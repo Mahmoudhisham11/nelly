@@ -77,12 +77,22 @@ export default function ProductModal({ isOpen, onClose, onSave, productToEdit = 
     const errs = {};
     if (!formData.barcode.trim()) errs.barcode = "يرجى كتابة أو توليد باركود الصنف";
     if (!formData.name.trim()) errs.name = "يرجى كتابة اسم الصنف";
-    if (formData.quantity === "" || isNaN(formData.quantity) || Number(formData.quantity) < 0) {
-      errs.quantity = "الكمية يجب أن تكون رقماً صحيحاً 0 أو أكثر";
+    
+    const qtyNum = Number(formData.quantity);
+    if (formData.quantity === "" || isNaN(qtyNum) || !Number.isInteger(qtyNum) || qtyNum < 0) {
+      errs.quantity = "الكمية يجب أن تكون رقماً صحيحاً 0 أو أكثر بدون كسور";
     }
-    if (formData.wholesalePrice === "" || isNaN(formData.wholesalePrice) || Number(formData.wholesalePrice) < 0) {
-      errs.wholesalePrice = "يرجى إدخال سعر الجملة بالجنيه";
+
+    const priceNum = Number(formData.wholesalePrice);
+    if (formData.wholesalePrice === "" || isNaN(priceNum) || priceNum < 0) {
+      errs.wholesalePrice = "يرجى إدخال سعر جملة صحيح أكبر من أو يساوي صفر";
     }
+
+    const threshNum = Number(formData.minThreshold);
+    if (formData.minThreshold !== "" && (isNaN(threshNum) || !Number.isInteger(threshNum) || threshNum < 0)) {
+      errs.minThreshold = "الحد الأدنى يجب أن يكون رقماً صحيحاً 0 أو أكثر";
+    }
+
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -100,8 +110,8 @@ export default function ProductModal({ isOpen, onClose, onSave, productToEdit = 
         quantity: parseInt(formData.quantity, 10) || 0,
         wholesalePrice: parseFloat(formData.wholesalePrice) || 0,
         minThreshold: parseInt(formData.minThreshold, 10) || 5,
-        brand: formData.brand || "Nelly",
-        description: formData.description || ""
+        brand: formData.brand ? formData.brand.trim() : "Nelly",
+        description: formData.description ? formData.description.trim() : ""
       };
 
       await onSave(dataToSave, productToEdit?.id);
@@ -119,6 +129,10 @@ export default function ProductModal({ isOpen, onClose, onSave, productToEdit = 
       onClose();
     } catch (err) {
       console.error("Save error:", err);
+      setErrors(prev => ({
+        ...prev,
+        submit: err.message || "حدث خطأ أثناء حفظ بيانات الصنف."
+      }));
     } finally {
       setIsSubmitting(false);
     }
@@ -178,6 +192,21 @@ export default function ProductModal({ isOpen, onClose, onSave, productToEdit = 
 
         {/* Form */}
         <form onSubmit={handleSubmit}>
+          {errors.submit && (
+            <div style={{
+              background: "#fef2f2",
+              border: "1.5px solid #fecaca",
+              borderRadius: "12px",
+              padding: "10px 14px",
+              marginBottom: "16px",
+              color: "#b91c1c",
+              fontSize: "0.85rem",
+              fontWeight: "700"
+            }}>
+              {errors.submit}
+            </div>
+          )}
+
           {/* Row 1: Barcode & Name */}
           <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1.8fr", gap: "14px", marginBottom: "14px" }}>
             <div className="form-group" style={{ marginBottom: 0 }}>

@@ -25,7 +25,7 @@ import {
 import { 
   subscribeToMonthlyExpenses 
 } from "@/lib/expensesService";
-import { formatNumber } from "@/lib/utils";
+import { formatNumber, roundCurrency } from "@/lib/utils";
 import { 
   Boxes, 
   Layers, 
@@ -124,20 +124,24 @@ export default function DashboardPage() {
   // Calculations for Products & Stock
   const totalProductTypes = products.length;
   const totalStockItems = products.reduce((acc, curr) => acc + (Number(curr.quantity) || 0), 0);
-  const totalWholesaleValue = products.reduce((acc, curr) => {
+  const totalWholesaleValue = roundCurrency(products.reduce((acc, curr) => {
     const qty = Number(curr.quantity) || 0;
     const price = Number(curr.wholesalePrice) || 0;
     return acc + (qty * price);
-  }, 0);
+  }, 0));
   const lowStockItems = products.filter(p => (Number(p.quantity) || 0) <= (Number(p.minThreshold) || 5));
 
   // Calculations for Suppliers
-  const totalPayableToSuppliers = suppliers.filter(s => s.balance > 0).reduce((sum, s) => sum + (Number(s.balance) || 0), 0);
+  const totalPayableToSuppliers = roundCurrency(suppliers.filter(s => s.balance > 0).reduce((sum, s) => sum + (Number(s.balance) || 0), 0));
   const topCreditorSuppliers = suppliers.filter(s => s.balance > 0).sort((a, b) => b.balance - a.balance).slice(0, 4);
 
   // Calculations for Current Month Expenses
   const currentMonthTotalExpenses = useMemo(() => {
-    return Object.values(monthlyExpensesMap).reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+    return roundCurrency(Object.values(monthlyExpensesMap).reduce((sum, e) => sum + (Number(e.amount) || 0), 0));
+  }, [monthlyExpensesMap]);
+
+  const currentMonthActiveExpensesCount = useMemo(() => {
+    return Object.values(monthlyExpensesMap).filter(r => (Number(r.amount) || 0) > 0).length;
   }, [monthlyExpensesMap]);
 
   // Expenses breakdown by item for current month
@@ -198,9 +202,10 @@ export default function DashboardPage() {
     showToast("تمت إضافة المورد الجديد بنجاح.");
   };
 
-  const handleMakePayment = async (supplierId, currentBal, payAmount, notes, method) => {
-    await makeSupplierPayment(supplierId, currentBal, payAmount, notes, method);
-    showToast(`تم تسجيل سداد ${formatNumber(payAmount)} ج.م وتحديث الحساب.`);
+  const handleMakePayment = async (supplierId, currentBal, payAmount, notes, method, operationType = "payment") => {
+    await makeSupplierPayment(supplierId, currentBal, payAmount, notes, method, operationType);
+    const actionLabel = operationType === "charge" ? "إضافة المستحقات" : "السداد";
+    showToast(`تم تسجيل ${actionLabel} بمبلغ ${formatNumber(payAmount)} ج.م وتحديث الحساب.`);
   };
 
   if (authLoading || (!user && loading)) {
@@ -360,7 +365,7 @@ export default function DashboardPage() {
                 title="مصاريف الشهر الحالي"
                 value={isAdmin ? currentMonthTotalExpenses : "🔒"}
                 suffix={isAdmin ? "ج.م" : "خاص بالمسؤول"}
-                subtitle={`${currentMonthExpenses.length} حركة صرف مسجلة`}
+                subtitle={`${currentMonthActiveExpensesCount} بند مصروف نشط`}
                 icon={TrendingDown}
                 theme="ruby"
                 trendText="نفقات هذا الشهر"

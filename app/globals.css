@@ -710,3 +710,107 @@ h1, h2, h3, h4, h5, h6 {
     border-radius: 18px !important;
   }
 }
+
+/* ==========================================================================
+   PRINT STYLES (@media print) FOR INVENTORY & BARCODE LABELS
+   ========================================================================== */
+
+@media print {
+  @page {
+    margin: 10mm;
+    size: auto;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-family: Arial, Tahoma, sans-serif !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide navigation, sidebar, and non-printable elements */
+  .app-sidebar,
+  .navbar-header,
+  .navbar-mobile-toggle,
+  .sidebar-mobile-backdrop,
+  .no-print,
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger,
+  header,
+  aside,
+  nav {
+    display: none !important;
+  }
+
+  /* Make main layout full width */
+  .app-layout,
+  .main-content,
+  .page-wrapper {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+  }
+
+  /* Modal overlay adjustments for print */
+  .modal-overlay {
+    position: static !important;
+    background: transparent !important;
+    padding: 0 !important;
+    display: block !important;
+    backdrop-filter: none !important;
+  }
+
+  .modal-content {
+    box-shadow: none !important;
+    border: none !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    padding: 0 !important;
+    background: transparent !important;
+    animation: none !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  /* Printable Containers */
+  #printable-inventory-document,
+  #printable-barcode-card {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    background: #ffffff !important;
+  }
+
+  #printable-inventory-document table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    page-break-inside: auto !important;
+  }
+
+  #printable-inventory-document tr {
+    page-break-inside: avoid !important;
+    page-break-after: auto !important;
+  }
+
+  #printable-inventory-document th,
+  #printable-inventory-document td {
+    border: 1px solid #d1d5db !important;
+    padding: 8px 10px !important;
+  }
+
+  /* Barcode Card Sticker Print */
+  #printable-barcode-card {
+    max-width: 320px !important;
+    margin: 20px auto !important;
+    padding: 15px !important;
+    border: 1.5px dashed #000000 !important;
+    page-break-inside: avoid !important;
+  }
+}
+

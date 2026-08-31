@@ -25,16 +25,26 @@ export default function AddExpenseAmountModal({
   const [date, setDate] = useState("");
   const [method, setMethod] = useState("نقدي");
   const [notes, setNotes] = useState("");
+  const [dateError, setDateError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (isOpen && item) {
       setAmount("");
-      setDate(new Date().toISOString().split("T")[0]);
+      // Smart date initialization: If today is within currentMonth use today, else use first day of currentMonth
+      const todayStr = new Date().toISOString().split("T")[0];
+      if (currentMonth && todayStr.startsWith(currentMonth)) {
+        setDate(todayStr);
+      } else if (currentMonth) {
+        setDate(`${currentMonth}-01`);
+      } else {
+        setDate(todayStr);
+      }
       setMethod("نقدي");
       setNotes("");
+      setDateError("");
     }
-  }, [isOpen, item]);
+  }, [isOpen, item, currentMonth]);
 
   if (!isOpen || !item) return null;
 
@@ -45,6 +55,11 @@ export default function AddExpenseAmountModal({
     e.preventDefault();
     if (!amount || addVal <= 0) {
       alert("يرجى إدخال مبلغ صحيح أكبر من صفر.");
+      return;
+    }
+
+    if (currentMonth && date && !date.startsWith(currentMonth)) {
+      setDateError(`تاريخ الصرف يجب أن يكون داخل شهر ${monthLabel} (${currentMonth})`);
       return;
     }
 
@@ -157,6 +172,7 @@ export default function AddExpenseAmountModal({
               <input 
                 type="number"
                 step="any"
+                min="0.01"
                 className="form-input num-font"
                 dir="ltr"
                 placeholder="أدخل المبلغ..."
@@ -198,9 +214,17 @@ export default function AddExpenseAmountModal({
                 type="date"
                 className="form-input num-font"
                 value={date}
-                onChange={(e) => setDate(e.target.value)}
+                onChange={(e) => {
+                  setDate(e.target.value);
+                  setDateError("");
+                }}
                 required
               />
+              {dateError && (
+                <span style={{ color: "#dc2626", fontSize: "0.75rem", fontWeight: "700", marginTop: "3px", display: "block" }}>
+                  {dateError}
+                </span>
+              )}
             </div>
 
             <div className="form-group">

@@ -1,37 +1,93 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 📋 تقرير المراجعة الفنية الشاملة لمشروع مخزن Nelly للميكاب ومستحضرات التجميل
 
-## Getting Started
+تمت مراجعة جميع ملفات وشاشات المشروع بالكامل (`app`, `components`, `lib`, `context`)، مع التركيز على **المشاكل المنطقية، الحسابية، تضارب الأرقام، تجربة الاستخدام (UX)، ومعالجة أخطاء المدخلات**.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 1. 🧮 مشاكل منطقية وحسابية في الأرقام (تضارب الحسابات والأرصدة)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### أ. تجاهل تعديل رصيد المورد في الواجهة البرمجية (Silent Data Loss)
+* **الملفات المرتبطة**: `components/SupplierModal.js` و `lib/suppliersService.js`
+* **المشكلة**: عند فتح نافذة تعديل بيانات مورد مسجل مسبقاً (`Edit Supplier`)، تتيح الواجهة للمستخدم تعديل نوع الرصيد ومبلغه. ولكن في دالة `updateSupplier` في ملف الخدمة، يتم حفظ الاسم والهاتف والملاحظات فقط، بينما يتم **تجاهل حقل الرصيد (`balance`) تماماً**.
+* **النتيجة**: المستخدم يقوم بتغيير الرصيد ويضغط حفظ وتظهر رسالة نجاح، لكن الرصيد في قاعدة البيانات يظل ثابتاً بدون أي تغيير.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### ب. تضارب إجمالي المصاريف بين لوحة التحكم وصفحة المصاريف عند حذف البنود (Orphaned Data Mismatch)
+* **الملفات المرتبطة**: `app/page.js`، `app/expenses/page.js`، و `lib/expensesService.js`
+* **المشكلة**: عند حذف بند مصروف رئيسي عبر دالة `deleteExpenseItem`، يتم مسحه من جدول البنود (`nelly_expense_items`)، لكن السجلات المالية المرتبطة به في جدول المصاريف الشهرية (`nelly_monthly_expenses`) **تظل مخزنة في قاعدة البيانات**.
+* **النتيجة**: 
+  * في **لوحة التحكم (Dashboard)**: تجمع الشاشة كل مستندات الشهر الحالي (فيعرض مثلاً إجمالي مصاريف `15,000 ج.م`).
+  * في **صفحة المصاريف (`/expenses`)**: تعرض الشاشة فقط البنود الموجودة في قائمة البنود، فيكون مجموعها (مثلاً `10,000 ج.م`).
+  * **النتيجة**: تضارب واختلاف واضح في الأرقام بين الشاشتين يربك الإدارة.
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+### ج. تضارب الألوان والإشارات في كشف حساب المورد (Initial Debt Rendered as Payment)
+* **الملفات المرتبطة**: `components/SupplierHistoryModal.js` و `lib/suppliersService.js`
+* **المشكلة**: عند إنشاء مورد برصيد افتتاحي (مديونية مستحقة للمورد بمبلغ 10,000 ج.م مثلاً)، يُسجل في الحركات كـ `رصيد افتتاحي` وبمبلغ موجب `amount: 10000`. في شاشة كشف الحساب، يتم التحقق بشرط غير منضبط:
+  ```js
+  const isPayment = tx.type === "سداد دفعة" || tx.amount > 0;
+  ```
+* **النتيجة**: يظهر الرصيد الافتتاحي (وهو دين علينا) باللون الأخضر وسهم سداد دفعة إلى الأسفل وكأنه مبلغ تم دفعه للمورد، وهو عكس المعنى المحاسبي تماماً.
+* بالإضافة إلى أن حذف حركة سابقة عبر `deleteSupplierTransaction` يعدل الرصيد الكلي فقط ولا يعيد احتساب تسلسل `newBalance` في الحركات التي تلتها، مما يجعل الرصيد التراكمي في الجدول غير متناسق زمنياً.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### د. تعارض تاريخ الحركة مع الشهر المالي المحدد
+* **الملفات المرتبطة**: `components/AddExpenseAmountModal.js` و `lib/expensesService.js`
+* **المشكلة**: عند اختيار شهر سابق من الفلتر (مثلاً `2026-02`) ثم الضغط على "إضافة مبلغ للبند"، يقوم النموذج بوضع تاريخ اليوم تلقائياً (`2026-08-31`) أو يتيح اختيار أي تاريخ. يتم ترحيل المبلغ لمستند شهر `2026-02` في حين أن تاريخ الدفعة الفعلي يظهر لشهر `08`.
+* **النتيجة**: صعوبة في جرد ومطابقة المصاريف بتاريخها الحقيقي مع تقفيل الشهر المالي.
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### هـ. مشاكل دقة الكسور العشرية (Floating Point Precision)
+* **الملفات المرتبطة**: حسابات `totalWholesaleValue` و `balance` والمدفوعات.
+* **المشكلة**: الحسابات المباشرة مثل `(qty * price)` أو جمع/طرح الأرصدة بدون تقريب منضبط (`Math.round` أو `.toFixed(2)`) قد تفرز أرقاماً طويلة في الواجهة مثل `2450.0000000000005 ج.م`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-"# nelly" 
+---
+
+## 2. 🖨️ مشاكل تجربة الاستخدام (UX) وطباعة المستندات
+
+### أ. تشوه الطباعة لعدم وجود أنماط `@media print`
+* **الملفات المرتبطة**: `components/BarcodeModal.js`، `components/PrintInventoryModal.js`، و `app/globals.css`
+* **المشكلة**: عند الضغط على "طباعة الباركود" أو "طباعة الكشف"، يتم استدعاء `window.print()` مباشرة، ولكن لا توجد أي قواعد CSS خاصة بالطباعة في المشروع.
+* **النتيجة**: يقوم المتصفح بطباعة خلفية الموقع، القائمة الجانبية (Sidebar)، والشاشة الرمادية (Modal Overlay) مشوهة على الورق بدلاً من طباعة ملصق الباركود أو جدول الجرد فقط.
+
+---
+
+### ب. ميزات كشف الجرد غير مربوطة في واجهة المنتجات (Dead Code)
+* **الملفات المرتبطة**: `components/PrintInventoryModal.js`، `lib/printService.js`، و `app/products/page.js`
+* **المشكلة**: تم بناء مكون نافذة معاينة الجرد `PrintInventoryModal` وخدمة `printService.js` بشكل منفصل، لكن **كلاهما غير مربوط بأي زر في صفحة المنتجات أو لوحة التحكم** (يوجد زر تصدير CSV فقط).
+
+---
+
+### ج. وجود مكونات قديمة غير مستخدمة وتستورد ملفات ناقصة
+* **الملفات المرتبطة**: `components/ExpenseModal.js` و `components/ExpenseCategoryModal.js`
+* **المشكلة**: ملفات متبقية من نظام مصاريف قديم تستورد `DEFAULT_EXPENSE_CATEGORIES` غير الموجود في `expensesService.js`. بقاؤها يسبب أخطاء بناء أو إرباكاً للمطورين.
+
+---
+
+## 3. ⚠️ مشاكل في التحقق من المدخلات (Input Validation & Edge Cases)
+
+### أ. عدم التحقق من تكرار الباركود (Barcode Uniqueness)
+* **الملفات المرتبطة**: `components/ProductModal.js` و `lib/productsService.js`
+* **المشكلة**: إذا قام المستخدم بإدخال باركود يدوي موجود بالفعل لصنف آخر، يقبل النظام الحفظ بدون تنبيه.
+* **النتيجة**: وجود صنفين بنفس الباركود، مما يسبب نتائج خاطئة وغير متوقعة عند البحث أو المسح بجهاز الباركود.
+
+---
+
+### ب. إدخال كسور عشرية في كميات المخزن
+* **الملفات المرتبطة**: `components/ProductModal.js`
+* **المشكلة**: حقل الكمية يسمح بكتابة أرقام عشرية (مثل `3.5`)، وعند الحفظ يتم عمل `parseInt(formData.quantity, 10)` فيتم اختصار الرقم إلى `3` بصمت وتجاهل الكسر دون تنبيه المستخدم.
+
+---
+
+### ج. إدخال مبالغ سالبة في نافذة السداد العادية
+* **الملفات المرتبطة**: `components/PaymentModal.js`
+* **المشكلة**: حقل سداد المورد يقبل كتابة أرقام سالبة. إذا كتب المستخدم `-500` معتقداً أنه يخصم مبلغاً، فإن معادلة السداد `currentBal - amount` تصبح `currentBal - (-500) = currentBal + 500`، فيزداد الدين على المحل بدلاً من أن ينقص.
+
+---
+
+### د. حماية ضد النقر المتعدد أثناء الحفظ (Double Submit Prevention)
+* في بعض عمليات الحذف وتعديل الصلاحيات السريعة، قد يؤدي النقر المتكرر السريع على الزر قبل انتهاء استجابة Firebase إلى إرسال طلبات مكررة لنفس العملية.

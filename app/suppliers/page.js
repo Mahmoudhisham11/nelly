@@ -150,9 +150,10 @@ export default function SuppliersPage() {
     }
   };
 
-  const handleMakePayment = async (supplierId, currentBal, payAmount, notes, method) => {
-    await makeSupplierPayment(supplierId, currentBal, payAmount, notes, method);
-    showToast(`تم تسجيل عملية السداد بمبلغ ${formatNumber(payAmount)} ج.م وتحديث الحساب.`);
+  const handleMakePayment = async (supplierId, currentBal, payAmount, notes, method, operationType = "payment") => {
+    await makeSupplierPayment(supplierId, currentBal, payAmount, notes, method, operationType);
+    const actionLabel = operationType === "charge" ? "إضافة المستحقات / الفاتورة" : "عملية السداد";
+    showToast(`تم تسجيل ${actionLabel} بمبلغ ${formatNumber(payAmount)} ج.م وتحديث الحساب.`);
   };
 
   const handleDeleteTransaction = async (supplierId, txId) => {

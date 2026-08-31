@@ -53,12 +53,17 @@ export default function SupplierModal({ isOpen, onClose, onSave, supplierToEdit 
 
     setIsSubmitting(true);
     try {
-      await onSave({
+      const payload = {
         name: name.trim(),
         phone: phone.trim(),
-        balance: finalBalance,
         notes: notes.trim()
-      }, supplierToEdit?.id);
+      };
+
+      if (!supplierToEdit) {
+        payload.balance = finalBalance;
+      }
+
+      await onSave(payload, supplierToEdit?.id);
       onClose();
     } catch (err) {
       console.error("Error saving supplier:", err);

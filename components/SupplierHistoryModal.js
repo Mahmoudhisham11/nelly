@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, History, FileText, ArrowDownLeft, ArrowUpRight, Trash2, AlertCircle } from "lucide-react";
+import { X, History, FileText, ArrowDownLeft, ArrowUpRight, Trash2, AlertCircle, Edit3 } from "lucide-react";
 import { formatNumber } from "@/lib/utils";
 
 export default function SupplierHistoryModal({ isOpen, onClose, supplier, onDeleteTransaction }) {
@@ -26,12 +26,46 @@ export default function SupplierHistoryModal({ isOpen, onClose, supplier, onDele
     }
   };
 
+  const getTxConfig = (tx) => {
+    const type = tx.type || "حركة مالية";
+    if (type === "سداد دفعة") {
+      return {
+        bg: "#ecfdf5",
+        color: "#059669",
+        icon: ArrowDownLeft,
+        label: "سداد دفعة (يقلل المديونية)"
+      };
+    }
+    if (type === "رصيد افتتاحي") {
+      return {
+        bg: "#faf5ff",
+        color: "#7e22ce",
+        icon: FileText,
+        label: "رصيد افتتاحي"
+      };
+    }
+    if (type.includes("فاتورة") || type.includes("مستحقات")) {
+      return {
+        bg: "#fdf2f8",
+        color: "#db2777",
+        icon: ArrowUpRight,
+        label: "إضافة مستحقات / فاتورة"
+      };
+    }
+    return {
+      bg: "#eff6ff",
+      color: "#2563eb",
+      icon: Edit3,
+      label: "تعديل رصيد يدوي"
+    };
+  };
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div 
         className="modal-content"
         onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: "650px", padding: "26px" }}
+        style={{ maxWidth: "680px", padding: "26px" }}
       >
         {/* Header */}
         <div style={{
@@ -58,7 +92,7 @@ export default function SupplierHistoryModal({ isOpen, onClose, supplier, onDele
             </div>
             <div>
               <h3 style={{ fontSize: "1.2rem", fontWeight: "900", color: "#1e1322" }}>
-                كشف حساب وسجل مدفوعات المورد
+                كشف حساب وسجل حركات المورد
               </h3>
               <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", fontWeight: "600" }}>
                 {supplier.name} {supplier.phone && `(${supplier.phone})`}
@@ -88,7 +122,7 @@ export default function SupplierHistoryModal({ isOpen, onClose, supplier, onDele
         {/* Current Balance Ribbon */}
         <div style={{
           background: currentBal > 0 ? "#fdf2f8" : currentBal < 0 ? "#faf5ff" : "#ecfdf5",
-          border: `1px solid ${currentBal > 0 ? "#fbcfe8" : currentBal < 0 ? "#e9d5ff" : "#a7f3d0"}`,
+          border: `1.5px solid ${currentBal > 0 ? "#fbcfe8" : currentBal < 0 ? "#e9d5ff" : "#a7f3d0"}`,
           borderRadius: "12px",
           padding: "12px 16px",
           marginBottom: "18px",
@@ -97,12 +131,12 @@ export default function SupplierHistoryModal({ isOpen, onClose, supplier, onDele
           justifyContent: "space-between"
         }}>
           <span style={{ fontSize: "0.88rem", fontWeight: "700", color: "#4a3650" }}>
-            الرصيد المالي الحالي:
+            الرصيد المالي الحالي المسجل:
           </span>
           <strong style={{ fontSize: "1.15rem", color: currentBal > 0 ? "#be185d" : currentBal < 0 ? "#7e22ce" : "#047857" }}>
             <span className="num-font" dir="ltr">{formatNumber(Math.abs(currentBal))}</span> ج.م
             <span style={{ fontSize: "0.8rem", marginRight: "6px", fontWeight: "800" }}>
-              {currentBal > 0 ? "(له مستحقات)" : currentBal < 0 ? "(عليه مبالغ)" : "(خالص)"}
+              {currentBal > 0 ? "(له مستحقات علينا)" : currentBal < 0 ? "(عليه مبالغ لنا)" : "(خالص تماماً)"}
             </span>
           </strong>
         </div>
@@ -123,7 +157,7 @@ export default function SupplierHistoryModal({ isOpen, onClose, supplier, onDele
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#991b1b", fontSize: "0.86rem", fontWeight: "700" }}>
               <AlertCircle size={18} color="#dc2626" />
-              <span>هل تريد بالتأكيد حذف هذه الحركة بمبلغ <span className="num-font" dir="ltr">{formatNumber(confirmTx.amount)}</span> ج.م وتعديل الرصيد؟</span>
+              <span>هل تريد بالتأكيد حذف هذه الحركة بمبلغ <span className="num-font" dir="ltr">{formatNumber(confirmTx.amount)}</span> ج.م وتعديل الرصيد تلقائياً؟</span>
             </div>
             <div style={{ display: "flex", gap: "8px", flexShrink: 0 }}>
               <button
@@ -154,7 +188,10 @@ export default function SupplierHistoryModal({ isOpen, onClose, supplier, onDele
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
               {[...transactions].reverse().map((tx, idx) => {
-                const isPayment = tx.type === "سداد دفعة" || tx.amount > 0;
+                const cfg = getTxConfig(tx);
+                const TxIcon = cfg.icon;
+                const txNewBal = Number(tx.newBalance) || 0;
+
                 return (
                   <div
                     key={tx.id || idx}
@@ -172,17 +209,17 @@ export default function SupplierHistoryModal({ isOpen, onClose, supplier, onDele
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                       <div style={{
-                        width: "34px",
-                        height: "34px",
+                        width: "36px",
+                        height: "36px",
                         borderRadius: "10px",
-                        background: isPayment ? "#ecfdf5" : "#faf5ff",
-                        color: isPayment ? "#059669" : "#7e22ce",
+                        background: cfg.bg,
+                        color: cfg.color,
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
                         flexShrink: 0
                       }}>
-                        {isPayment ? <ArrowDownLeft size={18} /> : <ArrowUpRight size={18} />}
+                        <TxIcon size={18} />
                       </div>
                       <div>
                         <div style={{ fontWeight: "800", fontSize: "0.9rem", color: "#1e1322" }}>
@@ -198,11 +235,14 @@ export default function SupplierHistoryModal({ isOpen, onClose, supplier, onDele
 
                     <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
                       <div style={{ textAlign: "left" }}>
-                        <div style={{ fontWeight: "900", fontSize: "1rem", color: isPayment ? "#059669" : "#be185d" }}>
+                        <div style={{ fontWeight: "900", fontSize: "1rem", color: cfg.color }}>
                           <span className="num-font" dir="ltr">{formatNumber(tx.amount)}</span> ج.م
                         </div>
                         <div style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginTop: "2px" }}>
-                          الرصيد: <span className="num-font" dir="ltr">{formatNumber(Math.abs(tx.newBalance || 0))}</span>
+                          الرصيد بعد الحركة: <strong className="num-font" dir="ltr">{formatNumber(Math.abs(txNewBal))}</strong>
+                          <span style={{ fontSize: "0.68rem", marginRight: "3px" }}>
+                            {txNewBal > 0 ? "(له)" : txNewBal < 0 ? "(عليه)" : "(خالص)"}
+                          </span>
                         </div>
                       </div>
 

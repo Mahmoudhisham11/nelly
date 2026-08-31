@@ -7,6 +7,7 @@ import Sidebar from "@/components/Sidebar";
 import Navbar from "@/components/Navbar";
 import ProductModal, { CATEGORIES } from "@/components/ProductModal";
 import BarcodeModal from "@/components/BarcodeModal";
+import PrintInventoryModal from "@/components/PrintInventoryModal";
 import PermissionDeniedModal from "@/components/PermissionDeniedModal";
 import CustomSelect from "@/components/CustomSelect";
 import { 
@@ -26,7 +27,8 @@ import {
   Boxes, 
   PackagePlus,
   RotateCcw,
-  Lock
+  Lock,
+  Printer
 } from "lucide-react";
 
 export default function ProductsPage() {
@@ -43,6 +45,7 @@ export default function ProductsPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [barcodeProduct, setBarcodeProduct] = useState(null);
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
   const [permissionDeniedAction, setPermissionDeniedAction] = useState(null);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -262,7 +265,16 @@ export default function ProductsPage() {
 
           {/* Action buttons */}
           <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-            <button onClick={exportToCSV} className="btn-secondary" title="تصدير إلى ملف إكسل CSV">
+            <button 
+              onClick={() => setIsPrintModalOpen(true)} 
+              className="btn-secondary" 
+              title="معاينة وطباعة كشف جرد المخزن"
+              style={{ background: "#ffffff" }}
+            >
+              <Printer size={16} color="#db2777" />
+              طباعة كشف الجرد
+            </button>
+            <button onClick={exportToCSV} className="btn-secondary" title="تصدير إلى ملف إكسل CSV" style={{ background: "#ffffff" }}>
               <Download size={16} color="#059669" />
               تصدير CSV
             </button>
@@ -646,6 +658,12 @@ export default function ProductsPage() {
           </div>
         </div>
       )}
+      {/* Print Inventory Modal */}
+      <PrintInventoryModal 
+        isOpen={isPrintModalOpen}
+        onClose={() => setIsPrintModalOpen(false)}
+        products={filteredProducts}
+      />
       </div>
     </div>
   );

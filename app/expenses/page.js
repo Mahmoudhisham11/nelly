@@ -20,7 +20,7 @@ import {
   addAmountToExpenseItem,
   deleteMonthlyTransaction
 } from "@/lib/expensesService";
-import { formatNumber } from "@/lib/utils";
+import { formatNumber, roundCurrency } from "@/lib/utils";
 import { 
   Receipt, 
   Plus, 
@@ -194,7 +194,7 @@ export default function ExpensesPage() {
 
   // Statistics for selected month
   const totalMonthExpenses = useMemo(() => {
-    return Object.values(monthlyExpensesMap).reduce((sum, rec) => sum + (Number(rec.amount) || 0), 0);
+    return roundCurrency(Object.values(monthlyExpensesMap).reduce((sum, rec) => sum + (Number(rec.amount) || 0), 0));
   }, [monthlyExpensesMap]);
 
   const activeSpentItemsCount = useMemo(() => {
