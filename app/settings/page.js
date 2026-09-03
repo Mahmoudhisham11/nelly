@@ -22,7 +22,10 @@ import {
   AlertCircle,
   Crown,
   User,
-  Sparkles
+  Sparkles,
+  Eye,
+  EyeOff,
+  Key
 } from "lucide-react";
 
 export default function SettingsPage() {
@@ -37,6 +40,14 @@ export default function SettingsPage() {
   const [toastMessage, setToastMessage] = useState("");
   const [updatingUserId, setUpdatingUserId] = useState(null);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [revealedPasswords, setRevealedPasswords] = useState({});
+
+  const togglePasswordReveal = (userId) => {
+    setRevealedPasswords(prev => ({
+      ...prev,
+      [userId]: !prev[userId]
+    }));
+  };
 
   // Authentication check
   useEffect(() => {
@@ -401,6 +412,7 @@ export default function SettingsPage() {
                   <tr>
                     <th>اسم المستخدم</th>
                     <th>البريد الإلكتروني</th>
+                    <th>كلمة المرور</th>
                     <th>الصلاحية الحالية (Role)</th>
                     <th>تاريخ التسجيل</th>
                     <th style={{ textAlign: "center" }}>تغيير الصلاحية</th>
@@ -412,6 +424,7 @@ export default function SettingsPage() {
                     const isCurrentUser = u.uid === user?.uid;
                     const isTargetAdmin = u.role === "admin";
                     const isUpdating = updatingUserId === u.uid;
+                    const isPassRevealed = !!revealedPasswords[u.uid || u.id];
 
                     return (
                       <tr key={u.uid || u.id}>
@@ -451,6 +464,46 @@ export default function SettingsPage() {
                           <span className="num-font" dir="ltr" style={{ color: "#4a3650", fontWeight: "600", fontSize: "0.9rem" }}>
                             {u.email || "—"}
                           </span>
+                        </td>
+
+                        {/* Password */}
+                        <td>
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                            <span 
+                              className="num-font" 
+                              dir="ltr"
+                              style={{ 
+                                fontFamily: isPassRevealed ? "inherit" : "monospace",
+                                fontSize: "0.9rem",
+                                color: "#1e1322",
+                                fontWeight: "700",
+                                background: "#f9fafb",
+                                padding: "3px 8px",
+                                borderRadius: "6px",
+                                border: "1px solid #e5e7eb"
+                              }}
+                            >
+                              {isPassRevealed ? (u.password || "—") : "••••••••"}
+                            </span>
+                            {u.password && (
+                              <button
+                                type="button"
+                                onClick={() => togglePasswordReveal(u.uid || u.id)}
+                                style={{
+                                  background: "transparent",
+                                  border: "none",
+                                  color: "#6b7280",
+                                  cursor: "pointer",
+                                  padding: "3px",
+                                  display: "flex",
+                                  alignItems: "center"
+                                }}
+                                title={isPassRevealed ? "إخفاء كلمة المرور" : "عرض كلمة المرور"}
+                              >
+                                {isPassRevealed ? <EyeOff size={15} color="#db2777" /> : <Eye size={15} />}
+                              </button>
+                            )}
+                          </div>
                         </td>
 
                         {/* Role Badge */}
@@ -512,6 +565,7 @@ export default function SettingsPage() {
                       </tr>
                     );
                   })}
+
                 </tbody>
               </table>
             )}
