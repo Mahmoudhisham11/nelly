@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { formatNumber } from "@/lib/utils";
 import { 
   Printer, 
@@ -12,6 +12,7 @@ import {
 
 export default function POSReceiptModal({ isOpen, onClose, invoice, onNewSale }) {
   const receiptRef = useRef(null);
+  const [includePolicy, setIncludePolicy] = useState(true);
 
   if (!isOpen || !invoice) return null;
 
@@ -38,7 +39,7 @@ export default function POSReceiptModal({ isOpen, onClose, invoice, onNewSale })
 💵 *الإجمالي:* ${formatNumber(invoice.total)} ج.م
 💳 *طريقة الدفع:* ${invoice.paymentMethod || "نقدي"}
 ━━━━━━━━━━━━━━━━━━
-✨ شكراً لتعاملكم معنا ونسعد بزيارتكم ✨`;
+✨ شكراً لتعاملكم معنا ونسعد بزيارتكم ✨${includePolicy ? "\nℹ️ *البضاعة المباعة لا ترد ولكن تستبدل خلال 14 يوماً*" : ""}`;
 
     const phone = invoice.customer?.phone ? invoice.customer.phone.replace(/[^0-9]/g, "") : "";
     const cleanPhone = phone.startsWith("01") ? `20${phone.substring(1)}` : phone;
@@ -170,7 +171,7 @@ export default function POSReceiptModal({ isOpen, onClose, invoice, onNewSale })
               </div>
             </div>
 
-            {/* 3. Items Table (Non-black header, 4 columns) */}
+            {/* 3. Items Table - All Columns Center-Aligned */}
             <div style={{ marginBottom: "10px" }}>
               <table style={{ 
                 width: "100%", 
@@ -184,16 +185,16 @@ export default function POSReceiptModal({ isOpen, onClose, invoice, onNewSale })
                     borderTop: "1.5px solid #000000", 
                     borderBottom: "1.5px solid #000000" 
                   }}>
-                    <th style={{ textAlign: "right", padding: "6px 4px", fontWeight: "900", color: "#000000" }}>
+                    <th style={{ textAlign: "center", padding: "6px 4px", fontWeight: "900", color: "#000000" }}>
                       اسم المنتج
                     </th>
-                    <th style={{ textAlign: "center", padding: "6px 4px", fontWeight: "900", color: "#000000", width: "42px" }}>
+                    <th style={{ textAlign: "center", padding: "6px 4px", fontWeight: "900", color: "#000000", width: "45px" }}>
                       الكمية
                     </th>
                     <th style={{ textAlign: "center", padding: "6px 4px", fontWeight: "900", color: "#000000", width: "55px" }}>
                       السعر
                     </th>
-                    <th style={{ textAlign: "left", padding: "6px 4px", fontWeight: "900", color: "#000000", width: "65px" }}>
+                    <th style={{ textAlign: "center", padding: "6px 4px", fontWeight: "900", color: "#000000", width: "65px" }}>
                       الإجمالي
                     </th>
                   </tr>
@@ -206,7 +207,7 @@ export default function POSReceiptModal({ isOpen, onClose, invoice, onNewSale })
                         borderBottom: "1px dashed #d1d5db"
                       }}
                     >
-                      <td style={{ padding: "6px 4px", fontWeight: "800", color: "#000000", wordBreak: "break-word" }}>
+                      <td style={{ textAlign: "center", padding: "6px 4px", fontWeight: "800", color: "#000000", wordBreak: "break-word" }}>
                         {it.name}
                       </td>
                       <td style={{ textAlign: "center", padding: "6px 4px", fontWeight: "900", color: "#000000" }} className="num-font">
@@ -215,7 +216,7 @@ export default function POSReceiptModal({ isOpen, onClose, invoice, onNewSale })
                       <td style={{ textAlign: "center", padding: "6px 4px", fontWeight: "800", color: "#000000" }} className="num-font">
                         {formatNumber(it.sellingPrice)}
                       </td>
-                      <td style={{ textAlign: "left", padding: "6px 4px", fontWeight: "900", color: "#000000" }} className="num-font">
+                      <td style={{ textAlign: "center", padding: "6px 4px", fontWeight: "900", color: "#000000" }} className="num-font">
                         {formatNumber(it.subtotal || it.quantity * it.sellingPrice)}
                       </td>
                     </tr>
@@ -285,7 +286,7 @@ export default function POSReceiptModal({ isOpen, onClose, invoice, onNewSale })
               )}
             </div>
 
-            {/* 5. Footer: Thank You Message */}
+            {/* 5. Footer: Thank You Message & Optional Exchange Policy */}
             <div style={{ 
               textAlign: "center", 
               borderTop: "1.5px solid #000000", 
@@ -294,13 +295,47 @@ export default function POSReceiptModal({ isOpen, onClose, invoice, onNewSale })
               fontWeight: "900",
               color: "#000000" 
             }}>
-              شكراً لتعاملكم معنا ونسعد بزيارتكم
+              <div>شكراً لتعاملكم معنا ونسعد بزيارتكم</div>
+              {includePolicy && (
+                <div style={{ 
+                  marginTop: "4px", 
+                  fontSize: "0.73rem", 
+                  fontWeight: "800", 
+                  color: "#1f2937" 
+                }}>
+                  البضاعة المباعة لا ترد ولكن تستبدل خلال 14 يوماً مع وجود الفاتورة
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Pinned Action Buttons Footer in Modal (Print, WhatsApp, New Sale) */}
+        {/* Pinned Action Buttons Footer in Modal (Print, WhatsApp, Policy Toggle, New Sale) */}
         <div className="modal-footer no-print" style={{ flexDirection: "column", gap: "8px", flexShrink: 0, padding: "12px 16px" }}>
+          {/* Policy Toggle Option */}
+          <label style={{ 
+            display: "flex", 
+            alignItems: "center", 
+            justifyContent: "space-between", 
+            width: "100%",
+            padding: "6px 12px", 
+            background: "#f8fafc", 
+            border: "1px solid #e2e8f0", 
+            borderRadius: "8px", 
+            cursor: "pointer", 
+            userSelect: "none" 
+          }}>
+            <span style={{ fontSize: "0.8rem", fontWeight: "700", color: "#334155" }}>
+              طباعة سياسة الاستبدال (14 يوم) بالفاتورة
+            </span>
+            <input 
+              type="checkbox" 
+              checked={includePolicy} 
+              onChange={(e) => setIncludePolicy(e.target.checked)}
+              style={{ width: "17px", height: "17px", accentColor: "#db2777", cursor: "pointer" }}
+            />
+          </label>
+
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", width: "100%" }}>
             <button
               type="button"
