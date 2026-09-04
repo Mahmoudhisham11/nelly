@@ -2240,17 +2240,25 @@ h1, h2, h3, h4, h5, h6 {
     width: 100% !important;
     margin: 0 auto !important;
     padding: 3mm 2mm !important;
-    border: 1px dashed #000000 !important;
+    border: none !important;
     box-shadow: none !important;
     background: #ffffff !important;
     page-break-inside: avoid !important;
-    font-size: 11pt !important;
+    font-size: 10pt !important;
     color: #000000 !important;
+    font-weight: 700 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   #printable-receipt table {
     width: 100% !important;
     border-collapse: collapse !important;
+  }
+
+  #printable-receipt th,
+  #printable-receipt td {
+    color: #000000 !important;
   }
 
   /* B. Thermal Barcode Label Sticker */
