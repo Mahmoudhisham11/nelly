@@ -25,6 +25,9 @@ import {
 import { 
   subscribeToMonthlyExpenses 
 } from "@/lib/expensesService";
+import { 
+  subscribeToSales 
+} from "@/lib/salesService";
 import { formatNumber, roundCurrency } from "@/lib/utils";
 import { 
   Boxes, 
@@ -36,15 +39,18 @@ import {
   ArrowLeft, 
   Barcode, 
   CheckCircle2, 
-  Edit3,
-  Lock,
-  Truck,
-  Receipt,
-  TrendingDown,
-  CreditCard,
-  PieChart,
-  ArrowDownLeft,
-  ChevronLeft
+  Edit3, 
+  Lock, 
+  Truck, 
+  Receipt, 
+  TrendingDown, 
+  TrendingUp,
+  CreditCard, 
+  PieChart, 
+  ArrowDownLeft, 
+  ChevronLeft,
+  ShoppingCart,
+  ShoppingBag
 } from "lucide-react";
 
 export default function DashboardPage() {
@@ -54,8 +60,10 @@ export default function DashboardPage() {
   // Real-time states
   const [products, setProducts] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
+  const [sales, setSales] = useState([]);
   const [monthlyExpensesMap, setMonthlyExpensesMap] = useState({});
   const [loading, setLoading] = useState(true);
+
 
   // Modals state
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
@@ -96,7 +104,7 @@ export default function DashboardPage() {
     let loadedCount = 0;
     const checkDone = () => {
       loadedCount++;
-      if (loadedCount >= 3) setLoading(false);
+      if (loadedCount >= 4) setLoading(false);
     };
 
     const unsubProducts = subscribeToProducts((data) => {
@@ -109,6 +117,11 @@ export default function DashboardPage() {
       checkDone();
     });
 
+    const unsubSales = subscribeToSales((data) => {
+      setSales(data);
+      checkDone();
+    });
+
     const unsubExpenses = subscribeToMonthlyExpenses(currentMonthStr, (map) => {
       setMonthlyExpensesMap(map);
       checkDone();
@@ -117,9 +130,29 @@ export default function DashboardPage() {
     return () => {
       unsubProducts();
       unsubSuppliers();
+      unsubSales();
       unsubExpenses();
     };
   }, [user, currentMonthStr]);
+
+  // Calculations for Sales & Profits
+  const activeSales = useMemo(() => sales.filter(s => s.status !== "مرتجعة"), [sales]);
+  const totalSalesRevenue = useMemo(() => {
+    return roundCurrency(activeSales.reduce((acc, curr) => acc + (Number(curr.total) || 0), 0));
+  }, [activeSales]);
+
+  const totalSalesProfit = useMemo(() => {
+    return roundCurrency(activeSales.reduce((acc, curr) => acc + (Number(curr.totalProfit) || 0), 0));
+  }, [activeSales]);
+
+  const todayStr = useMemo(() => new Date().toISOString().split("T")[0], []);
+  const todaySalesRevenue = useMemo(() => {
+    return roundCurrency(
+      activeSales
+        .filter(s => s.date && s.date.startsWith(todayStr))
+        .reduce((acc, curr) => acc + (Number(curr.total) || 0), 0)
+    );
+  }, [activeSales, todayStr]);
 
   // Calculations for Products & Stock
   const totalProductTypes = products.length;
@@ -151,6 +184,7 @@ export default function DashboardPage() {
       .map(r => [r.itemName, Number(r.amount) || 0])
       .sort((a, b) => b[1] - a[1]);
   }, [monthlyExpensesMap]);
+
 
   // Action handlers
   const handleOpenAddProduct = () => {
@@ -302,38 +336,73 @@ export default function DashboardPage() {
 
             {/* Quick Action Hub */}
             <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+              <Link 
+                href="/pos"
+                className="btn-primary"
+                style={{ padding: "10px 20px", fontSize: "0.92rem", textDecoration: "none", boxShadow: "0 6px 20px rgba(219, 39, 119, 0.3)" }}
+              >
+                <ShoppingCart size={18} />
+                نقطة البيع (الكاشير)
+              </Link>
+
               <button 
                 onClick={handleOpenAddProduct}
-                className="btn-primary"
-                style={{ padding: "10px 18px", fontSize: "0.88rem" }}
+                className="btn-secondary"
+                style={{ padding: "10px 16px", fontSize: "0.88rem", background: "#ffffff" }}
               >
                 <Plus size={16} />
                 + صنف للمخزن
               </button>
 
               <Link 
-                href="/expenses"
+                href="/sales"
                 className="btn-secondary"
                 style={{ padding: "10px 16px", fontSize: "0.88rem", background: "#ffffff", textDecoration: "none" }}
               >
                 <Receipt size={16} color="#db2777" />
-                المصاريف الشهرية
+                فواتير المبيعات
               </Link>
 
-              <button 
-                onClick={handleOpenAddSupplier}
+              <Link 
+                href="/expenses"
                 className="btn-secondary"
-                style={{ padding: "10px 16px", fontSize: "0.88rem", background: "#ffffff" }}
+                style={{ padding: "10px 16px", fontSize: "0.88rem", background: "#ffffff", textDecoration: "none" }}
               >
-                <Truck size={16} color="#9333ea" />
-                + مورد جديد
-              </button>
+                <TrendingDown size={16} color="#dc2626" />
+                المصاريف
+              </Link>
             </div>
           </section>
 
           {/* Executive KPI Cards (Swiper on Mobile, Grid on Desktop) */}
           <section className="mobile-cards-swiper">
-            {/* 1. Inventory Volume */}
+            {/* 1. Today & Total Sales */}
+            <div className="mobile-swiper-card">
+              <StatCard 
+                title="إجمالي المبيعات المحققة"
+                value={totalSalesRevenue}
+                suffix="ج.م"
+                subtitle={`مبيعات اليوم: ${formatNumber(todaySalesRevenue)} ج.م`}
+                icon={ShoppingBag}
+                theme="rose"
+                trendText={`${activeSales.length} فاتورة مسجلة`}
+              />
+            </div>
+
+            {/* 2. Total Net Profit (Admin) */}
+            <div className="mobile-swiper-card">
+              <StatCard 
+                title="صافي أرباح المبيعات"
+                value={isAdmin ? totalSalesProfit : "🔒"}
+                suffix={isAdmin ? "ج.م" : "خاص بالمسؤول"}
+                subtitle="أرباح الفواتير بعد الخصومات والتكلفة"
+                icon={TrendingUp}
+                theme="emerald"
+                trendText="أرباح المتجر"
+              />
+            </div>
+
+            {/* 3. Inventory Volume */}
             <div className="mobile-swiper-card">
               <StatCard 
                 title="إجمالي بضاعة المخزن"
@@ -341,12 +410,12 @@ export default function DashboardPage() {
                 suffix="قطعة"
                 subtitle={`${totalProductTypes} صنف مسجل`}
                 icon={Boxes}
-                theme="rose"
+                theme="purple"
                 trendText="المخزون الحالي"
               />
             </div>
 
-            {/* 2. Total Wholesale Value */}
+            {/* 4. Total Wholesale Value */}
             <div className="mobile-swiper-card">
               <StatCard 
                 title="القيمة المالية للمخزون"
@@ -359,7 +428,7 @@ export default function DashboardPage() {
               />
             </div>
 
-            {/* 3. Monthly Expenses */}
+            {/* 5. Monthly Expenses */}
             <div className="mobile-swiper-card">
               <StatCard 
                 title="مصاريف الشهر الحالي"
@@ -372,7 +441,7 @@ export default function DashboardPage() {
               />
             </div>
 
-            {/* 4. Suppliers Dues */}
+            {/* 6. Suppliers Dues */}
             <div className="mobile-swiper-card">
               <StatCard 
                 title="مستحقات الموردين (له)"
@@ -385,6 +454,7 @@ export default function DashboardPage() {
               />
             </div>
           </section>
+
 
           {/* Mobile Swipe Hint */}
           <div className="swiper-mobile-hint">
@@ -503,6 +573,91 @@ export default function DashboardPage() {
 
           </div>
 
+          {/* Section: Recent Sales Invoices */}
+          <section className="glass-panel" style={{ padding: "20px 22px", marginBottom: "28px", background: "#ffffff", border: "1.5px solid #fbcfe8" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px", paddingBottom: "10px", borderBottom: "1px solid #fce7f3" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <Receipt size={20} color="#db2777" />
+                <h3 style={{ fontSize: "1.1rem", fontWeight: "900", color: "#1e1322" }}>
+                  أحدث فواتير المبيعات الصادرة ({activeSales.length})
+                </h3>
+              </div>
+              <div style={{ display: "flex", gap: "8px" }}>
+                <Link href="/pos" className="btn-primary" style={{ padding: "6px 14px", fontSize: "0.82rem", textDecoration: "none" }}>
+                  <Plus size={14} />
+                  فاتورة جديدة (POS)
+                </Link>
+                <Link href="/sales" className="btn-secondary" style={{ padding: "6px 14px", fontSize: "0.82rem", textDecoration: "none" }}>
+                  عرض كل الفواتير <ChevronLeft size={14} />
+                </Link>
+              </div>
+            </div>
+
+            {activeSales.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "30px", color: "var(--text-muted)", fontSize: "0.88rem", fontWeight: "700" }}>
+                <ShoppingBag size={32} color="#db2777" style={{ margin: "0 auto 8px", opacity: 0.5 }} />
+                لا توجد فواتير مبيعات مسجلة حتى الآن. ابدأ البيع من نقطة البيع!
+              </div>
+            ) : (
+              <div className="table-container">
+                <table className="custom-table">
+                  <thead>
+                    <tr>
+                      <th>رقم الفاتورة</th>
+                      <th>التاريخ والوقت</th>
+                      <th>العميل</th>
+                      <th>القطع</th>
+                      <th>إجمالي الفاتورة</th>
+                      <th>طريقة الدفع</th>
+                      <th>الحالة</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {activeSales.slice(0, 5).map((inv) => (
+                      <tr key={inv.id}>
+                        <td>
+                          <span className="num-font" dir="ltr" style={{ fontWeight: "800", color: "#db2777", background: "#fdf2f8", padding: "3px 8px", borderRadius: "6px", border: "1px solid #fbcfe8", fontSize: "0.82rem" }}>
+                            {inv.invoiceNumber}
+                          </span>
+                        </td>
+                        <td>
+                          <span style={{ fontSize: "0.8rem", color: "#5a4663" }}>
+                            {inv.date ? new Date(inv.date).toLocaleDateString("ar-EG") : "—"}
+                          </span>
+                        </td>
+                        <td>
+                          <span style={{ fontWeight: "700", color: "#1e1322" }}>
+                            {inv.customer?.name || "عميل نقدي"}
+                          </span>
+                        </td>
+                        <td>
+                          <span className="num-font" style={{ fontWeight: "700" }}>
+                            {inv.itemsCount || inv.items?.length || 1}
+                          </span>
+                        </td>
+                        <td>
+                          <strong style={{ color: "#1e1322" }}>
+                            <span className="num-font" dir="ltr">{formatNumber(inv.total)}</span> ج.م
+                          </strong>
+                        </td>
+                        <td>
+                          <span className="badge" style={{ background: "#fdf2f8", color: "#db2777", border: "1px solid #fbcfe8" }}>
+                            {inv.paymentMethod || "نقدي"}
+                          </span>
+                        </td>
+                        <td>
+                          <span className="badge" style={{ background: "#ecfdf5", color: "#047857", border: "1px solid #a7f3d0" }}>
+                            ✓ مكتملة
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+
           {/* Section C: Pending Suppliers Table */}
           <section className="glass-panel" style={{ padding: "20px 22px", marginBottom: "28px", background: "#ffffff", border: "1.5px solid #e9d5ff" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px", paddingBottom: "10px", borderBottom: "1px solid #faf5ff" }}>
@@ -516,6 +671,7 @@ export default function DashboardPage() {
                 صفحة الموردين <ChevronLeft size={14} />
               </Link>
             </div>
+
 
             {topCreditorSuppliers.length === 0 ? (
               <div style={{ textAlign: "center", padding: "30px", color: "var(--text-muted)", fontSize: "0.88rem", fontWeight: "700" }}>

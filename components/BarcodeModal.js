@@ -1,109 +1,236 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
+import JsBarcode from "jsbarcode";
 import { formatNumber } from "@/lib/utils";
-import { X, Printer, Barcode, Check } from "lucide-react";
+import { 
+  X, 
+  Printer, 
+  Barcode as BarcodeIcon, 
+  Copy, 
+  Check 
+} from "lucide-react";
 
 export default function BarcodeModal({ isOpen, onClose, product }) {
+  const [showPrice, setShowPrice] = useState(true);
+  const [copied, setCopied] = useState(false);
+  const barcodeSvgRef = useRef(null);
+
+  const barcodeValue = product?.barcode || product?.code || "6221001001";
+
+  // Generate real vector Code128 Barcode using JsBarcode
+  useEffect(() => {
+    if (!isOpen || !product || !barcodeSvgRef.current) return;
+
+    try {
+      JsBarcode(barcodeSvgRef.current, barcodeValue, {
+        format: "CODE128",
+        width: 1.8,
+        height: 50,
+        displayValue: false, // Clean custom rendered digits below
+        margin: 0,
+        background: "#ffffff",
+        lineColor: "#000000"
+      });
+    } catch (err) {
+      console.error("JsBarcode error:", err);
+    }
+  }, [isOpen, product, barcodeValue]);
+
   if (!isOpen || !product) return null;
 
   const handlePrint = () => {
     window.print();
   };
 
-  const barcodeValue = product.barcode || product.code || "6220000000";
+  const handleCopyBarcode = () => {
+    if (navigator?.clipboard) {
+      navigator.clipboard.writeText(barcodeValue);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const displayPrice = product.sellingPrice ? product.sellingPrice : product.wholesalePrice;
+  const priceLabel = product.sellingPrice ? "سعر القطاعي" : "سعر الجملة";
 
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div 
         className="modal-content"
         onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: "420px", padding: "26px", textAlign: "center", background: "#ffffff" }}
+        style={{ 
+          maxWidth: "460px", 
+          padding: "24px", 
+          background: "#ffffff", 
+          borderRadius: "20px" 
+        }}
       >
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
-          <h3 style={{ fontSize: "1.1rem", color: "#1e1322", fontWeight: "800" }}>ملصق باركود الصنف</h3>
-          <button 
-            onClick={onClose}
-            style={{
-              background: "#fdf2f8",
-              border: "1px solid #fbcfe8",
-              borderRadius: "8px",
-              width: "32px",
-              height: "32px",
-              color: "#db2777",
+        {/* Top Header */}
+        <div className="no-print" style={{ 
+          display: "flex", 
+          alignItems: "center", 
+          justifyContent: "space-between", 
+          marginBottom: "16px", 
+          borderBottom: "1px solid #fce7f3", 
+          paddingBottom: "12px" 
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <div style={{
+              width: "38px",
+              height: "38px",
+              borderRadius: "10px",
+              background: "linear-gradient(135deg, #ec4899 0%, #db2777 100%)",
+              color: "#ffffff",
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer"
+              justifyContent: "center"
+            }}>
+              <BarcodeIcon size={20} />
+            </div>
+            <div>
+              <h3 style={{ fontSize: "1.15rem", fontWeight: "900", color: "#1e1322" }}>
+                طباعة ملصق الباركود
+              </h3>
+              <span style={{ fontSize: "0.78rem", color: "var(--text-muted)", fontWeight: "600" }}>
+                ملصق قياسي عالي الوضوح لطابعات الباركود
+              </span>
+            </div>
+          </div>
+
+          <button onClick={onClose} style={{ background: "transparent", border: "none", cursor: "pointer", color: "#6b7280" }}>
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Quick Toolbar (Copy Code + Show Price) */}
+        <div className="no-print" style={{
+          background: "#fdf5f9",
+          border: "1px solid #fbcfe8",
+          borderRadius: "12px",
+          padding: "10px 14px",
+          marginBottom: "16px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          fontSize: "0.84rem"
+        }}>
+          <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", fontWeight: "700", color: "#374151" }}>
+            <input 
+              type="checkbox" 
+              checked={showPrice} 
+              onChange={(e) => setShowPrice(e.target.checked)} 
+              style={{ accentColor: "#db2777" }}
+            />
+            إظهار السعر بالملصق
+          </label>
+
+          <button
+            type="button"
+            onClick={handleCopyBarcode}
+            className="btn-secondary"
+            style={{ padding: "5px 10px", fontSize: "0.78rem", background: "#ffffff", borderRadius: "8px" }}
+            title="نسخ رقم الباركود"
+          >
+            {copied ? <Check size={13} color="#059669" /> : <Copy size={13} />}
+            {copied ? "تم النسخ!" : "نسخ الكود"}
+          </button>
+        </div>
+
+        {/* ===================================================================
+            PREVIEW & PRINTABLE THERMAL BARCODE STICKER
+           =================================================================== */}
+        <div style={{ display: "flex", justifyContent: "center", margin: "10px 0 20px" }}>
+          <div 
+            id="printable-barcode-card"
+            className="thermal-barcode-sticker"
+            style={{
+              width: "290px",
+              background: "#ffffff",
+              color: "#000000",
+              padding: "14px 16px 12px",
+              borderRadius: "10px",
+              border: "1.5px dashed #000000",
+              boxShadow: "0 4px 16px rgba(0,0,0,0.06)",
+              textAlign: "center",
+              fontFamily: "Arial, Tahoma, sans-serif"
             }}
           >
-            <X size={18} />
-          </button>
+            {/* Brand Header */}
+            <div style={{
+              fontSize: "11px",
+              fontWeight: "900",
+              letterSpacing: "1.5px",
+              textTransform: "uppercase",
+              color: "#000000",
+              borderBottom: "1px solid #000000",
+              paddingBottom: "3px",
+              marginBottom: "5px"
+            }}>
+              ★ NELLY COSMETICS ★
+            </div>
+
+            {/* Product Name */}
+            <div 
+              dir="rtl"
+              style={{
+                fontSize: "13px",
+                fontWeight: "900",
+                color: "#000000",
+                lineHeight: "1.3",
+                margin: "4px 0 6px",
+                wordBreak: "break-word"
+              }}
+            >
+              {product.name}
+            </div>
+
+            {/* Real Vector SVG Barcode */}
+            <div style={{ margin: "4px auto 2px", display: "flex", justifyContent: "center" }}>
+              <svg ref={barcodeSvgRef} style={{ maxWidth: "100%", height: "46px" }} />
+            </div>
+
+            {/* Barcode Numbers */}
+            <div className="num-font" dir="ltr" style={{
+              fontSize: "13px",
+              fontWeight: "900",
+              letterSpacing: "2.5px",
+              color: "#000000",
+              fontFamily: "monospace",
+              marginTop: "1px"
+            }}>
+              {barcodeValue}
+            </div>
+
+            {/* Price Tag */}
+            {showPrice && displayPrice > 0 && (
+              <div style={{
+                marginTop: "6px",
+                paddingTop: "5px",
+                borderTop: "1px dashed #000000",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                fontSize: "11px",
+                fontWeight: "900"
+              }}>
+                <span>{priceLabel}:</span>
+                <span style={{ fontSize: "13px", fontWeight: "900" }}>
+                  <span className="num-font" dir="ltr">{formatNumber(displayPrice)}</span> EGP
+                </span>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Printable Barcode Label */}
-        <div 
-          id="printable-barcode-card"
-          style={{
-            background: "#ffffff",
-            color: "#111827",
-            padding: "20px",
-            borderRadius: "14px",
-            margin: "12px 0 20px",
-            boxShadow: "0 4px 20px rgba(219, 39, 119, 0.08)",
-            border: "2px dashed #db2777"
-          }}
-        >
-          <div style={{ fontSize: "0.85rem", fontWeight: "900", color: "#db2777", textTransform: "uppercase", letterSpacing: "1px" }}>
-            NELLY COSMETICS
-          </div>
-          <div style={{ fontSize: "1.05rem", fontWeight: "800", margin: "6px 0", color: "#111" }}>
-            {product.name}
-          </div>
-          <div style={{ fontSize: "0.82rem", color: "#4b5563", marginBottom: "10px" }}>
-            باركود: <span className="num-font" dir="ltr" style={{ fontWeight: "800", color: "#be185d" }}>{barcodeValue}</span>
-          </div>
-
-          {/* Barcode visual lines simulation */}
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "2px",
-            height: "48px",
-            margin: "8px auto",
-            padding: "0 10px"
-          }}>
-            {[4, 2, 6, 1, 3, 2, 5, 2, 4, 1, 6, 3, 2, 4, 1, 5, 2, 3, 6, 2, 4, 1, 3, 5, 2].map((w, i) => (
-              <div 
-                key={i} 
-                style={{ 
-                  width: `${w}px`, 
-                  height: "100%", 
-                  background: i % 7 === 0 ? "#fff" : "#000",
-                  margin: "0 1px"
-                }} 
-              />
-            ))}
-          </div>
-
-          <div className="num-font" dir="ltr" style={{ fontSize: "1rem", fontWeight: "900", letterSpacing: "2px", color: "#111" }}>
-            {barcodeValue}
-          </div>
-
-          <div style={{ display: "flex", justifyContent: "center", marginTop: "12px", paddingTop: "8px", borderTop: "1px solid #e5e7eb", fontSize: "0.9rem" }}>
-            <span style={{ color: "#1f2937", fontWeight: "700" }}>سعر الجملة: <strong style={{ color: "#9d174d" }}><span className="num-font" dir="ltr">{formatNumber(product.wholesalePrice)}</span> ج.م</strong></span>
-          </div>
-        </div>
-
-        {/* Buttons */}
-        <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
-          <button onClick={onClose} className="btn-secondary" style={{ padding: "8px 16px" }}>
+        {/* Action Buttons */}
+        <div className="no-print" style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+          <button onClick={onClose} className="btn-secondary" style={{ padding: "9px 18px" }}>
             إغلاق
           </button>
-          <button onClick={handlePrint} className="btn-primary" style={{ padding: "8px 18px" }}>
+          <button onClick={handlePrint} className="btn-primary" style={{ padding: "9px 24px" }}>
             <Printer size={16} />
-            طباعة الملصق
+            طباعة ملصق الباركود الآن
           </button>
         </div>
       </div>

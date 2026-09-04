@@ -9,6 +9,7 @@ import ProductModal, { CATEGORIES } from "@/components/ProductModal";
 import BarcodeModal from "@/components/BarcodeModal";
 import PrintInventoryModal from "@/components/PrintInventoryModal";
 import PermissionDeniedModal from "@/components/PermissionDeniedModal";
+import TransferModal from "@/components/TransferModal";
 import CustomSelect from "@/components/CustomSelect";
 import { 
   subscribeToProducts, 
@@ -16,6 +17,7 @@ import {
   updateProduct, 
   deleteProduct 
 } from "@/lib/productsService";
+import { transferFromWarehouseToShop } from "@/lib/shopService";
 import { formatNumber } from "@/lib/utils";
 import { 
   Plus, 
@@ -28,7 +30,11 @@ import {
   PackagePlus,
   RotateCcw,
   Lock,
-  Printer
+  Printer,
+  Layers,
+  DollarSign,
+  ArrowLeftRight,
+  Store
 } from "lucide-react";
 
 export default function ProductsPage() {
@@ -47,8 +53,16 @@ export default function ProductsPage() {
   const [barcodeProduct, setBarcodeProduct] = useState(null);
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
+  const [productToTransfer, setProductToTransfer] = useState(null);
   const [permissionDeniedAction, setPermissionDeniedAction] = useState(null);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+
+  const showToast = (msg) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(""), 3000);
+  };
+
 
   // Authentication check
   useEffect(() => {
@@ -171,7 +185,17 @@ export default function ProductsPage() {
     }
   };
 
+  const handleConfirmTransfer = async (product, quantity) => {
+    try {
+      await transferFromWarehouseToShop(product, quantity, user);
+      showToast(`تم تحويل ${quantity} قطعة من "${product.name}" إلى المحل بنجاح 🏪`);
+    } catch (err) {
+      alert(err.message || "حدث خطأ أثناء تحويل البضاعة.");
+    }
+  };
+
   const confirmDelete = async () => {
+
     if (!isAdmin || !productToDelete) return;
     await deleteProduct(productToDelete.id);
     setProductToDelete(null);
@@ -253,13 +277,13 @@ export default function ProductsPage() {
         }}>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <h2 style={{ fontSize: "1.6rem", fontWeight: "900", color: "#1e1322" }}>سجل أصناف وبضاعة المخزن</h2>
+              <h2 style={{ fontSize: "1.6rem", fontWeight: "900", color: "#1e1322" }}>المخزن</h2>
               <span className="badge badge-code" style={{ fontSize: "0.85rem" }}>
                 <span className="num-font" dir="ltr">{formatNumber(products.length)}</span> صنف مسجل
               </span>
             </div>
             <p style={{ color: "#5a4663", fontSize: "0.88rem", marginTop: "4px", fontWeight: "600" }}>
-              تسجيل، تعديل، والبحث بباركود الصنف وإدارة كميات مستحضرات التجميل
+              إدارة وجرد بضاعة المخزن الرئيسي، وتعديل الأصناف، والتحويل إلى المحل
             </p>
           </div>
 
@@ -318,8 +342,7 @@ export default function ProductsPage() {
               <CustomSelect 
                 options={categoryOptions}
                 value={selectedCategory}
-                onChange={setSelectedCategory}
-                placeholder="جميع الأقسام"
+                onChange={(cat) => setSelectedCategory(cat)}
               />
             </div>
 
@@ -328,8 +351,7 @@ export default function ProductsPage() {
               <CustomSelect 
                 options={statusOptions}
                 value={selectedStatus}
-                onChange={setSelectedStatus}
-                placeholder="كل الحالات"
+                onChange={(stat) => setSelectedStatus(stat)}
               />
             </div>
 
@@ -338,15 +360,14 @@ export default function ProductsPage() {
               <CustomSelect 
                 options={sortOptions}
                 value={sortBy}
-                onChange={setSortBy}
-                placeholder="ترتيب الأصناف"
+                onChange={(sb) => setSortBy(sb)}
               />
             </div>
 
             {/* Reset Filters */}
             {(searchQuery || selectedCategory !== "all" || selectedStatus !== "all" || sortBy !== "newest") && (
               <button 
-                onClick={() => { setSearchQuery(""); setSelectedCategory("all"); setSelectedStatus("all"); setSortBy("newest"); }}
+                onClick={resetFilters} 
                 className="btn-secondary"
                 title="إعادة ضبط الفلاتر"
                 style={{ padding: "11px" }}
@@ -356,37 +377,95 @@ export default function ProductsPage() {
             )}
           </div>
 
-          {/* Quick Summary Pill */}
+          {/* 3 Rich Stat Cards for Summary Data */}
           <div style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginTop: "16px",
-            paddingTop: "14px",
-            borderTop: "1px solid #f0e4ec",
-            fontSize: "0.88rem",
-            color: "#4a3650"
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+            gap: "14px",
+            marginTop: "18px",
+            paddingTop: "16px",
+            borderTop: "1px solid #fce7f3"
           }}>
-            <div style={{ display: "flex", gap: "20px", flexWrap: "wrap", alignItems: "center" }}>
-              <span>معروض: <strong style={{ color: "#1e1322", fontWeight: "900" }}><span className="num-font" dir="ltr">{formatNumber(totalFilteredCount)}</span></strong> صنف</span>
-              <span>إجمالي القطع: <strong style={{ color: "#db2777", fontWeight: "900" }}><span className="num-font" dir="ltr">{formatNumber(totalFilteredQty)}</span></strong> قطعة</span>
-              {isAdmin ? (
-                <span>القيمة بسعر الجملة: <strong style={{ color: "#9d174d", fontWeight: "900" }}><span className="num-font" dir="ltr">{formatNumber(totalFilteredWholesale)}</span></strong> ج.م</span>
-              ) : (
-                <span style={{ color: "#6b7280", display: "inline-flex", alignItems: "center", gap: "4px", background: "#f3f4f6", padding: "2px 8px", borderRadius: "8px", fontSize: "0.8rem", fontWeight: "700" }}>
-                  <Lock size={12} />
-                  الأسعار والقيمة: خاص بالمسؤول
-                </span>
-              )}
+            {/* Card 1: معروض */}
+            <div style={{
+              background: "linear-gradient(135deg, #ffffff 0%, #fdf2f8 100%)",
+              border: "1.5px solid #fbcfe8",
+              borderRadius: "14px",
+              padding: "14px 18px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between"
+            }}>
+              <div>
+                <span style={{ fontSize: "0.82rem", color: "var(--text-muted)", fontWeight: "700" }}>الأصناف المعروضة</span>
+                <div style={{ display: "flex", alignItems: "baseline", gap: "4px", marginTop: "2px" }}>
+                  <span className="num-font" dir="ltr" style={{ fontSize: "1.5rem", fontWeight: "900", color: "#1e1322" }}>
+                    {formatNumber(totalFilteredCount)}
+                  </span>
+                  <span style={{ fontSize: "0.8rem", color: "#5a4663", fontWeight: "700" }}>صنف</span>
+                </div>
+              </div>
+              <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: "#fce7f3", color: "#db2777", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Boxes size={20} />
+              </div>
             </div>
 
-            {searchQuery && (
-              <span style={{ fontSize: "0.82rem", color: "#8c7696", fontWeight: "600" }}>
-                نتائج البحث عن: "{searchQuery}"
-              </span>
-            )}
+            {/* Card 2: إجمالي القطع */}
+            <div style={{
+              background: "linear-gradient(135deg, #ffffff 0%, #fff7ed 100%)",
+              border: "1.5px solid #fed7aa",
+              borderRadius: "14px",
+              padding: "14px 18px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between"
+            }}>
+              <div>
+                <span style={{ fontSize: "0.82rem", color: "var(--text-muted)", fontWeight: "700" }}>إجمالي عدد القطع بالمخزن</span>
+                <div style={{ display: "flex", alignItems: "baseline", gap: "4px", marginTop: "2px" }}>
+                  <span className="num-font" dir="ltr" style={{ fontSize: "1.5rem", fontWeight: "900", color: "#c2410c" }}>
+                    {formatNumber(totalFilteredQty)}
+                  </span>
+                  <span style={{ fontSize: "0.8rem", color: "#c2410c", fontWeight: "700" }}>قطعة</span>
+                </div>
+              </div>
+              <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: "#ffedd5", color: "#ea580c", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Layers size={20} />
+              </div>
+            </div>
+
+            {/* Card 3: القيمة بسعر الجملة */}
+            <div style={{
+              background: "linear-gradient(135deg, #ffffff 0%, #faf5ff 100%)",
+              border: "1.5px solid #e9d5ff",
+              borderRadius: "14px",
+              padding: "14px 18px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between"
+            }}>
+              <div>
+                <span style={{ fontSize: "0.82rem", color: "var(--text-muted)", fontWeight: "700" }}>القيمة بسعر الجملة</span>
+                {isAdmin ? (
+                  <div style={{ display: "flex", alignItems: "baseline", gap: "4px", marginTop: "2px" }}>
+                    <span className="num-font" dir="ltr" style={{ fontSize: "1.5rem", fontWeight: "900", color: "#7e22ce" }}>
+                      {formatNumber(totalFilteredWholesale)}
+                    </span>
+                    <span style={{ fontSize: "0.8rem", color: "#7e22ce", fontWeight: "700" }}>ج.م</span>
+                  </div>
+                ) : (
+                  <div style={{ display: "flex", alignItems: "center", gap: "4px", color: "#6b7280", marginTop: "4px", fontSize: "0.82rem", fontWeight: "700" }}>
+                    <Lock size={13} /> خاص بالمسؤول
+                  </div>
+                )}
+              </div>
+              <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: "#f3e8ff", color: "#9333ea", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <DollarSign size={20} />
+              </div>
+            </div>
           </div>
         </div>
+
 
         {/* Screen Products Table */}
         <div className="table-container">
@@ -515,6 +594,8 @@ export default function ProductsPage() {
                         )}
                       </td>
 
+
+
                       {/* Total Value (Protected for Admin Only) */}
                       <td>
                         {isAdmin ? (
@@ -555,6 +636,15 @@ export default function ProductsPage() {
                       <td style={{ textAlign: "center" }}>
                         <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", flexWrap: "nowrap" }}>
                           <button 
+                            onClick={() => setProductToTransfer(p)}
+                            className="btn-secondary"
+                            style={{ padding: "6px 10px", fontSize: "0.8rem", color: "#15803d", borderColor: "#86efac", background: "#f0fdf4" }}
+                            title="تحويل كمية من الصنف إلى المحل"
+                          >
+                            <Store size={15} color="#16a34a" />
+                            تحويل للمحل
+                          </button>
+                          <button 
                             onClick={() => setBarcodeProduct(p)}
                             className="btn-secondary"
                             style={{ padding: "6px 10px", fontSize: "0.8rem" }}
@@ -591,13 +681,47 @@ export default function ProductsPage() {
         </div>
       </main>
 
+      {/* Toast Alert */}
+      {toastMessage && (
+        <div style={{
+          position: "fixed",
+          bottom: "24px",
+          left: "24px",
+          background: "#111827",
+          color: "#ffffff",
+          padding: "12px 20px",
+          borderRadius: "14px",
+          boxShadow: "0 10px 30px rgba(0,0,0,0.25)",
+          zIndex: 1000,
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          fontSize: "0.92rem",
+          fontWeight: "700"
+        }}>
+          <Store size={18} color="#4ade80" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
+      {/* Transfer Modal */}
+      <TransferModal 
+        isOpen={!!productToTransfer}
+        onClose={() => setProductToTransfer(null)}
+        product={productToTransfer}
+        onConfirmTransfer={handleConfirmTransfer}
+        direction="warehouse_to_shop"
+      />
+
       {/* Modals */}
       <ProductModal 
         isOpen={isAddModalOpen}
         onClose={() => { setIsAddModalOpen(false); setEditingProduct(null); }}
         onSave={handleSaveProduct}
         productToEdit={editingProduct}
+        hideSellingPrice={true}
       />
+
 
       <BarcodeModal 
         isOpen={!!barcodeProduct}
@@ -668,3 +792,5 @@ export default function ProductsPage() {
     </div>
   );
 }
+
+

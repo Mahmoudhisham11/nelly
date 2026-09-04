@@ -6,16 +6,21 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { 
   LayoutDashboard, 
-  Boxes, 
-  Truck, 
+  ShoppingCart,
   Receipt,
+  Users,
+  Boxes, 
+  Store,
+  Truck, 
   Settings, 
   LogOut, 
   User, 
   Sparkles, 
   X,
   ShieldCheck,
-  ChevronLeft
+  ChevronLeft,
+  RotateCcw,
+  CalendarCheck
 } from "lucide-react";
 
 export default function Sidebar({ isMobileOpen, onCloseMobile }) {
@@ -30,9 +35,45 @@ export default function Sidebar({ isMobileOpen, onCloseMobile }) {
       badge: null
     },
     {
-      label: "سجل الأصناف والمخزن",
+      label: "مستشار نيللي AI",
+      href: "/ai",
+      icon: Sparkles,
+      badge: "AI"
+    },
+    {
+      label: "نقطة البيع (الكاشير)",
+      href: "/pos",
+      icon: ShoppingCart,
+      badge: "POS"
+    },
+    {
+      label: "المحل",
+      href: "/shop",
+      icon: Store,
+      badge: null
+    },
+    {
+      label: "المخزن",
       href: "/products",
       icon: Boxes,
+      badge: null
+    },
+    {
+      label: "المرتجعات",
+      href: "/returns",
+      icon: RotateCcw,
+      badge: null
+    },
+    {
+      label: "تقفيلة الأيام",
+      href: "/reports",
+      icon: CalendarCheck,
+      badge: null
+    },
+    {
+      label: "سجل العملاء والآجل",
+      href: "/customers",
+      icon: Users,
       badge: null
     },
     {
@@ -45,7 +86,7 @@ export default function Sidebar({ isMobileOpen, onCloseMobile }) {
       label: "المصاريف والنفقات",
       href: "/expenses",
       icon: Receipt,
-      badge: "جديد"
+      badge: null
     },
     {
       label: "الإعدادات والمستخدمين",
@@ -55,6 +96,7 @@ export default function Sidebar({ isMobileOpen, onCloseMobile }) {
       adminOnly: true
     }
   ];
+
 
   return (
     <>

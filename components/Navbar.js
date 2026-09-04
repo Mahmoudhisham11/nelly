@@ -18,12 +18,18 @@ export default function Navbar({ onOpenAddModal, onOpenMobileSidebar }) {
   const [timeStr, setTimeStr] = useState("");
 
   const pageTitles = {
-    "/": "لوحة التحكم والإحصائيات",
-    "/products": "سجل أصناف وبضاعة المخزن",
+    "/": "لوحة التحكم والإحصائيات الشاملة",
+    "/pos": "نقطة البيع السريعة (الكاشير)",
+    "/shop": "المحل وبضاعة المعرض",
+    "/products": "المخزن الرئيسي",
+    "/sales": "سجل فواتير المبيعات والمرتجعات",
+    "/customers": "دليل العملاء والحسابات والديون",
     "/suppliers": "إدارة الموردين والحسابات المالية",
     "/expenses": "سجل المصاريف والنفقات التشغيلية",
     "/settings": "إعدادات النظام وإدارة المستخدمين"
   };
+
+
 
   useEffect(() => {
     const updateTime = () => {
