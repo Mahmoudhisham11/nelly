@@ -15,10 +15,10 @@ import {
 
 export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
   const [copied, setCopied] = useState(false);
-  const [labelSize, setLabelSize] = useState("38x20"); // "38x20" | "38x25" | "40x20" | "50x30"
+  const [labelSize, setLabelSize] = useState("50x30"); // Default to the large sticker in the photo
   const [orientation, setOrientation] = useState("landscape"); // "landscape" | "portrait"
   const [includeStoreName, setIncludeStoreName] = useState(true);
-  const [fontSizeMode, setFontSizeMode] = useState("compact"); // "compact" (صغير ومناسب) | "mini" (فائق الصغر) | "standard" (عادي)
+  const [fontSizeMode, setFontSizeMode] = useState("compact"); // "compact" | "mini" | "standard"
   const barcodeSvgRef = useRef(null);
   const printIframeRef = useRef(null);
 
@@ -28,10 +28,12 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
 
   // Sizes in mm (Strict thermal printer dimensions)
   const sizeMap = {
-    "38x20": { w: 38, h: 20, barWidth: 1.3, barHeight: 28 },
-    "38x25": { w: 38, h: 25, barWidth: 1.4, barHeight: 34 },
-    "40x20": { w: 40, h: 20, barWidth: 1.3, barHeight: 28 },
-    "50x30": { w: 50, h: 30, barWidth: 1.8, barHeight: 42 }
+    "50x30": { w: 50, h: 30, barWidth: 1.8, barHeight: 48, label: "50 × 30 مم", sub: "(المقاس الجديد بالصورة)" },
+    "50x25": { w: 50, h: 25, barWidth: 1.7, barHeight: 38, label: "50 × 25 مم", sub: "(مقاس عريض)" },
+    "50x40": { w: 50, h: 40, barWidth: 1.9, barHeight: 58, label: "50 × 40 مم", sub: "(مقاس كبير جداً)" },
+    "60x40": { w: 60, h: 40, barWidth: 2.1, barHeight: 62, label: "60 × 40 مم", sub: "(مقاس جامبو)" },
+    "38x25": { w: 38, h: 25, barWidth: 1.4, barHeight: 34, label: "38 × 25 مم", sub: "(مقاس قياسي)" },
+    "38x20": { w: 38, h: 20, barWidth: 1.3, barHeight: 28, label: "38 × 20 مم", sub: "(مقاس صغير)" }
   };
 
   // Generate real vector Code128 Barcode
@@ -39,7 +41,7 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
     if (!isOpen || !employee || !barcodeSvgRef.current) return;
 
     try {
-      const config = sizeMap[labelSize] || sizeMap["38x20"];
+      const config = sizeMap[labelSize] || sizeMap["50x30"];
       JsBarcode(barcodeSvgRef.current, barcodeValue, {
         format: "CODE128",
         width: config.barWidth,
@@ -58,7 +60,7 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
 
   // Render high-res sticker on 300 DPI Canvas
   const createStickerCanvas = (callback) => {
-    const config = sizeMap[labelSize] || sizeMap["38x20"];
+    const config = sizeMap[labelSize] || sizeMap["50x30"];
     const widthMm = config.w;
     const heightMm = config.h;
 
@@ -92,59 +94,72 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
         ctx.fillStyle = "#ffffff";
         ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
-        // Clean outer border (thin & sharp)
+        // Clean sharp border
         ctx.strokeStyle = "#000000";
-        ctx.lineWidth = 1.5;
-        ctx.strokeRect(4, 4, canvasWidth - 8, canvasHeight - 8);
+        ctx.lineWidth = 2;
+        ctx.strokeRect(5, 5, canvasWidth - 10, canvasHeight - 10);
 
-        // Font size presets
-        const fontHeaderSize = fontSizeMode === "mini" ? 11 : fontSizeMode === "compact" ? 13 : 16;
-        const fontFooterCode = fontSizeMode === "mini" ? 12 : fontSizeMode === "compact" ? 14 : 17;
-        const fontFooterRole = fontSizeMode === "mini" ? 10 : fontSizeMode === "compact" ? 12 : 14;
+        // Calculate proportional layout based on label size
+        const isLarge = widthMm >= 50 && heightMm >= 30;
+        
+        let fontHeaderSize = isLarge ? 20 : 13;
+        let fontFooterCode = isLarge ? 22 : 14;
+        let fontFooterRole = isLarge ? 17 : 12;
+        let headerBandHeight = isLarge ? 34 : 22;
+        let footerBandHeight = isLarge ? 32 : 22;
 
-        const headerBandHeight = fontSizeMode === "mini" ? 18 : 22;
-        const footerBandHeight = fontSizeMode === "mini" ? 18 : 22;
+        if (fontSizeMode === "mini") {
+          fontHeaderSize = Math.round(fontHeaderSize * 0.8);
+          fontFooterCode = Math.round(fontFooterCode * 0.8);
+          fontFooterRole = Math.round(fontFooterRole * 0.8);
+          headerBandHeight = Math.round(headerBandHeight * 0.85);
+          footerBandHeight = Math.round(footerBandHeight * 0.85);
+        } else if (fontSizeMode === "standard") {
+          fontHeaderSize = Math.round(fontHeaderSize * 1.15);
+          fontFooterCode = Math.round(fontFooterCode * 1.15);
+          fontFooterRole = Math.round(fontFooterRole * 1.15);
+        }
 
-        // 1. Header: Employee Name (Right) + NELLY (Left)
+        // 1. Header: Employee Name (Right) + NELLY Brand (Left)
         ctx.fillStyle = "#000000";
         ctx.font = `bold ${fontHeaderSize}px Arial, Tahoma, sans-serif`;
         ctx.textAlign = "right";
-        ctx.fillText(employee.name || "", canvasWidth - 10, headerBandHeight - 5);
+        ctx.fillText(employee.name || "", canvasWidth - 14, headerBandHeight - 8);
 
         if (includeStoreName) {
-          ctx.font = `bold ${Math.max(fontHeaderSize - 2, 9)}px Arial, Tahoma, sans-serif`;
+          ctx.font = `bold ${Math.max(fontHeaderSize - 3, 11)}px Arial, Tahoma, sans-serif`;
           ctx.textAlign = "left";
-          ctx.fillText("★ NELLY ★", 10, headerBandHeight - 5);
+          ctx.fillText("★ NELLY ★", 14, headerBandHeight - 8);
         }
 
         // Divider Line 1
         ctx.beginPath();
-        ctx.lineWidth = 1;
-        ctx.moveTo(6, headerBandHeight);
-        ctx.lineTo(canvasWidth - 6, headerBandHeight);
+        ctx.lineWidth = 1.2;
+        ctx.moveTo(8, headerBandHeight);
+        ctx.lineTo(canvasWidth - 8, headerBandHeight);
         ctx.stroke();
 
-        // 2. Barcode Vector Graphic (Takes maximum available center height)
-        const barcodeTop = headerBandHeight + 3;
-        const barcodeHeight = canvasHeight - headerBandHeight - footerBandHeight - 6;
-        ctx.drawImage(image, 10, barcodeTop, canvasWidth - 20, barcodeHeight);
+        // 2. Barcode Vector Graphic (Dominates the center)
+        const barcodeTop = headerBandHeight + 4;
+        const barcodeHeight = canvasHeight - headerBandHeight - footerBandHeight - 8;
+        ctx.drawImage(image, 14, barcodeTop, canvasWidth - 28, barcodeHeight);
 
         // Divider Line 2
         const footerDividerY = canvasHeight - footerBandHeight;
         ctx.beginPath();
-        ctx.lineWidth = 1;
-        ctx.moveTo(6, footerDividerY);
-        ctx.lineTo(canvasWidth - 6, footerDividerY);
+        ctx.lineWidth = 1.2;
+        ctx.moveTo(8, footerDividerY);
+        ctx.lineTo(canvasWidth - 8, footerDividerY);
         ctx.stroke();
 
         // 3. Footer: Barcode Code (Left) + Role (Right)
         ctx.font = `bold ${fontFooterCode}px monospace, Courier`;
         ctx.textAlign = "left";
-        ctx.fillText(barcodeValue, 10, canvasHeight - 6);
+        ctx.fillText(barcodeValue, 14, canvasHeight - 8);
 
         ctx.font = `bold ${fontFooterRole}px Arial, Tahoma, sans-serif`;
         ctx.textAlign = "right";
-        ctx.fillText(employee.role || "بائع", canvasWidth - 10, canvasHeight - 6);
+        ctx.fillText(employee.role || "بائع", canvasWidth - 14, canvasHeight - 8);
 
         callback(canvas, widthMm, heightMm);
       } catch (err) {
@@ -396,19 +411,21 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
                 </label>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "6px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "6px" }}>
                 {[
-                  { id: "38x20", label: "38 × 20 مم", sub: "(استيكر الرول)" },
+                  { id: "50x30", label: "50 × 30 مم", sub: "(المقاس الجديد بالصورة)" },
+                  { id: "50x25", label: "50 × 25 مم", sub: "(مقاس عريض)" },
+                  { id: "50x40", label: "50 × 40 مم", sub: "(مقاس كبير جداً)" },
+                  { id: "60x40", label: "60 × 40 مم", sub: "(مقاس جامبو)" },
                   { id: "38x25", label: "38 × 25 مم", sub: "(مقاس قياسي)" },
-                  { id: "40x20", label: "40 × 20 مم", sub: "(مقاس صغير)" },
-                  { id: "50x30", label: "50 × 30 مم", sub: "(مقاس عريض)" }
+                  { id: "38x20", label: "38 × 20 مم", sub: "(مقاس صغير)" }
                 ].map((size) => (
                   <button
                     key={size.id}
                     type="button"
                     onClick={() => setLabelSize(size.id)}
                     style={{
-                      padding: "6px 2px",
+                      padding: "6px 4px",
                       borderRadius: "10px",
                       border: labelSize === size.id ? "2px solid #db2777" : "1px solid #cbd5e1",
                       background: labelSize === size.id ? "#fdf2f8" : "#ffffff",
@@ -432,9 +449,9 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
               </span>
               <div style={{ display: "flex", gap: "6px" }}>
                 {[
-                  { id: "compact", label: "صغير ومناسب (موصى به)" },
-                  { id: "mini", label: "ميني فائق الصغر" },
-                  { id: "standard", label: "عادي" }
+                  { id: "compact", label: "متناسق واحترافي (موصى به)" },
+                  { id: "standard", label: "خط عريض وكبير" },
+                  { id: "mini", label: "ميني صغير" }
                 ].map((mode) => (
                   <button
                     key={mode.id}
@@ -511,25 +528,25 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
             border: "1px dashed #cbd5e1"
           }}>
             <span style={{ fontSize: "0.72rem", color: "#64748b", fontWeight: "700", marginBottom: "8px" }}>
-              معاينة ملصق الاستيكر الفعلي المطبوع:
+              معاينة ملصق الاستيكر الفعلي المطبوع ({sizeMap[labelSize]?.label}):
             </span>
 
             {/* PREVIEW CONTAINER */}
             <div 
               style={{
-                width: labelSize === "38x20" ? "250px" : labelSize === "38x25" ? "260px" : labelSize === "40x20" ? "250px" : "300px",
+                width: labelSize === "60x40" ? "340px" : labelSize === "50x40" ? "320px" : labelSize === "50x30" ? "310px" : labelSize === "50x25" ? "310px" : labelSize === "38x25" ? "260px" : "250px",
                 background: "#ffffff",
                 color: "#000000",
-                borderRadius: "6px",
-                border: "1px solid #000000",
-                padding: "6px 10px",
+                borderRadius: "8px",
+                border: "1.5px solid #000000",
+                padding: "8px 12px",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
                 textAlign: "center",
                 fontFamily: "Arial, Tahoma, sans-serif",
-                boxShadow: "0 4px 12px rgba(0,0,0,0.06)"
+                boxShadow: "0 6px 16px rgba(0,0,0,0.08)"
               }}
             >
               {/* Header */}
@@ -538,23 +555,23 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
                 display: "flex", 
                 alignItems: "center", 
                 justifyContent: "space-between",
-                borderBottom: "1px solid #000000",
-                paddingBottom: "2px",
-                marginBottom: "3px"
+                borderBottom: "1.2px solid #000000",
+                paddingBottom: "4px",
+                marginBottom: "4px"
               }}>
-                <span style={{ fontSize: previewFontHeader, fontWeight: "900", color: "#000000" }}>
+                <span style={{ fontSize: labelSize.startsWith("50") || labelSize.startsWith("60") ? "13px" : previewFontHeader, fontWeight: "900", color: "#000000" }}>
                   {employee.name}
                 </span>
                 {includeStoreName && (
-                  <span style={{ fontSize: `calc(${previewFontHeader} - 2px)`, fontWeight: "900", letterSpacing: "1px", color: "#000000" }}>
+                  <span style={{ fontSize: labelSize.startsWith("50") || labelSize.startsWith("60") ? "11px" : `calc(${previewFontHeader} - 2px)`, fontWeight: "900", letterSpacing: "1px", color: "#000000" }}>
                     ★ NELLY ★
                   </span>
                 )}
               </div>
 
               {/* Barcode Vector Graphic */}
-              <div style={{ display: "flex", justifyContent: "center", width: "100%", overflow: "hidden", margin: "2px 0" }}>
-                <svg ref={barcodeSvgRef} style={{ maxWidth: "100%", height: labelSize === "38x20" || labelSize === "40x20" ? "30px" : "38px" }} />
+              <div style={{ display: "flex", justifyContent: "center", width: "100%", overflow: "hidden", margin: "4px 0" }}>
+                <svg ref={barcodeSvgRef} style={{ maxWidth: "100%", height: labelSize === "60x40" || labelSize === "50x40" ? "52px" : labelSize === "50x30" ? "44px" : "32px" }} />
               </div>
 
               {/* Barcode Numbers & Code */}
@@ -563,20 +580,20 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
                 display: "flex", 
                 alignItems: "center", 
                 justifyContent: "space-between",
-                paddingTop: "2px",
-                borderTop: "1px solid #000000",
-                marginTop: "2px"
+                paddingTop: "4px",
+                borderTop: "1.2px solid #000000",
+                marginTop: "3px"
               }}>
                 <span className="num-font" dir="ltr" style={{ 
-                  fontSize: previewFontCode, 
+                  fontSize: labelSize.startsWith("50") || labelSize.startsWith("60") ? "14px" : previewFontCode, 
                   fontWeight: "900", 
-                  letterSpacing: "1.5px", 
+                  letterSpacing: "2px", 
                   fontFamily: "monospace",
                   color: "#000000" 
                 }}>
                   {barcodeValue}
                 </span>
-                <span style={{ fontSize: previewFontRole, fontWeight: "800", color: "#000000" }}>
+                <span style={{ fontSize: labelSize.startsWith("50") || labelSize.startsWith("60") ? "12px" : previewFontRole, fontWeight: "800", color: "#000000" }}>
                   {employee.role || "بائع"}
                 </span>
               </div>
