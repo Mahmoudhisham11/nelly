@@ -22,7 +22,9 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
   const barcodeSvgRef = useRef(null);
   const printIframeRef = useRef(null);
 
-  const barcodeValue = employee?.code ? String(employee.code).trim().toUpperCase() : "EMP-01";
+  const rawBarcodeValue = employee?.code ? String(employee.code).trim().toUpperCase() : "EMP-01";
+  // Code128 supports ASCII printable characters (letters, numbers, dashes)
+  const barcodeValue = rawBarcodeValue.replace(/[^\x20-\x7E]/g, "") || "EMP01";
 
   // Sizes in mm (Strict thermal printer dimensions)
   const sizeMap = {
@@ -48,7 +50,7 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
         lineColor: "#000000"
       });
     } catch (err) {
-      console.error("JsBarcode error:", err);
+      console.error("JsBarcode generation error:", err);
     }
   }, [isOpen, employee, barcodeValue, labelSize, orientation]);
 
@@ -61,84 +63,102 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
     const heightMm = config.h;
 
     const svgElement = barcodeSvgRef.current;
-    if (!svgElement) return;
+    if (!svgElement) {
+      console.warn("Barcode SVG element not found.");
+      return;
+    }
 
-    const svgString = new XMLSerializer().serializeToString(svgElement);
+    let svgString = new XMLSerializer().serializeToString(svgElement);
+    if (!svgString.includes("xmlns")) {
+      svgString = svgString.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"');
+    }
     const svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
     const URL = window.URL || window.webkitURL || window;
     const blobURL = URL.createObjectURL(svgBlob);
 
     const image = new Image();
     image.onload = () => {
-      const scale = 12; // 12 px per mm = ~300 DPI
-      const canvasWidth = widthMm * scale;
-      const canvasHeight = heightMm * scale;
+      try {
+        const scale = 12; // 12 px per mm = ~300 DPI
+        const canvasWidth = widthMm * scale;
+        const canvasHeight = heightMm * scale;
 
-      const canvas = document.createElement("canvas");
-      canvas.width = canvasWidth;
-      canvas.height = canvasHeight;
-      const ctx = canvas.getContext("2d");
+        const canvas = document.createElement("canvas");
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
+        const ctx = canvas.getContext("2d");
 
-      // Crisp white background
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+        // Crisp white background
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
-      // Clean outer border (thin & sharp)
-      ctx.strokeStyle = "#000000";
-      ctx.lineWidth = 1.5;
-      ctx.strokeRect(4, 4, canvasWidth - 8, canvasHeight - 8);
+        // Clean outer border (thin & sharp)
+        ctx.strokeStyle = "#000000";
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(4, 4, canvasWidth - 8, canvasHeight - 8);
 
-      // Font size presets
-      const fontHeaderSize = fontSizeMode === "mini" ? 11 : fontSizeMode === "compact" ? 13 : 16;
-      const fontFooterCode = fontSizeMode === "mini" ? 12 : fontSizeMode === "compact" ? 14 : 17;
-      const fontFooterRole = fontSizeMode === "mini" ? 10 : fontSizeMode === "compact" ? 12 : 14;
+        // Font size presets
+        const fontHeaderSize = fontSizeMode === "mini" ? 11 : fontSizeMode === "compact" ? 13 : 16;
+        const fontFooterCode = fontSizeMode === "mini" ? 12 : fontSizeMode === "compact" ? 14 : 17;
+        const fontFooterRole = fontSizeMode === "mini" ? 10 : fontSizeMode === "compact" ? 12 : 14;
 
-      const headerBandHeight = fontSizeMode === "mini" ? 18 : 22;
-      const footerBandHeight = fontSizeMode === "mini" ? 18 : 22;
+        const headerBandHeight = fontSizeMode === "mini" ? 18 : 22;
+        const footerBandHeight = fontSizeMode === "mini" ? 18 : 22;
 
-      // 1. Header: Employee Name (Right) + NELLY (Left)
-      ctx.fillStyle = "#000000";
-      ctx.font = `bold ${fontHeaderSize}px Arial, Tahoma, sans-serif`;
-      ctx.textAlign = "right";
-      ctx.fillText(employee.name || "", canvasWidth - 10, headerBandHeight - 5);
+        // 1. Header: Employee Name (Right) + NELLY (Left)
+        ctx.fillStyle = "#000000";
+        ctx.font = `bold ${fontHeaderSize}px Arial, Tahoma, sans-serif`;
+        ctx.textAlign = "right";
+        ctx.fillText(employee.name || "", canvasWidth - 10, headerBandHeight - 5);
 
-      if (includeStoreName) {
-        ctx.font = `bold ${Math.max(fontHeaderSize - 2, 9)}px Arial, Tahoma, sans-serif`;
+        if (includeStoreName) {
+          ctx.font = `bold ${Math.max(fontHeaderSize - 2, 9)}px Arial, Tahoma, sans-serif`;
+          ctx.textAlign = "left";
+          ctx.fillText("★ NELLY ★", 10, headerBandHeight - 5);
+        }
+
+        // Divider Line 1
+        ctx.beginPath();
+        ctx.lineWidth = 1;
+        ctx.moveTo(6, headerBandHeight);
+        ctx.lineTo(canvasWidth - 6, headerBandHeight);
+        ctx.stroke();
+
+        // 2. Barcode Vector Graphic (Takes maximum available center height)
+        const barcodeTop = headerBandHeight + 3;
+        const barcodeHeight = canvasHeight - headerBandHeight - footerBandHeight - 6;
+        ctx.drawImage(image, 10, barcodeTop, canvasWidth - 20, barcodeHeight);
+
+        // Divider Line 2
+        const footerDividerY = canvasHeight - footerBandHeight;
+        ctx.beginPath();
+        ctx.lineWidth = 1;
+        ctx.moveTo(6, footerDividerY);
+        ctx.lineTo(canvasWidth - 6, footerDividerY);
+        ctx.stroke();
+
+        // 3. Footer: Barcode Code (Left) + Role (Right)
+        ctx.font = `bold ${fontFooterCode}px monospace, Courier`;
         ctx.textAlign = "left";
-        ctx.fillText("★ NELLY ★", 10, headerBandHeight - 5);
+        ctx.fillText(barcodeValue, 10, canvasHeight - 6);
+
+        ctx.font = `bold ${fontFooterRole}px Arial, Tahoma, sans-serif`;
+        ctx.textAlign = "right";
+        ctx.fillText(employee.role || "بائع", canvasWidth - 10, canvasHeight - 6);
+
+        callback(canvas, widthMm, heightMm);
+      } catch (err) {
+        console.error("Canvas draw error:", err);
+      } finally {
+        URL.revokeObjectURL(blobURL);
       }
-
-      // Divider Line 1
-      ctx.beginPath();
-      ctx.lineWidth = 1;
-      ctx.moveTo(6, headerBandHeight);
-      ctx.lineTo(canvasWidth - 6, headerBandHeight);
-      ctx.stroke();
-
-      // 2. Barcode Vector Graphic (Takes maximum available center height)
-      const barcodeTop = headerBandHeight + 3;
-      const barcodeHeight = canvasHeight - headerBandHeight - footerBandHeight - 6;
-      ctx.drawImage(image, 10, barcodeTop, canvasWidth - 20, barcodeHeight);
-
-      // Divider Line 2
-      const footerDividerY = canvasHeight - footerBandHeight;
-      ctx.beginPath();
-      ctx.lineWidth = 1;
-      ctx.moveTo(6, footerDividerY);
-      ctx.lineTo(canvasWidth - 6, footerDividerY);
-      ctx.stroke();
-
-      // 3. Footer: Barcode Code (Left) + Role (Right)
-      ctx.font = `bold ${fontFooterCode}px monospace, Courier`;
-      ctx.textAlign = "left";
-      ctx.fillText(barcodeValue, 10, canvasHeight - 6);
-
-      ctx.font = `bold ${fontFooterRole}px Arial, Tahoma, sans-serif`;
-      ctx.textAlign = "right";
-      ctx.fillText(employee.role || "بائع", canvasWidth - 10, canvasHeight - 6);
-
-      callback(canvas, widthMm, heightMm);
     };
+
+    image.onerror = (err) => {
+      console.error("Image decode error from SVG blob:", err);
+      URL.revokeObjectURL(blobURL);
+    };
+
     image.src = blobURL;
   };
 
@@ -212,18 +232,22 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
         </html>
       `;
 
-      let iframe = document.getElementById("thermal-print-hidden-iframe");
-      if (!iframe) {
-        iframe = document.createElement("iframe");
-        iframe.id = "thermal-print-hidden-iframe";
-        iframe.style.position = "fixed";
-        iframe.style.right = "0";
-        iframe.style.bottom = "0";
-        iframe.style.width = "0";
-        iframe.style.height = "0";
-        iframe.style.border = "none";
-        document.body.appendChild(iframe);
+      // Remove existing iframe to prevent reuse state issues
+      const oldIframe = document.getElementById("thermal-print-hidden-iframe");
+      if (oldIframe) {
+        oldIframe.remove();
       }
+
+      const iframe = document.createElement("iframe");
+      iframe.id = "thermal-print-hidden-iframe";
+      iframe.style.position = "fixed";
+      iframe.style.right = "0";
+      iframe.style.bottom = "0";
+      iframe.style.width = "0";
+      iframe.style.height = "0";
+      iframe.style.border = "none";
+      iframe.style.zIndex = "-9999";
+      document.body.appendChild(iframe);
 
       const doc = iframe.contentWindow.document;
       doc.open();
@@ -231,8 +255,12 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
       doc.close();
 
       setTimeout(() => {
-        iframe.contentWindow.focus();
-        iframe.contentWindow.print();
+        try {
+          iframe.contentWindow.focus();
+          iframe.contentWindow.print();
+        } catch (printErr) {
+          console.error("Print invocation error:", printErr);
+        }
       }, 250);
     });
   };
