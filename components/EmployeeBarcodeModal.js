@@ -8,35 +8,40 @@ import {
   Barcode as BarcodeIcon, 
   Copy, 
   Check, 
-  Sparkles
+  Sparkles,
+  Download,
+  RotateCw
 } from "lucide-react";
 
 export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
   const [copied, setCopied] = useState(false);
   const [labelSize, setLabelSize] = useState("38x25"); // "38x25" | "40x20" | "50x30"
+  const [orientation, setOrientation] = useState("landscape"); // "landscape" (بالعرض) | "portrait" (بالطول)
   const [includeStoreName, setIncludeStoreName] = useState(true);
   const barcodeSvgRef = useRef(null);
+  const printIframeRef = useRef(null);
 
   const barcodeValue = employee?.code ? String(employee.code).trim().toUpperCase() : "EMP-01";
 
-  // Generate real vector Code128 Barcode sized perfectly for thermal stickers
+  // Sizes in mm (Strict thermal printer dimensions)
+  const sizeMap = {
+    "38x25": { w: 38, h: 25, barWidth: 1.4, barHeight: 24, maxSvgHeight: "9mm", fontSize: "7pt", numSize: "7.5pt" },
+    "38x20": { w: 38, h: 20, barWidth: 1.3, barHeight: 20, maxSvgHeight: "7mm", fontSize: "6.5pt", numSize: "7pt" },
+    "40x20": { w: 40, h: 20, barWidth: 1.3, barHeight: 20, maxSvgHeight: "7mm", fontSize: "6.5pt", numSize: "7pt" },
+    "50x30": { w: 50, h: 30, barWidth: 1.8, barHeight: 32, maxSvgHeight: "13mm", fontSize: "8pt", numSize: "8.5pt" }
+  };
+
+  // Generate real vector Code128 Barcode
   useEffect(() => {
     if (!isOpen || !employee || !barcodeSvgRef.current) return;
 
     try {
-      const barcodeConfig = {
-        "38x25": { width: 1.8, height: 38 },
-        "40x20": { width: 1.5, height: 28 },
-        "50x30": { width: 2.0, height: 46 }
-      };
-
-      const { width, height } = barcodeConfig[labelSize] || barcodeConfig["38x25"];
-
+      const config = sizeMap[labelSize] || sizeMap["38x25"];
       JsBarcode(barcodeSvgRef.current, barcodeValue, {
         format: "CODE128",
-        width: width,
-        height: height,
-        displayValue: false, // Digits rendered in sharp bold text below
+        width: config.barWidth,
+        height: config.barHeight,
+        displayValue: false,
         margin: 0,
         background: "#ffffff",
         lineColor: "#000000"
@@ -44,12 +49,231 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
     } catch (err) {
       console.error("JsBarcode error:", err);
     }
-  }, [isOpen, employee, barcodeValue, labelSize]);
+  }, [isOpen, employee, barcodeValue, labelSize, orientation]);
 
   if (!isOpen || !employee) return null;
 
+  // Direct Thermal Printing via Isolated Iframe (Strict 1-sticker fit)
   const handlePrint = () => {
-    window.print();
+    const config = sizeMap[labelSize] || sizeMap["38x25"];
+    const widthMm = config.w;
+    const heightMm = config.h;
+    
+    const svgElement = barcodeSvgRef.current;
+    if (!svgElement) return;
+
+    const svgXml = new XMLSerializer().serializeToString(svgElement);
+
+    const printHtml = `
+      <!DOCTYPE html>
+      <html lang="ar" dir="rtl">
+      <head>
+        <meta charset="utf-8" />
+        <title>Barcode_${barcodeValue}</title>
+        <style>
+          @page {
+            size: ${widthMm}mm ${heightMm}mm;
+            margin: 0mm !important;
+          }
+          @media print {
+            html, body {
+              width: ${widthMm}mm !important;
+              height: ${heightMm}mm !important;
+              max-width: ${widthMm}mm !important;
+              max-height: ${heightMm}mm !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              overflow: hidden !important;
+              background: #ffffff !important;
+              page-break-after: avoid !important;
+              page-break-inside: avoid !important;
+              break-inside: avoid !important;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+          }
+          * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, Tahoma, sans-serif;
+            width: ${widthMm}mm;
+            height: ${heightMm}mm;
+            max-width: ${widthMm}mm;
+            max-height: ${heightMm}mm;
+            padding: 0.8mm 1.5mm;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            text-align: center;
+            background: #ffffff;
+            color: #000000;
+            overflow: hidden;
+            position: absolute;
+            top: 0;
+            left: 0;
+          }
+          .header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: ${config.fontSize};
+            font-weight: 900;
+            border-bottom: 0.5pt solid #000000;
+            padding-bottom: 0.5px;
+            line-height: 1;
+          }
+          .barcode-wrap {
+            width: 100%;
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            margin: 0.5mm 0;
+          }
+          .barcode-wrap svg {
+            width: 96%;
+            height: ${config.maxSvgHeight};
+            max-height: ${config.maxSvgHeight};
+            display: block;
+          }
+          .footer {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: ${config.fontSize};
+            font-weight: 900;
+            border-top: 0.5pt solid #000000;
+            padding-top: 0.5px;
+            line-height: 1;
+          }
+          .code-text {
+            font-family: monospace, Courier, monospace;
+            font-size: ${config.numSize};
+            font-weight: 900;
+            letter-spacing: 1px;
+            direction: ltr;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <span>${employee.name}</span>
+          ${includeStoreName ? '<span>★ NELLY ★</span>' : ''}
+        </div>
+        <div class="barcode-wrap">
+          ${svgXml}
+        </div>
+        <div class="footer">
+          <span class="code-text">${barcodeValue}</span>
+          <span>${employee.role || "بائع"}</span>
+        </div>
+      </body>
+      </html>
+    `;
+
+    // Write to hidden iframe and print
+    let iframe = document.getElementById("thermal-print-hidden-iframe");
+    if (!iframe) {
+      iframe = document.createElement("iframe");
+      iframe.id = "thermal-print-hidden-iframe";
+      iframe.style.position = "fixed";
+      iframe.style.right = "0";
+      iframe.style.bottom = "0";
+      iframe.style.width = "0";
+      iframe.style.height = "0";
+      iframe.style.border = "none";
+      document.body.appendChild(iframe);
+    }
+
+    const doc = iframe.contentWindow.document;
+    doc.open();
+    doc.write(printHtml);
+    doc.close();
+
+    setTimeout(() => {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+    }, 250);
+  };
+
+  // Download barcode image directly
+  const handleDownloadImage = () => {
+    const svgElement = barcodeSvgRef.current;
+    if (!svgElement) return;
+
+    const svgString = new XMLSerializer().serializeToString(svgElement);
+    const svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+    const URL = window.URL || window.webkitURL || window;
+    const blobURL = URL.createObjectURL(svgBlob);
+    
+    const image = new Image();
+    image.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 400;
+      canvas.height = 250;
+      const ctx = canvas.getContext("2d");
+      
+      // White background
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Draw border
+      ctx.strokeStyle = "#000000";
+      ctx.lineWidth = 3;
+      ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
+      
+      // Header text
+      ctx.fillStyle = "#000000";
+      ctx.font = "bold 18px Arial";
+      ctx.textAlign = "right";
+      ctx.fillText(employee.name || "", canvas.width - 24, 38);
+      if (includeStoreName) {
+        ctx.textAlign = "left";
+        ctx.fillText("NELLY", 24, 38);
+      }
+      
+      // Separator line
+      ctx.beginPath();
+      ctx.moveTo(15, 48);
+      ctx.lineTo(canvas.width - 15, 48);
+      ctx.stroke();
+      
+      // Draw Barcode image
+      ctx.drawImage(image, 20, 58, 360, 120);
+      
+      // Separator line
+      ctx.beginPath();
+      ctx.moveTo(15, 192);
+      ctx.lineTo(canvas.width - 15, 192);
+      ctx.stroke();
+      
+      // Footer text
+      ctx.font = "bold 18px monospace";
+      ctx.textAlign = "left";
+      ctx.fillText(barcodeValue, 24, 222);
+      
+      ctx.font = "bold 16px Arial";
+      ctx.textAlign = "right";
+      ctx.fillText(employee.role || "بائع", canvas.width - 24, 222);
+      
+      const pngUrl = canvas.toDataURL("image/png");
+      const downloadLink = document.createElement("a");
+      downloadLink.href = pngUrl;
+      downloadLink.download = `Barcode_${employee.name}_${barcodeValue}.png`;
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+    };
+    image.src = blobURL;
   };
 
   const handleCopyCode = () => {
@@ -66,8 +290,8 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
         className="modal-content"
         onClick={(e) => e.stopPropagation()}
         style={{ 
-          maxWidth: "480px", 
-          maxHeight: "min(92vh, 760px)",
+          maxWidth: "500px", 
+          maxHeight: "min(92vh, 780px)",
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
@@ -76,8 +300,8 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
           borderRadius: "20px" 
         }}
       >
-        {/* Header (No print) */}
-        <div className="no-print" style={{ 
+        {/* Header */}
+        <div style={{ 
           display: "flex", 
           alignItems: "center", 
           justifyContent: "space-between", 
@@ -102,10 +326,10 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
             </div>
             <div>
               <h3 style={{ fontSize: "1.15rem", fontWeight: "900", color: "#1e1322", margin: 0 }}>
-                طباعة ملصق باركود الموظف
+                طباعة باركود الموظف للاستيكر الحراري
               </h3>
               <span style={{ fontSize: "0.78rem", color: "#6b7280", fontWeight: "600" }}>
-                مقاس مخصص لطابعات الاستيكر الحراري (38×25 مم)
+                مقاس مخصص لطابعات الباركود الحرارية (Sticker Label)
               </span>
             </div>
           </div>
@@ -135,94 +359,138 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
           flexDirection: "column",
           gap: "16px"
         }}>
-          {/* Label Size Selector (No print) */}
-          <div className="no-print" style={{
+          {/* Controls: Size & Orientation */}
+          <div style={{
             background: "#f8fafc",
             border: "1px solid #e2e8f0",
             borderRadius: "14px",
             padding: "12px 14px",
             display: "flex",
             flexDirection: "column",
-            gap: "8px"
+            gap: "10px"
           }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <span style={{ fontSize: "0.82rem", fontWeight: "800", color: "#334155" }}>
-                مقاس ورقة الاستيكر الحراري:
-              </span>
-              <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.78rem", fontWeight: "700", color: "#64748b", cursor: "pointer" }}>
-                <input
-                  type="checkbox"
-                  checked={includeStoreName}
-                  onChange={(e) => setIncludeStoreName(e.target.checked)}
-                  style={{ accentColor: "#db2777" }}
-                />
-                <span>إظهار اسم Nelly</span>
-              </label>
+            {/* Label Size Buttons */}
+            <div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
+                <span style={{ fontSize: "0.82rem", fontWeight: "800", color: "#334155" }}>
+                  مقاس الاستيكر الحراري:
+                </span>
+                <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.78rem", fontWeight: "700", color: "#64748b", cursor: "pointer" }}>
+                  <input
+                    type="checkbox"
+                    checked={includeStoreName}
+                    onChange={(e) => setIncludeStoreName(e.target.checked)}
+                    style={{ accentColor: "#db2777" }}
+                  />
+                  <span>اسم نيللي</span>
+                </label>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "6px" }}>
+                {[
+                  { id: "38x20", label: "38 × 20 مم", sub: "(استيكر الرول بالصورة)" },
+                  { id: "38x25", label: "38 × 25 مم", sub: "(مقاس قياسي)" },
+                  { id: "40x20", label: "40 × 20 مم", sub: "(مقاس صغير)" },
+                  { id: "50x30", label: "50 × 30 مم", sub: "(مقاس عريض)" }
+                ].map((size) => (
+                  <button
+                    key={size.id}
+                    type="button"
+                    onClick={() => setLabelSize(size.id)}
+                    style={{
+                      padding: "6px 2px",
+                      borderRadius: "10px",
+                      border: labelSize === size.id ? "2px solid #db2777" : "1px solid #cbd5e1",
+                      background: labelSize === size.id ? "#fdf2f8" : "#ffffff",
+                      color: labelSize === size.id ? "#db2777" : "#475569",
+                      cursor: "pointer",
+                      textAlign: "center",
+                      transition: "all 0.15s ease"
+                    }}
+                  >
+                    <strong style={{ fontSize: "0.78rem", display: "block" }}>{size.label}</strong>
+                    <span style={{ fontSize: "0.64rem", opacity: 0.85 }}>{size.sub}</span>
+                  </button>
+                ))}
+              </div>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px" }}>
-              {[
-                { id: "38x25", label: "38 × 25 مم", sub: "(المقاس القياسي بالصورة)" },
-                { id: "40x20", label: "40 × 20 مم", sub: "(مقاس صغير ومضغوط)" },
-                { id: "50x30", label: "50 × 30 مم", sub: "(مقاس عريض)" }
-              ].map((size) => (
+            {/* Orientation Buttons (Landscape vs Portrait) */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: "8px", borderTop: "1px dashed #cbd5e1" }}>
+              <span style={{ fontSize: "0.8rem", fontWeight: "800", color: "#334155" }}>
+                اتجاه سحب الورقة في الطابعة:
+              </span>
+              <div style={{ display: "flex", gap: "6px" }}>
                 <button
-                  key={size.id}
                   type="button"
-                  onClick={() => setLabelSize(size.id)}
+                  onClick={() => setOrientation("landscape")}
                   style={{
-                    padding: "8px 6px",
-                    borderRadius: "10px",
-                    border: labelSize === size.id ? "2px solid #db2777" : "1px solid #cbd5e1",
-                    background: labelSize === size.id ? "#fdf2f8" : "#ffffff",
-                    color: labelSize === size.id ? "#db2777" : "#475569",
-                    cursor: "pointer",
-                    textAlign: "center",
-                    transition: "all 0.15s ease"
+                    padding: "5px 12px",
+                    borderRadius: "8px",
+                    border: orientation === "landscape" ? "2px solid #db2777" : "1px solid #cbd5e1",
+                    background: orientation === "landscape" ? "#db2777" : "#ffffff",
+                    color: orientation === "landscape" ? "#ffffff" : "#475569",
+                    fontSize: "0.78rem",
+                    fontWeight: "800",
+                    cursor: "pointer"
                   }}
                 >
-                  <strong style={{ fontSize: "0.82rem", display: "block" }}>{size.label}</strong>
-                  <span style={{ fontSize: "0.68rem", opacity: 0.85 }}>{size.sub}</span>
+                  بالعرض (Landscape)
                 </button>
-              ))}
+                <button
+                  type="button"
+                  onClick={() => setOrientation("portrait")}
+                  style={{
+                    padding: "5px 12px",
+                    borderRadius: "8px",
+                    border: orientation === "portrait" ? "2px solid #db2777" : "1px solid #cbd5e1",
+                    background: orientation === "portrait" ? "#db2777" : "#ffffff",
+                    color: orientation === "portrait" ? "#ffffff" : "#475569",
+                    fontSize: "0.78rem",
+                    fontWeight: "800",
+                    cursor: "pointer"
+                  }}
+                >
+                  بالطول (Portrait)
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Realistic Sticker Preview */}
+          {/* Preview Box */}
           <div style={{
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            padding: "16px 0",
+            padding: "16px",
             background: "#f1f5f9",
             borderRadius: "16px",
             border: "1px dashed #cbd5e1"
           }}>
-            <span className="no-print" style={{ fontSize: "0.72rem", color: "#64748b", fontWeight: "700", marginBottom: "8px" }}>
+            <span style={{ fontSize: "0.72rem", color: "#64748b", fontWeight: "700", marginBottom: "8px" }}>
               معاينة ملصق الاستيكر الفعلي:
             </span>
 
-            {/* THE THERMAL STICKER PRINT CONTAINER (Uses classes from globals.css) */}
+            {/* PREVIEW CONTAINER */}
             <div 
-              id="printable-barcode-card"
-              className="thermal-barcode-sticker"
               style={{
                 width: labelSize === "38x25" ? "260px" : labelSize === "40x20" ? "240px" : "300px",
                 background: "#ffffff",
                 color: "#000000",
                 borderRadius: "8px",
-                border: "1.5px dashed #000000",
+                border: "1.5px solid #000000",
                 padding: "10px 14px",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
                 textAlign: "center",
-                fontFamily: "Arial, Tahoma, sans-serif"
+                fontFamily: "Arial, Tahoma, sans-serif",
+                boxShadow: "0 6px 16px rgba(0,0,0,0.08)"
               }}
             >
-              {/* Header: Store Name & Employee Name */}
+              {/* Header */}
               <div style={{ 
                 width: "100%", 
                 display: "flex", 
@@ -273,8 +541,8 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
             </div>
           </div>
 
-          {/* Barcode info and copy */}
-          <div className="no-print" style={{
+          {/* Quick Copy */}
+          <div style={{
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -307,8 +575,8 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
           </div>
         </div>
 
-        {/* Fixed Footer (No print) */}
-        <div className="no-print" style={{
+        {/* Fixed Footer */}
+        <div style={{
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
@@ -325,15 +593,28 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
             إغلاق
           </button>
 
-          <button
-            type="button"
-            onClick={handlePrint}
-            className="btn-primary"
-            style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 22px" }}
-          >
-            <Printer size={18} />
-            <span>طباعة الاستيكر الحراري</span>
-          </button>
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button
+              type="button"
+              onClick={handleDownloadImage}
+              className="btn-secondary"
+              style={{ display: "flex", alignItems: "center", gap: "6px", padding: "10px 16px" }}
+              title="تنزيل ملصق الباركود كصورة عالية الجودة"
+            >
+              <Download size={16} />
+              <span>حفظ صورة الاستيكر</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handlePrint}
+              className="btn-primary"
+              style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 22px" }}
+            >
+              <Printer size={18} />
+              <span>طباعة الاستيكر الحراري</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
