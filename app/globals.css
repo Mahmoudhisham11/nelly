@@ -2261,15 +2261,16 @@ h1, h2, h3, h4, h5, h6 {
     color: #000000 !important;
   }
 
-  /* B. Thermal Barcode Label Sticker */
+  /* B. Thermal Barcode Label Sticker (100% Borderless) */
   #printable-barcode-card,
   .thermal-barcode-sticker {
     display: block !important;
     max-width: 290px !important;
     width: 100% !important;
     margin: 0 auto !important;
-    padding: 10px !important;
-    border: 1.5px dashed #000000 !important;
+    padding: 0 !important;
+    border: none !important;
+    outline: none !important;
     box-shadow: none !important;
     background: #ffffff !important;
     page-break-inside: avoid !important;

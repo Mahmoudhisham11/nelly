@@ -58,11 +58,16 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
 
   if (!isOpen || !employee) return null;
 
-  // Render high-res sticker on 300 DPI Canvas
+  // Render high-res sticker on 300 DPI Canvas (100% BORDERLESS - No strokeRect, No setLineDash, No divider lines)
   const createStickerCanvas = (callback) => {
     const config = sizeMap[labelSize] || sizeMap["50x30"];
-    const widthMm = config.w;
-    const heightMm = config.h;
+    let widthMm = config.w;
+    let heightMm = config.h;
+
+    if (orientation === "portrait") {
+      widthMm = config.h;
+      heightMm = config.w;
+    }
 
     const svgElement = barcodeSvgRef.current;
     if (!svgElement) {
@@ -81,7 +86,7 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
     const image = new Image();
     image.onload = () => {
       try {
-        const scale = 12; // 12 px per mm = ~300 DPI
+        const scale = 12; // 12 px per mm = ~300 DPI (304.8 DPI exact)
         const canvasWidth = widthMm * scale;
         const canvasHeight = heightMm * scale;
 
@@ -90,80 +95,89 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
         canvas.height = canvasHeight;
         const ctx = canvas.getContext("2d");
 
-        // Crisp white background
+        // 1. Pure Crisp White Background (100% BORDERLESS - Absolute zero strokeRect or edge lines)
         ctx.fillStyle = "#ffffff";
         ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
-        // Clean sharp border
-        ctx.strokeStyle = "#000000";
-        ctx.lineWidth = 2;
-        ctx.strokeRect(5, 5, canvasWidth - 10, canvasHeight - 10);
+        // Calculate proportional layout based on label size (Bigger, more legible fonts)
+        const isSmall = widthMm < 45 || heightMm < 25;
+        const fontMult = fontSizeMode === "mini" ? 0.82 : fontSizeMode === "standard" ? 1.18 : 1.0;
 
-        // Calculate proportional layout based on label size
-        const isLarge = widthMm >= 50 && heightMm >= 30;
-        
-        let fontHeaderSize = isLarge ? 20 : 13;
-        let fontFooterCode = isLarge ? 22 : 14;
-        let fontFooterRole = isLarge ? 17 : 12;
-        let headerBandHeight = isLarge ? 34 : 22;
-        let footerBandHeight = isLarge ? 32 : 22;
+        const headerBandHeight = Math.round(canvasHeight * (isSmall ? 0.23 : 0.21));
+        const footerBandHeight = Math.round(canvasHeight * (isSmall ? 0.24 : 0.22));
 
-        if (fontSizeMode === "mini") {
-          fontHeaderSize = Math.round(fontHeaderSize * 0.8);
-          fontFooterCode = Math.round(fontFooterCode * 0.8);
-          fontFooterRole = Math.round(fontFooterRole * 0.8);
-          headerBandHeight = Math.round(headerBandHeight * 0.85);
-          footerBandHeight = Math.round(footerBandHeight * 0.85);
-        } else if (fontSizeMode === "standard") {
-          fontHeaderSize = Math.round(fontHeaderSize * 1.15);
-          fontFooterCode = Math.round(fontFooterCode * 1.15);
-          fontFooterRole = Math.round(fontFooterRole * 1.15);
-        }
+        const fontHeaderSize = Math.round((isSmall ? 18 : 24) * fontMult);
+        const fontStoreSize = Math.round((isSmall ? 11 : 13) * fontMult);
+        const fontFooterCode = Math.round((isSmall ? 18 : 24) * fontMult);
+        const fontFooterRole = Math.round((isSmall ? 16 : 20) * fontMult);
 
-        // 1. Header: Employee Name (Right) + NELLY Brand (Left)
+        const safeMarginX = Math.round(canvasWidth * 0.05); // 5% quiet zone from edges
+
+        // Helper to truncate text safely if employee name is long
+        const truncateToFit = (text, maxW) => {
+          if (!text) return "";
+          if (ctx.measureText(text).width <= maxW) return text;
+          let trimmed = text;
+          while (trimmed.length > 2 && ctx.measureText(trimmed + "...").width > maxW) {
+            trimmed = trimmed.slice(0, -1);
+          }
+          return trimmed + "...";
+        };
+
+        // 2. Header: Employee Name (Right) + Store Brand (Left) - Vertically centered
+        const headerCenterY = Math.round(headerBandHeight / 2) + 2;
         ctx.fillStyle = "#000000";
-        ctx.font = `bold ${fontHeaderSize}px Arial, Tahoma, sans-serif`;
-        ctx.textAlign = "right";
-        ctx.fillText(employee.name || "", canvasWidth - 14, headerBandHeight - 8);
+        ctx.textBaseline = "middle";
 
+        let storeWidth = 0;
         if (includeStoreName) {
-          ctx.font = `bold ${Math.max(fontHeaderSize - 3, 11)}px Arial, Tahoma, sans-serif`;
+          const storeText = "★ NELLY ★";
+          ctx.font = `900 ${fontStoreSize}px Arial, Tahoma, sans-serif`;
+          storeWidth = ctx.measureText(storeText).width;
           ctx.textAlign = "left";
-          ctx.fillText("★ NELLY ★", 14, headerBandHeight - 8);
+          ctx.fillText(storeText, safeMarginX, headerCenterY);
         }
 
-        // Divider Line 1
-        ctx.beginPath();
-        ctx.lineWidth = 1.2;
-        ctx.moveTo(8, headerBandHeight);
-        ctx.lineTo(canvasWidth - 8, headerBandHeight);
-        ctx.stroke();
-
-        // 2. Barcode Vector Graphic (Dominates the center)
-        const barcodeTop = headerBandHeight + 4;
-        const barcodeHeight = canvasHeight - headerBandHeight - footerBandHeight - 8;
-        ctx.drawImage(image, 14, barcodeTop, canvasWidth - 28, barcodeHeight);
-
-        // Divider Line 2
-        const footerDividerY = canvasHeight - footerBandHeight;
-        ctx.beginPath();
-        ctx.lineWidth = 1.2;
-        ctx.moveTo(8, footerDividerY);
-        ctx.lineTo(canvasWidth - 8, footerDividerY);
-        ctx.stroke();
-
-        // 3. Footer: Barcode Code (Left) + Role (Right)
-        ctx.font = `bold ${fontFooterCode}px monospace, Courier`;
-        ctx.textAlign = "left";
-        ctx.fillText(barcodeValue, 14, canvasHeight - 8);
-
-        ctx.font = `bold ${fontFooterRole}px Arial, Tahoma, sans-serif`;
+        ctx.font = `900 ${fontHeaderSize}px Arial, Tahoma, sans-serif`;
         ctx.textAlign = "right";
-        ctx.fillText(employee.role || "بائع", canvasWidth - 14, canvasHeight - 8);
+        const maxNameWidth = canvasWidth - (safeMarginX * 2) - storeWidth - (includeStoreName ? 14 : 0);
+        const safeName = truncateToFit(employee.name || "موظف", maxNameWidth);
+        ctx.fillText(safeName, canvasWidth - safeMarginX, headerCenterY);
+
+        // 3. Barcode Vector Graphic (Proportionally centered horizontally and vertically with safe quiet zones)
+        const barcodeTop = headerBandHeight + 2;
+        const barcodeAvailableHeight = canvasHeight - headerBandHeight - footerBandHeight - 4;
+        const maxSafeW = Math.round(canvasWidth * 0.88); // 6% quiet zone on each side
+
+        const imgAspect = (image.width && image.height) ? (image.width / image.height) : 2.6;
+        let drawH = barcodeAvailableHeight;
+        let drawW = drawH * imgAspect;
+
+        if (drawW > maxSafeW) {
+          drawW = maxSafeW;
+          drawH = drawW / imgAspect;
+        }
+
+        const drawX = Math.round((canvasWidth - drawW) / 2);
+        const drawY = Math.round(barcodeTop + (barcodeAvailableHeight - drawH) / 2);
+        ctx.drawImage(image, drawX, drawY, drawW, drawH);
+
+        // 4. Footer: Barcode Code (Left) + Role (Right) - Large & Sharp, Vertically Centered
+        const footerCenterY = canvasHeight - Math.round(footerBandHeight / 2);
+        ctx.fillStyle = "#000000";
+        ctx.textBaseline = "middle";
+
+        ctx.font = `900 ${fontFooterCode}px monospace, Courier`;
+        ctx.textAlign = "left";
+        ctx.fillText(barcodeValue, safeMarginX, footerCenterY);
+
+        ctx.font = `900 ${fontFooterRole}px Arial, Tahoma, sans-serif`;
+        ctx.textAlign = "right";
+        ctx.fillText(employee.role || "موظف", canvasWidth - safeMarginX, footerCenterY);
 
         callback(canvas, widthMm, heightMm);
       } catch (err) {
-        console.error("Canvas draw error:", err);
+        console.error("Canvas draw error in EmployeeBarcodeModal:", err);
       } finally {
         URL.revokeObjectURL(blobURL);
       }
@@ -177,7 +191,7 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
     image.src = blobURL;
   };
 
-  // Direct Thermal Printing via High-DPI Canvas
+  // Direct Thermal Printing via Isolated Iframe
   const handlePrint = () => {
     createStickerCanvas((canvas, widthMm, heightMm) => {
       const stickerDataUrl = canvas.toDataURL("image/png");
@@ -191,7 +205,7 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
           <style>
             @page {
               size: ${widthMm}mm ${heightMm}mm;
-              margin: 0mm !important;
+              margin: 0 !important;
             }
             @media print {
               html, body {
@@ -199,6 +213,8 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
                 height: ${heightMm}mm !important;
                 margin: 0 !important;
                 padding: 0 !important;
+                border: none !important;
+                outline: none !important;
                 overflow: hidden !important;
                 background: #ffffff !important;
                 page-break-after: avoid !important;
@@ -215,29 +231,39 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
                 display: block !important;
                 margin: 0 !important;
                 padding: 0 !important;
+                border: none !important;
+                outline: none !important;
                 page-break-after: avoid !important;
                 page-break-inside: avoid !important;
                 break-inside: avoid !important;
+                object-fit: fill !important;
               }
             }
             * {
-              box-sizing: border-box;
-              margin: 0;
-              padding: 0;
+              box-sizing: border-box !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              border: none !important;
+              outline: none !important;
             }
-            body {
+            html, body {
               width: ${widthMm}mm;
               height: ${heightMm}mm;
               margin: 0;
               padding: 0;
               overflow: hidden;
               background: #ffffff;
+              line-height: 0;
             }
             img {
               width: ${widthMm}mm;
               height: ${heightMm}mm;
               display: block;
               margin: 0;
+              padding: 0;
+              border: none;
+              outline: none;
+              object-fit: fill;
             }
           </style>
         </head>
@@ -523,77 +549,81 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
             alignItems: "center",
             justifyContent: "center",
             padding: "16px",
-            background: "#f1f5f9",
+            background: "#f8fafc",
             borderRadius: "16px",
-            border: "1px dashed #cbd5e1"
+            border: "1px solid #e2e8f0"
           }}>
             <span style={{ fontSize: "0.72rem", color: "#64748b", fontWeight: "700", marginBottom: "8px" }}>
               معاينة ملصق الاستيكر الفعلي المطبوع ({sizeMap[labelSize]?.label}):
             </span>
 
-            {/* PREVIEW CONTAINER */}
+            {/* PREVIEW CONTAINER (100% BORDERLESS) */}
             <div 
               style={{
-                width: labelSize === "60x40" ? "340px" : labelSize === "50x40" ? "320px" : labelSize === "50x30" ? "310px" : labelSize === "50x25" ? "310px" : labelSize === "38x25" ? "260px" : "250px",
+                width: labelSize === "60x40" ? "350px" : labelSize === "50x40" ? "330px" : labelSize === "50x30" ? "320px" : labelSize === "50x25" ? "320px" : labelSize === "38x25" ? "270px" : "260px",
                 background: "#ffffff",
                 color: "#000000",
-                borderRadius: "8px",
-                border: "1.5px solid #000000",
+                borderRadius: "4px",
+                border: "none",
                 padding: "8px 12px",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
-                justifyContent: "center",
+                justifyContent: "space-between",
                 textAlign: "center",
                 fontFamily: "Arial, Tahoma, sans-serif",
-                boxShadow: "0 6px 16px rgba(0,0,0,0.08)"
+                boxShadow: "0 4px 14px rgba(0,0,0,0.06)"
               }}
             >
-              {/* Header */}
+              {/* Header (Clean Borderless) */}
               <div style={{ 
                 width: "100%", 
                 display: "flex", 
                 alignItems: "center", 
                 justifyContent: "space-between",
-                borderBottom: "1.2px solid #000000",
-                paddingBottom: "4px",
-                marginBottom: "4px"
+                paddingBottom: "2px"
               }}>
-                <span style={{ fontSize: labelSize.startsWith("50") || labelSize.startsWith("60") ? "13px" : previewFontHeader, fontWeight: "900", color: "#000000" }}>
+                <span style={{ 
+                  fontSize: labelSize.startsWith("50") || labelSize.startsWith("60") ? "15px" : "13px", 
+                  fontWeight: "900", 
+                  color: "#000000",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  maxWidth: "75%"
+                }}>
                   {employee.name}
                 </span>
                 {includeStoreName && (
-                  <span style={{ fontSize: labelSize.startsWith("50") || labelSize.startsWith("60") ? "11px" : `calc(${previewFontHeader} - 2px)`, fontWeight: "900", letterSpacing: "1px", color: "#000000" }}>
+                  <span style={{ fontSize: labelSize.startsWith("50") || labelSize.startsWith("60") ? "12px" : "10.5px", fontWeight: "900", letterSpacing: "1px", color: "#000000" }}>
                     ★ NELLY ★
                   </span>
                 )}
               </div>
 
-              {/* Barcode Vector Graphic */}
-              <div style={{ display: "flex", justifyContent: "center", width: "100%", overflow: "hidden", margin: "4px 0" }}>
-                <svg ref={barcodeSvgRef} style={{ maxWidth: "100%", height: labelSize === "60x40" || labelSize === "50x40" ? "52px" : labelSize === "50x30" ? "44px" : "32px" }} />
+              {/* Barcode Vector Graphic (Centered) */}
+              <div style={{ display: "flex", justifyContent: "center", width: "100%", overflow: "hidden", margin: "2px 0" }}>
+                <svg ref={barcodeSvgRef} style={{ maxWidth: "90%", height: labelSize === "60x40" || labelSize === "50x40" ? "54px" : labelSize === "50x30" ? "46px" : "34px" }} />
               </div>
 
-              {/* Barcode Numbers & Code */}
+              {/* Barcode Numbers & Code (Clean Borderless) */}
               <div style={{ 
                 width: "100%", 
                 display: "flex", 
                 alignItems: "center", 
                 justifyContent: "space-between",
-                paddingTop: "4px",
-                borderTop: "1.2px solid #000000",
-                marginTop: "3px"
+                paddingTop: "2px"
               }}>
                 <span className="num-font" dir="ltr" style={{ 
-                  fontSize: labelSize.startsWith("50") || labelSize.startsWith("60") ? "14px" : previewFontCode, 
+                  fontSize: labelSize.startsWith("50") || labelSize.startsWith("60") ? "15px" : "13.5px", 
                   fontWeight: "900", 
-                  letterSpacing: "2px", 
+                  letterSpacing: "2.5px", 
                   fontFamily: "monospace",
                   color: "#000000" 
                 }}>
                   {barcodeValue}
                 </span>
-                <span style={{ fontSize: labelSize.startsWith("50") || labelSize.startsWith("60") ? "12px" : previewFontRole, fontWeight: "800", color: "#000000" }}>
+                <span style={{ fontSize: labelSize.startsWith("50") || labelSize.startsWith("60") ? "13px" : "11px", fontWeight: "900", color: "#000000" }}>
                   {employee.role || "بائع"}
                 </span>
               </div>
