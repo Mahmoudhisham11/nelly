@@ -265,6 +265,23 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
     });
   };
 
+  // Download barcode image directly
+  const handleDownloadImage = () => {
+    createStickerCanvas((canvas) => {
+      try {
+        const pngUrl = canvas.toDataURL("image/png");
+        const downloadLink = document.createElement("a");
+        downloadLink.href = pngUrl;
+        downloadLink.download = `Barcode_${employee?.name || "Employee"}_${barcodeValue}.png`;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+      } catch (err) {
+        console.error("Download image error:", err);
+      }
+    });
+  };
+
   const handleCopyCode = () => {
     if (navigator?.clipboard) {
       navigator.clipboard.writeText(barcodeValue);
