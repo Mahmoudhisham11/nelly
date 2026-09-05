@@ -204,23 +204,24 @@ export default function POSPage() {
     ).slice(0, 8);
   }, [searchTerm, shopProducts]);
 
-  // Cart Management
+  // Cart Management - Strictly blocks 0 quantity items
   const addToCart = (product) => {
     if (!product) return;
-    if (product.quantity <= 0) {
-      showToast(`عفواً، الصنف "${product.name}" نفد رصيده من المحل.`);
+    const availableStock = Number(product.quantity ?? 0);
+    if (isNaN(availableStock) || availableStock <= 0) {
+      showToast(`عفواً، الصنف "${product.name || 'المحدد'}" غير متوفر (الكمية: 0) ولا يمكن إضافته للسلة.`);
       return;
     }
 
     setCart(prev => {
       const existing = prev.find(item => item.id === product.id);
       if (existing) {
-        if (existing.quantity >= product.quantity) {
-          showToast(`الكمية المتاحة في المحل (${product.quantity}) تم وضعها بالكامل في السلة.`);
+        if (existing.quantity >= availableStock) {
+          showToast(`الكمية المتاحة في المحل (${availableStock}) تم وضعها بالكامل في السلة.`);
           return prev;
         }
         return prev.map(item => 
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+          item.id === product.id ? { ...item, quantity: item.quantity + 1, stock: availableStock } : item
         );
       } else {
         return [...prev, {
@@ -231,7 +232,7 @@ export default function POSPage() {
           category: product.category || "عام",
           wholesalePrice: roundCurrency(product.wholesalePrice || 0),
           sellingPrice: roundCurrency(product.sellingPrice || 0),
-          stock: product.quantity,
+          stock: availableStock,
           quantity: 1
         }];
       }
@@ -254,13 +255,22 @@ export default function POSPage() {
       // Exact barcode match first
       const exactBarcode = shopProducts.find(p => (p.barcode || "").toLowerCase() === term);
       if (exactBarcode) {
+        if (Number(exactBarcode.quantity ?? 0) <= 0) {
+          showToast(`عفواً، الصنف "${exactBarcode.name}" نفد رصيده من المحل (الكمية: 0).`);
+          return;
+        }
         addToCart(exactBarcode);
         return;
       }
 
       // Name or partial match
       if (matchingShopProducts.length > 0) {
-        addToCart(matchingShopProducts[0]);
+        const availableItem = matchingShopProducts.find(p => Number(p.quantity ?? 0) > 0);
+        if (!availableItem) {
+          showToast(`عفواً، الصنف "${matchingShopProducts[0].name}" نفد رصيده من المحل (الكمية: 0).`);
+          return;
+        }
+        addToCart(availableItem);
       } else {
         showToast(`لا يوجد صنف في المحل يطابق "${searchTerm}".`);
       }
@@ -272,7 +282,7 @@ export default function POSPage() {
       if (item.id === id) {
         const nextQty = item.quantity + delta;
         if (nextQty <= 0) return null;
-        if (nextQty > item.stock) {
+        if (Number(item.stock ?? 0) <= 0 || nextQty > item.stock) {
           showToast(`الرصيد المتوفر في المحل هو ${item.stock} فقط.`);
           return item;
         }
@@ -363,7 +373,20 @@ export default function POSPage() {
   };
 
   const handleRestoreHeldInvoice = (heldItem) => {
-    setCart(heldItem.cart || []);
+    // Exclude any items that currently have 0 stock in the shop
+    const validCart = (heldItem.cart || []).filter(item => {
+      const liveProduct = shopProducts.find(p => p.id === (item.productId || item.id));
+      if (liveProduct && Number(liveProduct.quantity ?? 0) <= 0) {
+        return false;
+      }
+      return true;
+    });
+
+    if (validCart.length < (heldItem.cart || []).length) {
+      showToast("تم استبعاد بعض الأصناف من الفاتورة المعلقة لنفاد رصيدها من المحل حالياً.");
+    }
+
+    setCart(validCart);
     setSelectedCustomer(heldItem.customer || null);
     setSelectedSellerEmployee(heldItem.sellerEmployee || null);
     setDiscountType(heldItem.discountType || "fixed");
@@ -752,23 +775,36 @@ export default function POSPage() {
                   {/* Autocomplete Menu */}
                   {searchDropdownOpen && matchingShopProducts.length > 0 && (
                     <div ref={dropdownRef} className="pos-search-dropdown-menu">
-                      {matchingShopProducts.map((p) => (
-                        <div
-                          key={p.id}
-                          onClick={() => addToCart(p)}
-                          className="pos-search-result-item"
-                        >
-                          <div>
-                            <div className="pos-result-name">{p.name}</div>
-                            <div className="pos-result-meta">
-                              باركود: {p.barcode || "—"} | الرصيد: {p.quantity} قطعة
+                      {matchingShopProducts.map((p) => {
+                        const stockCount = Number(p.quantity ?? 0);
+                        const isOut = isNaN(stockCount) || stockCount <= 0;
+                        return (
+                          <div
+                            key={p.id}
+                            onClick={() => {
+                              if (isOut) {
+                                showToast(`عفواً، الصنف "${p.name}" نفد رصيده من المحل (الكمية: 0).`);
+                                return;
+                              }
+                              addToCart(p);
+                            }}
+                            className="pos-search-result-item"
+                            style={isOut ? { opacity: 0.55, cursor: "not-allowed", background: "#fef2f2" } : {}}
+                          >
+                            <div>
+                              <div className="pos-result-name" style={isOut ? { color: "#991b1b" } : {}}>
+                                {p.name} {isOut && <span style={{ fontSize: "0.72rem", color: "#dc2626", fontWeight: "bold", marginRight: "4px" }}>(نفد ❌)</span>}
+                              </div>
+                              <div className="pos-result-meta">
+                                باركود: {p.barcode || "—"} | الرصيد: <strong style={{ color: isOut ? "#dc2626" : "inherit" }}>{stockCount}</strong> قطعة
+                              </div>
+                            </div>
+                            <div className="pos-result-price" style={isOut ? { color: "#991b1b" } : {}}>
+                              {formatNumber(p.sellingPrice)} ج.م
                             </div>
                           </div>
-                          <div className="pos-result-price">
-                            {formatNumber(p.sellingPrice)} ج.م
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>

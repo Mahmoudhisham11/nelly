@@ -14,10 +14,10 @@ import {
 } from "lucide-react";
 
 export const CATEGORIES = [
-  "Makeup",
-  "Stainless",
+  "ميكاب",
+  "ستاليس",
   "Skin Care",
-  "Accessories"
+  "مستلزمات"
 ];
 
 export default function ProductModal({ 
@@ -34,7 +34,7 @@ export default function ProductModal({
   const [formData, setFormData] = useState({
     barcode: "",
     name: "",
-    category: "Makeup",
+    category: "ميكاب",
     quantity: "",
     wholesalePrice: "",
     sellingPrice: "",
@@ -52,7 +52,7 @@ export default function ProductModal({
         setFormData({
           barcode: productToEdit.barcode || productToEdit.code || "",
           name: productToEdit.name || "",
-          category: productToEdit.category || "Makeup",
+          category: productToEdit.category || "ميكاب",
           quantity: productToEdit.quantity !== undefined ? productToEdit.quantity : "",
           wholesalePrice: productToEdit.wholesalePrice !== undefined ? productToEdit.wholesalePrice : "",
           sellingPrice: productToEdit.sellingPrice !== undefined ? productToEdit.sellingPrice : "",
@@ -65,7 +65,7 @@ export default function ProductModal({
         setFormData({
           barcode: "",
           name: "",
-          category: "Makeup",
+          category: "ميكاب",
           quantity: "",
           wholesalePrice: "",
           sellingPrice: "",
