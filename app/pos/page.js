@@ -9,6 +9,7 @@ import Navbar from "@/components/Navbar";
 import POSReceiptModal from "@/components/POSReceiptModal";
 import { subscribeToShopProducts } from "@/lib/shopService";
 import { subscribeToCustomers, addCustomer } from "@/lib/customersService";
+import { subscribeToEmployees } from "@/lib/employeesService";
 import { 
   subscribeToSales, 
   createSaleInvoice, 
@@ -45,7 +46,8 @@ import {
   Printer,
   TrendingUp,
   DollarSign,
-  Coins
+  Coins,
+  Users
 } from "lucide-react";
 
 export default function POSPage() {
@@ -56,6 +58,8 @@ export default function POSPage() {
   const [shopProducts, setShopProducts] = useState([]);
   const [currentShiftSales, setCurrentShiftSales] = useState([]);
   const [customers, setCustomers] = useState([]);
+  const [employees, setEmployees] = useState([]);
+  const [selectedSellerEmployee, setSelectedSellerEmployee] = useState(null);
   const [loading, setLoading] = useState(true);
 
   // Search & Cart states
@@ -172,10 +176,15 @@ export default function POSPage() {
       if (pLoaded && sLoaded) setLoading(false);
     });
 
+    const unsubEmp = subscribeToEmployees((data) => {
+      setEmployees(data);
+    });
+
     return () => {
       unsubShop();
       unsubSales();
       unsubCust();
+      unsubEmp();
     };
   }, [user]);
 
@@ -280,6 +289,7 @@ export default function POSPage() {
   const clearCart = () => {
     setCart([]);
     setSelectedCustomer(null);
+    setSelectedSellerEmployee(null);
     setDiscountValue("");
     setReceivedCash("");
     setOrderNotes("");
@@ -338,6 +348,7 @@ export default function POSPage() {
       createdAt: new Date().toISOString(),
       cart,
       customer: selectedCustomer,
+      sellerEmployee: selectedSellerEmployee,
       discountType,
       discountValue,
       paymentMethod,
@@ -354,6 +365,7 @@ export default function POSPage() {
   const handleRestoreHeldInvoice = (heldItem) => {
     setCart(heldItem.cart || []);
     setSelectedCustomer(heldItem.customer || null);
+    setSelectedSellerEmployee(heldItem.sellerEmployee || null);
     setDiscountType(heldItem.discountType || "fixed");
     setDiscountValue(heldItem.discountValue || "");
     setPaymentMethod(heldItem.paymentMethod || "نقدي");
@@ -394,6 +406,7 @@ export default function POSPage() {
       const salePayload = {
         items: cart,
         customer: selectedCustomer,
+        sellerEmployee: selectedSellerEmployee,
         discount: calculatedDiscount,
         paymentMethod,
         paidAmount: parsedReceivedCash || (paymentMethod === "آجل" ? 0 : cartFinalTotal),
@@ -882,6 +895,31 @@ export default function POSPage() {
                   {customers.map(c => (
                     <option key={c.id} value={c.id}>
                       {c.name} {c.phone ? `(${c.phone})` : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Sales Employee Selector Row */}
+              <div className="pos-control-row">
+                <div className="pos-label-between">
+                  <span className="pos-label-title">
+                    <Users size={14} color="var(--rose-600)" />
+                    <span>موظف المبيعات (عمولة 1%)</span>
+                  </span>
+                </div>
+                <select
+                  value={selectedSellerEmployee?.id || ""}
+                  onChange={(e) => {
+                    const emp = employees.find(item => item.id === e.target.value);
+                    setSelectedSellerEmployee(emp || null);
+                  }}
+                  className="pos-select-box"
+                >
+                  <option value="">بدون تحديد موظف مبيعات</option>
+                  {employees.map(emp => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.name} (كود: {emp.code}) - عمولة {((emp.commissionRate || 0.01) * 100).toFixed(0)}%
                     </option>
                   ))}
                 </select>

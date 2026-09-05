@@ -8,7 +8,7 @@ import AiMarkdownRenderer from "@/components/AiMarkdownRenderer";
 import { subscribeToProducts } from "@/lib/productsService";
 import { subscribeToShopProducts } from "@/lib/shopService";
 import { subscribeToSales, subscribeToReports } from "@/lib/salesService";
-import { subscribeToExpenseItems, subscribeToMonthlyExpenses } from "@/lib/expensesService";
+import { subscribeToExpenseItems, subscribeToMonthlyExpenses, subscribeToAllMonthlyExpenses } from "@/lib/expensesService";
 import { subscribeToCustomers } from "@/lib/customersService";
 import { subscribeToSuppliers } from "@/lib/suppliersService";
 import { 
@@ -41,6 +41,7 @@ export default function AIAssistantPage() {
   const [shiftReports, setShiftReports] = useState([]);
   const [expenseItems, setExpenseItems] = useState([]);
   const [monthlyExpensesMap, setMonthlyExpensesMap] = useState({});
+  const [allMonthlyExpenses, setAllMonthlyExpenses] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
 
@@ -79,11 +80,12 @@ export default function AIAssistantPage() {
     const curMonthKey = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`;
     const u5 = subscribeToExpenseItems(setExpenseItems);
     const u6 = subscribeToMonthlyExpenses(curMonthKey, setMonthlyExpensesMap);
+    const u6b = subscribeToAllMonthlyExpenses(setAllMonthlyExpenses);
     const u7 = subscribeToCustomers(setCustomers);
     const u8 = subscribeToSuppliers(setSuppliers);
 
     return () => {
-      u1(); u2(); u3(); u4(); u5(); u6(); u7(); u8();
+      u1(); u2(); u3(); u4(); u5(); u6(); u6b(); u7(); u8();
     };
   }, [user]);
 
@@ -98,7 +100,7 @@ export default function AIAssistantPage() {
 أنا متصل لحظياً بكافة أرقام وبيانات المتجر:
 - 📦 **المخزن والمحل:** متابعة النواقص والأصناف الموشكة على النفاد.
 - 🔥 **المبيعات والطلب:** حصر أكثر المنتجات مبيعاً وتكرار الشراء.
-- 💵 **المصروفات والأرباح:** تحليل صافي ربحك اليومي والشهري.
+- 💵 **المصروفات والأرباح:** تحليل صافي ربحك اليومي والشهري ومتابعة جميع بنود المصاريف المسجلة.
 - 🎯 **الخطط المالية:** يمكنك أن تطلب مني أي هدف مالي (مثال: *"عايز اجمع 50 ألف جنية"*) وسأقوم بوضع خطة مبيعات تفصيلية بالأيام والمنتجات الأكثر ربحاً.
 - 🎙️ **التسجيل الصوتي:** اضغط على الميكروفون وتحدث بصوتك، وبمجرد إيقاف التسجيل ستُرسل رسالتك فوراً للـ AI!`
         }
@@ -120,6 +122,7 @@ export default function AIAssistantPage() {
       shiftReports,
       expenseItems,
       monthlyExpensesMap,
+      allMonthlyExpenses,
       customers,
       suppliers
     });
@@ -130,6 +133,7 @@ export default function AIAssistantPage() {
     shiftReports,
     expenseItems,
     monthlyExpensesMap,
+    allMonthlyExpenses,
     customers,
     suppliers
   ]);
@@ -415,31 +419,17 @@ export default function AIAssistantPage() {
             </div>
 
             <div style={{ minWidth: "0", overflow: "hidden" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "nowrap" }}>
-                <h1 style={{
-                  fontSize: "1rem",
-                  fontWeight: "800",
-                  color: "#1e1322",
-                  margin: "0",
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis"
-                }}>
-                  مستشار نيللي AI
-                </h1>
-                <span style={{
-                  background: "#faf5ff",
-                  color: "#7e22ce",
-                  border: "1px solid #e9d5ff",
-                  fontSize: "0.68rem",
-                  fontWeight: "700",
-                  padding: "1px 6px",
-                  borderRadius: "5px",
-                  whiteSpace: "nowrap"
-                }}>
-                  MiniMax
-                </span>
-              </div>
+              <h1 style={{
+                fontSize: "1rem",
+                fontWeight: "800",
+                color: "#1e1322",
+                margin: "0",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis"
+              }}>
+                مستشار نيللي AI
+              </h1>
               <p className="hidden sm:block" style={{ fontSize: "0.74rem", color: "#715b7b", fontWeight: "600", margin: "0", whiteSpace: "nowrap" }}>
                 متصل لحظياً بالمخزن والمحل والأرباح
               </p>

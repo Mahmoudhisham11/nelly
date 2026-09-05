@@ -20,7 +20,8 @@ import {
   ShieldCheck,
   ChevronLeft,
   RotateCcw,
-  CalendarCheck
+  CalendarCheck,
+  UserCheck
 } from "lucide-react";
 
 export default function Sidebar({ isMobileOpen, onCloseMobile }) {
@@ -87,6 +88,12 @@ export default function Sidebar({ isMobileOpen, onCloseMobile }) {
       href: "/expenses",
       icon: Receipt,
       badge: null
+    },
+    {
+      label: "الموظفين والرواتب",
+      href: "/employees",
+      icon: UserCheck,
+      badge: "جديد"
     },
     {
       label: "الإعدادات والمستخدمين",
