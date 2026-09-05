@@ -53,7 +53,7 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
 
   if (!isOpen || !employee) return null;
 
-  // Direct Thermal Printing via Isolated Iframe (Strict 1-sticker fit)
+  // Direct Thermal Printing via High-DPI Canvas (Guarantees 1 Single Sticker, Never Sliced)
   const handlePrint = () => {
     const config = sizeMap[labelSize] || sizeMap["38x25"];
     const widthMm = config.w;
@@ -62,147 +62,162 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
     const svgElement = barcodeSvgRef.current;
     if (!svgElement) return;
 
-    const svgXml = new XMLSerializer().serializeToString(svgElement);
+    const svgString = new XMLSerializer().serializeToString(svgElement);
+    const svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+    const URL = window.URL || window.webkitURL || window;
+    const blobURL = URL.createObjectURL(svgBlob);
+    
+    const image = new Image();
+    image.onload = () => {
+      // 300 DPI high resolution canvas
+      const scale = 12; // 12 px per mm
+      const canvasWidth = widthMm * scale;
+      const canvasHeight = heightMm * scale;
 
-    const printHtml = `
-      <!DOCTYPE html>
-      <html lang="ar" dir="rtl">
-      <head>
-        <meta charset="utf-8" />
-        <title>Barcode_${barcodeValue}</title>
-        <style>
-          @page {
-            size: ${widthMm}mm ${heightMm}mm;
-            margin: 0mm !important;
-          }
-          @media print {
-            html, body {
-              width: ${widthMm}mm !important;
-              height: ${heightMm}mm !important;
-              max-width: ${widthMm}mm !important;
-              max-height: ${heightMm}mm !important;
-              margin: 0 !important;
-              padding: 0 !important;
-              overflow: hidden !important;
-              background: #ffffff !important;
-              page-break-after: avoid !important;
-              page-break-inside: avoid !important;
-              break-inside: avoid !important;
-              -webkit-print-color-adjust: exact !important;
-              print-color-adjust: exact !important;
+      const canvas = document.createElement("canvas");
+      canvas.width = canvasWidth;
+      canvas.height = canvasHeight;
+      const ctx = canvas.getContext("2d");
+
+      // Crisp background
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+      // Clean outer border
+      ctx.strokeStyle = "#000000";
+      ctx.lineWidth = 2.5;
+      ctx.strokeRect(6, 6, canvasWidth - 12, canvasHeight - 12);
+
+      // Header: Employee name + NELLY
+      ctx.fillStyle = "#000000";
+      ctx.font = "bold 20px Arial, Tahoma, sans-serif";
+      ctx.textAlign = "right";
+      ctx.fillText(employee.name || "", canvasWidth - 16, 28);
+
+      if (includeStoreName) {
+        ctx.font = "bold 16px Arial, Tahoma, sans-serif";
+        ctx.textAlign = "left";
+        ctx.fillText("★ NELLY ★", 16, 28);
+      }
+
+      // Divider 1
+      ctx.beginPath();
+      ctx.moveTo(10, 36);
+      ctx.lineTo(canvasWidth - 10, 36);
+      ctx.stroke();
+
+      // Barcode image
+      const barcodeTop = 42;
+      const barcodeHeight = canvasHeight - 88;
+      ctx.drawImage(image, 14, barcodeTop, canvasWidth - 28, barcodeHeight);
+
+      // Divider 2
+      const footerDividerY = canvasHeight - 38;
+      ctx.beginPath();
+      ctx.moveTo(10, footerDividerY);
+      ctx.lineTo(canvasWidth - 10, footerDividerY);
+      ctx.stroke();
+
+      // Footer: Code (Left) + Role (Right)
+      ctx.font = "bold 20px monospace, Courier";
+      ctx.textAlign = "left";
+      ctx.fillText(barcodeValue, 16, canvasHeight - 14);
+
+      ctx.font = "bold 18px Arial, Tahoma, sans-serif";
+      ctx.textAlign = "right";
+      ctx.fillText(employee.role || "بائع", canvasWidth - 16, canvasHeight - 14);
+
+      const stickerDataUrl = canvas.toDataURL("image/png");
+
+      const printHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>Sticker_${barcodeValue}</title>
+          <style>
+            @page {
+              size: ${widthMm}mm ${heightMm}mm;
+              margin: 0mm !important;
             }
-          }
-          * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-          }
-          body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, Tahoma, sans-serif;
-            width: ${widthMm}mm;
-            height: ${heightMm}mm;
-            max-width: ${widthMm}mm;
-            max-height: ${heightMm}mm;
-            padding: 0.8mm 1.5mm;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            align-items: center;
-            text-align: center;
-            background: #ffffff;
-            color: #000000;
-            overflow: hidden;
-            position: absolute;
-            top: 0;
-            left: 0;
-          }
-          .header {
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: ${config.fontSize};
-            font-weight: 900;
-            border-bottom: 0.5pt solid #000000;
-            padding-bottom: 0.5px;
-            line-height: 1;
-          }
-          .barcode-wrap {
-            width: 100%;
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-            margin: 0.5mm 0;
-          }
-          .barcode-wrap svg {
-            width: 96%;
-            height: ${config.maxSvgHeight};
-            max-height: ${config.maxSvgHeight};
-            display: block;
-          }
-          .footer {
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: ${config.fontSize};
-            font-weight: 900;
-            border-top: 0.5pt solid #000000;
-            padding-top: 0.5px;
-            line-height: 1;
-          }
-          .code-text {
-            font-family: monospace, Courier, monospace;
-            font-size: ${config.numSize};
-            font-weight: 900;
-            letter-spacing: 1px;
-            direction: ltr;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <span>${employee.name}</span>
-          ${includeStoreName ? '<span>★ NELLY ★</span>' : ''}
-        </div>
-        <div class="barcode-wrap">
-          ${svgXml}
-        </div>
-        <div class="footer">
-          <span class="code-text">${barcodeValue}</span>
-          <span>${employee.role || "بائع"}</span>
-        </div>
-      </body>
-      </html>
-    `;
+            @media print {
+              html, body {
+                width: ${widthMm}mm !important;
+                height: ${heightMm}mm !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                overflow: hidden !important;
+                background: #ffffff !important;
+                page-break-after: avoid !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+              }
+              img {
+                width: ${widthMm}mm !important;
+                height: ${heightMm}mm !important;
+                max-width: ${widthMm}mm !important;
+                max-height: ${heightMm}mm !important;
+                display: block !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                page-break-after: avoid !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+              }
+            }
+            * {
+              box-sizing: border-box;
+              margin: 0;
+              padding: 0;
+            }
+            body {
+              width: ${widthMm}mm;
+              height: ${heightMm}mm;
+              margin: 0;
+              padding: 0;
+              overflow: hidden;
+              background: #ffffff;
+            }
+            img {
+              width: ${widthMm}mm;
+              height: ${heightMm}mm;
+              display: block;
+              margin: 0;
+            }
+          </style>
+        </head>
+        <body>
+          <img src="${stickerDataUrl}" alt="Barcode Sticker" />
+        </body>
+        </html>
+      `;
 
-    // Write to hidden iframe and print
-    let iframe = document.getElementById("thermal-print-hidden-iframe");
-    if (!iframe) {
-      iframe = document.createElement("iframe");
-      iframe.id = "thermal-print-hidden-iframe";
-      iframe.style.position = "fixed";
-      iframe.style.right = "0";
-      iframe.style.bottom = "0";
-      iframe.style.width = "0";
-      iframe.style.height = "0";
-      iframe.style.border = "none";
-      document.body.appendChild(iframe);
-    }
+      let iframe = document.getElementById("thermal-print-hidden-iframe");
+      if (!iframe) {
+        iframe = document.createElement("iframe");
+        iframe.id = "thermal-print-hidden-iframe";
+        iframe.style.position = "fixed";
+        iframe.style.right = "0";
+        iframe.style.bottom = "0";
+        iframe.style.width = "0";
+        iframe.style.height = "0";
+        iframe.style.border = "none";
+        document.body.appendChild(iframe);
+      }
 
-    const doc = iframe.contentWindow.document;
-    doc.open();
-    doc.write(printHtml);
-    doc.close();
+      const doc = iframe.contentWindow.document;
+      doc.open();
+      doc.write(printHtml);
+      doc.close();
 
-    setTimeout(() => {
-      iframe.contentWindow.focus();
-      iframe.contentWindow.print();
-    }, 250);
+      setTimeout(() => {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+      }, 250);
+    };
+    image.src = blobURL;
   };
 
   // Download barcode image directly
