@@ -22,14 +22,14 @@ export default function BarcodeModal({ isOpen, onClose, product }) {
   const rawBarcode = product?.barcode || product?.code || "6221001001";
   const barcodeValue = String(rawBarcode).trim().replace(/[^\x20-\x7E]/g, "") || "6221001001";
 
-  // Label sizes in mm (Calibrated for compact, centered thermal stickers)
+  // Label sizes in mm (Calibrated for crisp, high-impact thermal stickers)
   const sizeMap = {
-    "50x30": { w: 50, h: 30, barWidth: 1.5, barHeight: 36, label: "50 × 30 مم", sub: "(المقاس القياسي)" },
-    "50x25": { w: 50, h: 25, barWidth: 1.4, barHeight: 28, label: "50 × 25 مم", sub: "(مقاس عريض)" },
-    "50x40": { w: 50, h: 40, barWidth: 1.6, barHeight: 44, label: "50 × 40 مم", sub: "(مقاس كبير جداً)" },
-    "60x40": { w: 60, h: 40, barWidth: 1.8, barHeight: 48, label: "60 × 40 مم", sub: "(مقاس جامبو)" },
-    "38x25": { w: 38, h: 25, barWidth: 1.2, barHeight: 24, label: "38 × 25 مم", sub: "(مقاس وسط)" },
-    "38x20": { w: 38, h: 20, barWidth: 1.1, barHeight: 18, label: "38 × 20 مم", sub: "(مقاس صغير)" }
+    "50x30": { w: 50, h: 30, barWidth: 1.8, barHeight: 46, label: "50 × 30 مم", sub: "(المقاس القياسي)" },
+    "50x25": { w: 50, h: 25, barWidth: 1.7, barHeight: 38, label: "50 × 25 مم", sub: "(مقاس عريض)" },
+    "50x40": { w: 50, h: 40, barWidth: 1.9, barHeight: 56, label: "50 × 40 مم", sub: "(مقاس كبير جداً)" },
+    "60x40": { w: 60, h: 40, barWidth: 2.1, barHeight: 62, label: "60 × 40 مم", sub: "(مقاس جامبو)" },
+    "38x25": { w: 38, h: 25, barWidth: 1.25, barHeight: 26, label: "38 × 25 مم", sub: "(مقاس وسط)" },
+    "38x20": { w: 38, h: 20, barWidth: 1.15, barHeight: 20, label: "38 × 20 مم", sub: "(مقاس صغير)" }
   };
 
   const displayPrice = product?.sellingPrice ? product.sellingPrice : product?.wholesalePrice || 0;
@@ -57,7 +57,7 @@ export default function BarcodeModal({ isOpen, onClose, product }) {
 
   if (!isOpen || !product) return null;
 
-  // Render high-res sticker on 300 DPI Canvas (100% BORDERLESS, COMPACT & CENTERED)
+  // Render high-res sticker on 300 DPI Canvas (100% BORDERLESS, ULTRA-BOLD & HIGH-LEGIBILITY)
   const createStickerCanvas = (callback) => {
     const config = sizeMap[labelSize] || sizeMap["50x30"];
     const widthMm = config.w;
@@ -95,22 +95,23 @@ export default function BarcodeModal({ isOpen, onClose, product }) {
 
         // Proportional sizing based on sticker dimensions
         const isSmall = widthMm < 45 || heightMm < 25;
-        const fontMult = fontSizeMode === "mini" ? 0.82 : fontSizeMode === "standard" ? 1.18 : 1.0;
+        const fontMult = fontSizeMode === "mini" ? 0.84 : fontSizeMode === "standard" ? 1.18 : 1.0;
 
-        const fontTitleSize = Math.round((isSmall ? 16 : 22) * fontMult);
-        const fontStoreSize = Math.round((isSmall ? 10 : 12) * fontMult);
-        const fontBarcodeSize = Math.round((isSmall ? 16 : 22) * fontMult);
-        const fontPriceSize = Math.round((isSmall ? 16 : 20) * fontMult);
+        // Big, heavy, ultra-legible fonts for thermal print
+        const fontTitleSize = Math.round((isSmall ? 18 : 30) * fontMult);
+        const fontStoreSize = Math.round((isSmall ? 11 : 16) * fontMult);
+        const fontBarcodeSize = Math.round((isSmall ? 18 : 28) * fontMult);
+        const fontPriceSize = Math.round((isSmall ? 18 : 28) * fontMult);
 
-        const safeMarginX = Math.round(canvasWidth * 0.06); // 6% safe quiet zone on sides
+        const safeMarginX = Math.round(canvasWidth * 0.05); // 5% safe quiet zone on sides
 
-        // Tight, cohesive vertical spacing between elements
+        // Cohesive vertical spacing between elements
         const gapHeaderBarcode = isSmall ? 6 : 10;
         const gapBarcodeFooter = isSmall ? 6 : 10;
 
-        // Compact Barcode Sizing (leaves ample safety margins at top & bottom)
-        const targetBarH = Math.round(canvasHeight * (isSmall ? 0.36 : 0.40));
-        const maxSafeW = Math.round(canvasWidth * (isSmall ? 0.78 : 0.82));
+        // Strong, well-proportioned barcode bars
+        const targetBarH = Math.round(canvasHeight * (isSmall ? 0.36 : 0.44));
+        const maxSafeW = Math.round(canvasWidth * (isSmall ? 0.78 : 0.84));
 
         const imgAspect = (image.width && image.height) ? (image.width / image.height) : 2.6;
         let drawH = targetBarH;
@@ -146,42 +147,42 @@ export default function BarcodeModal({ isOpen, onClose, product }) {
           return trimmed + "...";
         };
 
-        // 2. Header: Product Name (Right) + Store Brand (Left)
+        // 2. Header: Product Name (Right) + Store Brand (Left) - Heavy 900 weight
         ctx.fillStyle = "#000000";
         ctx.textBaseline = "middle";
 
         const storeText = "★ NELLY ★";
-        ctx.font = `900 ${fontStoreSize}px Arial, Tahoma, sans-serif`;
+        ctx.font = `900 ${fontStoreSize}px "Segoe UI", Arial, Tahoma, sans-serif`;
         const storeWidth = ctx.measureText(storeText).width;
 
         ctx.textAlign = "left";
         ctx.fillText(storeText, safeMarginX, headerCenterY);
 
-        ctx.font = `900 ${fontTitleSize}px Arial, Tahoma, sans-serif`;
+        ctx.font = `900 ${fontTitleSize}px "Segoe UI", Arial, Tahoma, sans-serif`;
         ctx.textAlign = "right";
-        const maxTitleWidth = canvasWidth - (safeMarginX * 2) - storeWidth - 14;
+        const maxTitleWidth = canvasWidth - (safeMarginX * 2) - storeWidth - 16;
         const safeTitle = truncateToFit(product.name || "منتج", maxTitleWidth);
         ctx.fillText(safeTitle, canvasWidth - safeMarginX, headerCenterY);
 
-        // 3. Barcode Vector Graphic: Compact, centered, crisp
+        // 3. Barcode Vector Graphic: Sharp, deep black, centered
         ctx.imageSmoothingEnabled = false;
         ctx.drawImage(image, barcodeDrawX, barcodeDrawY, drawW, drawH);
 
-        // 4. Footer: Barcode Digits (Left) + Price (Right)
+        // 4. Footer: Barcode Digits (Left) + Price (Right) - Heavy 900 weight
         ctx.fillStyle = "#000000";
         ctx.textBaseline = "middle";
 
         if (showPrice && displayPrice > 0) {
-          ctx.font = `900 ${fontBarcodeSize}px monospace, Courier`;
+          ctx.font = `900 ${fontBarcodeSize}px monospace, "Courier New", Courier`;
           ctx.textAlign = "left";
           ctx.fillText(barcodeValue, safeMarginX, footerCenterY);
 
-          ctx.font = `900 ${fontPriceSize}px Arial, Tahoma, sans-serif`;
+          ctx.font = `900 ${fontPriceSize}px "Segoe UI", Arial, Tahoma, sans-serif`;
           ctx.textAlign = "right";
           ctx.fillText(`${formatNumber(displayPrice)} ج.م`, canvasWidth - safeMarginX, footerCenterY);
         } else {
           // Centered barcode digits if price is hidden
-          ctx.font = `900 ${fontBarcodeSize}px monospace, Courier`;
+          ctx.font = `900 ${fontBarcodeSize}px monospace, "Courier New", Courier`;
           ctx.textAlign = "center";
           ctx.fillText(barcodeValue, Math.round(canvasWidth / 2), footerCenterY);
         }
@@ -553,7 +554,7 @@ export default function BarcodeModal({ isOpen, onClose, product }) {
                 paddingBottom: "1px"
               }}>
                 <span style={{ 
-                  fontSize: labelSize.startsWith("50") || labelSize.startsWith("60") ? "14.5px" : "12.5px", 
+                  fontSize: labelSize.startsWith("50") || labelSize.startsWith("60") ? "17px" : "13px", 
                   fontWeight: "900", 
                   color: "#000000",
                   whiteSpace: "nowrap",
@@ -563,14 +564,14 @@ export default function BarcodeModal({ isOpen, onClose, product }) {
                 }}>
                   {product.name}
                 </span>
-                <span style={{ fontSize: labelSize.startsWith("50") || labelSize.startsWith("60") ? "11px" : "9.5px", fontWeight: "900", letterSpacing: "1px", color: "#000000" }}>
+                <span style={{ fontSize: labelSize.startsWith("50") || labelSize.startsWith("60") ? "12.5px" : "9.5px", fontWeight: "900", letterSpacing: "1px", color: "#000000" }}>
                   ★ NELLY ★
                 </span>
               </div>
 
               {/* Barcode Vector Graphic (Compact & Centered) */}
-              <div style={{ display: "flex", justifyContent: "center", width: "100%", overflow: "hidden", margin: "1px 0" }}>
-                <svg ref={barcodeSvgRef} style={{ maxWidth: "82%", height: labelSize === "60x40" || labelSize === "50x40" ? "42px" : labelSize === "50x30" ? "34px" : "22px" }} />
+              <div style={{ display: "flex", justifyContent: "center", width: "100%", overflow: "hidden", margin: "2px 0" }}>
+                <svg ref={barcodeSvgRef} style={{ maxWidth: "84%", height: labelSize === "60x40" || labelSize === "50x40" ? "50px" : labelSize === "50x30" ? "42px" : "24px" }} />
               </div>
 
               {/* Barcode Digits & Price (Clean Borderless) */}
@@ -579,10 +580,10 @@ export default function BarcodeModal({ isOpen, onClose, product }) {
                 display: "flex", 
                 alignItems: "center", 
                 justifyContent: "space-between",
-                paddingTop: "1px"
+                paddingTop: "2px"
               }}>
                 <span className="num-font" dir="ltr" style={{ 
-                  fontSize: labelSize.startsWith("50") || labelSize.startsWith("60") ? "15px" : "13.5px", 
+                  fontSize: labelSize.startsWith("50") || labelSize.startsWith("60") ? "17px" : "13.5px", 
                   fontWeight: "900", 
                   letterSpacing: "2px", 
                   fontFamily: "monospace",
@@ -591,7 +592,7 @@ export default function BarcodeModal({ isOpen, onClose, product }) {
                   {barcodeValue}
                 </span>
                 {showPrice && displayPrice > 0 && (
-                  <span style={{ fontSize: labelSize.startsWith("50") || labelSize.startsWith("60") ? "14px" : "12px", fontWeight: "900", color: "#000000" }}>
+                  <span style={{ fontSize: labelSize.startsWith("50") || labelSize.startsWith("60") ? "17px" : "12.5px", fontWeight: "900", color: "#000000" }}>
                     <span className="num-font" dir="ltr">{formatNumber(displayPrice)}</span> ج.م
                   </span>
                 )}
