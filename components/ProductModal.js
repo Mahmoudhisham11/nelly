@@ -14,19 +14,10 @@ import {
 } from "lucide-react";
 
 export const CATEGORIES = [
-  "أحمر شفاه وروج",
-  "كريم أساس وفونديشن",
-  "ظلال عيون وايشادو",
-  "ماسكارا وآيلاينر",
-  "أحمر خدود وبلاشر",
-  "كونتور وهايلايتر",
-  "برايمر ومثبتات مكياج",
-  "بودرة تثبيت ولوس باودر",
-  "عطور وميست للجسم",
-  "عناية بالبشرة وسيروم",
-  "فرش وإسفنجات ميكاب",
-  "أظافر ومناكير",
-  "أصناف أخرى"
+  "Makeup",
+  "Stainless",
+  "Skin Care",
+  "Accessories"
 ];
 
 export default function ProductModal({ 
@@ -43,7 +34,7 @@ export default function ProductModal({
   const [formData, setFormData] = useState({
     barcode: "",
     name: "",
-    category: "أحمر شفاه وروج",
+    category: "Makeup",
     quantity: "",
     wholesalePrice: "",
     sellingPrice: "",
@@ -61,7 +52,7 @@ export default function ProductModal({
         setFormData({
           barcode: productToEdit.barcode || productToEdit.code || "",
           name: productToEdit.name || "",
-          category: productToEdit.category || "أحمر شفاه وروج",
+          category: productToEdit.category || "Makeup",
           quantity: productToEdit.quantity !== undefined ? productToEdit.quantity : "",
           wholesalePrice: productToEdit.wholesalePrice !== undefined ? productToEdit.wholesalePrice : "",
           sellingPrice: productToEdit.sellingPrice !== undefined ? productToEdit.sellingPrice : "",
@@ -74,7 +65,7 @@ export default function ProductModal({
         setFormData({
           barcode: "",
           name: "",
-          category: "أحمر شفاه وروج",
+          category: "Makeup",
           quantity: "",
           wholesalePrice: "",
           sellingPrice: "",
@@ -331,7 +322,7 @@ export default function ProductModal({
             {/* Row 2: Category & Brand */}
             <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: "14px", marginBottom: "14px" }}>
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label">قسم الميكاب / التصنيف</label>
+                <label className="form-label">التصنيف / Category</label>
                 <CustomSelect 
                   options={CATEGORIES}
                   value={formData.category}
