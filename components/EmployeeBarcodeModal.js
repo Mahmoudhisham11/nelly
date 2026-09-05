@@ -26,14 +26,14 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
   // Code128 supports ASCII printable characters (letters, numbers, dashes)
   const barcodeValue = rawBarcodeValue.replace(/[^\x20-\x7E]/g, "") || "EMP01";
 
-  // Sizes in mm (Strict thermal printer dimensions)
+  // Sizes in mm (Calibrated for compact, centered thermal stickers)
   const sizeMap = {
-    "50x30": { w: 50, h: 30, barWidth: 1.8, barHeight: 48, label: "50 × 30 مم", sub: "(المقاس الجديد بالصورة)" },
-    "50x25": { w: 50, h: 25, barWidth: 1.7, barHeight: 38, label: "50 × 25 مم", sub: "(مقاس عريض)" },
-    "50x40": { w: 50, h: 40, barWidth: 1.9, barHeight: 58, label: "50 × 40 مم", sub: "(مقاس كبير جداً)" },
-    "60x40": { w: 60, h: 40, barWidth: 2.1, barHeight: 62, label: "60 × 40 مم", sub: "(مقاس جامبو)" },
-    "38x25": { w: 38, h: 25, barWidth: 1.4, barHeight: 34, label: "38 × 25 مم", sub: "(مقاس قياسي)" },
-    "38x20": { w: 38, h: 20, barWidth: 1.3, barHeight: 28, label: "38 × 20 مم", sub: "(مقاس صغير)" }
+    "50x30": { w: 50, h: 30, barWidth: 1.5, barHeight: 36, label: "50 × 30 مم", sub: "(المقاس الجديد بالصورة)" },
+    "50x25": { w: 50, h: 25, barWidth: 1.4, barHeight: 28, label: "50 × 25 مم", sub: "(مقاس عريض)" },
+    "50x40": { w: 50, h: 40, barWidth: 1.6, barHeight: 44, label: "50 × 40 مم", sub: "(مقاس كبير جداً)" },
+    "60x40": { w: 60, h: 40, barWidth: 1.8, barHeight: 48, label: "60 × 40 مم", sub: "(مقاس جامبو)" },
+    "38x25": { w: 38, h: 25, barWidth: 1.2, barHeight: 24, label: "38 × 25 مم", sub: "(مقاس قياسي)" },
+    "38x20": { w: 38, h: 20, barWidth: 1.1, barHeight: 18, label: "38 × 20 مم", sub: "(مقاس صغير)" }
   };
 
   // Generate real vector Code128 Barcode
@@ -58,7 +58,7 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
 
   if (!isOpen || !employee) return null;
 
-  // Render high-res sticker on 300 DPI Canvas (100% BORDERLESS - No strokeRect, No setLineDash, No divider lines)
+  // Render high-res sticker on 300 DPI Canvas (100% BORDERLESS, COMPACT & CENTERED)
   const createStickerCanvas = (callback) => {
     const config = sizeMap[labelSize] || sizeMap["50x30"];
     let widthMm = config.w;
@@ -95,7 +95,7 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
         canvas.height = canvasHeight;
         const ctx = canvas.getContext("2d");
 
-        // 1. Pure Crisp White Background (100% BORDERLESS - Absolute zero strokeRect or edge lines)
+        // 1. Pure Crisp White Background (100% BORDERLESS - No outer border or edge bleeding)
         ctx.fillStyle = "#ffffff";
         ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
@@ -103,15 +103,43 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
         const isSmall = widthMm < 45 || heightMm < 25;
         const fontMult = fontSizeMode === "mini" ? 0.82 : fontSizeMode === "standard" ? 1.18 : 1.0;
 
-        const headerBandHeight = Math.round(canvasHeight * (isSmall ? 0.23 : 0.21));
-        const footerBandHeight = Math.round(canvasHeight * (isSmall ? 0.24 : 0.22));
+        const fontHeaderSize = Math.round((isSmall ? 16 : 22) * fontMult);
+        const fontStoreSize = Math.round((isSmall ? 10 : 12) * fontMult);
+        const fontFooterCode = Math.round((isSmall ? 16 : 22) * fontMult);
+        const fontFooterRole = Math.round((isSmall ? 15 : 19) * fontMult);
 
-        const fontHeaderSize = Math.round((isSmall ? 18 : 24) * fontMult);
-        const fontStoreSize = Math.round((isSmall ? 11 : 13) * fontMult);
-        const fontFooterCode = Math.round((isSmall ? 18 : 24) * fontMult);
-        const fontFooterRole = Math.round((isSmall ? 16 : 20) * fontMult);
+        const safeMarginX = Math.round(canvasWidth * 0.06); // 6% safe quiet zone on sides
 
-        const safeMarginX = Math.round(canvasWidth * 0.05); // 5% quiet zone from edges
+        // Tight, cohesive vertical spacing between elements
+        const gapHeaderBarcode = isSmall ? 6 : 10;
+        const gapBarcodeFooter = isSmall ? 6 : 10;
+
+        // Compact Barcode Sizing (leaves ample safety margins at top & bottom)
+        const targetBarH = Math.round(canvasHeight * (isSmall ? 0.36 : 0.40));
+        const maxSafeW = Math.round(canvasWidth * (isSmall ? 0.78 : 0.82));
+
+        const imgAspect = (image.width && image.height) ? (image.width / image.height) : 2.6;
+        let drawH = targetBarH;
+        let drawW = drawH * imgAspect;
+
+        if (drawW > maxSafeW) {
+          drawW = maxSafeW;
+          drawH = drawW / imgAspect;
+        }
+
+        const headerTextHeight = fontHeaderSize;
+        const footerTextHeight = Math.max(fontFooterCode, fontFooterRole);
+
+        // Total content block height
+        const totalContentHeight = headerTextHeight + gapHeaderBarcode + drawH + gapBarcodeFooter + footerTextHeight;
+
+        // Perfectly vertically center the entire block within the sticker
+        const startY = Math.round((canvasHeight - totalContentHeight) / 2);
+
+        const headerCenterY = startY + Math.round(headerTextHeight / 2);
+        const barcodeDrawY = startY + headerTextHeight + gapHeaderBarcode;
+        const footerCenterY = barcodeDrawY + drawH + gapBarcodeFooter + Math.round(footerTextHeight / 2);
+        const barcodeDrawX = Math.round((canvasWidth - drawW) / 2);
 
         // Helper to truncate text safely if employee name is long
         const truncateToFit = (text, maxW) => {
@@ -125,7 +153,6 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
         };
 
         // 2. Header: Employee Name (Right) + Store Brand (Left) - Vertically centered
-        const headerCenterY = Math.round(headerBandHeight / 2) + 2;
         ctx.fillStyle = "#000000";
         ctx.textBaseline = "middle";
 
@@ -144,26 +171,11 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
         const safeName = truncateToFit(employee.name || "موظف", maxNameWidth);
         ctx.fillText(safeName, canvasWidth - safeMarginX, headerCenterY);
 
-        // 3. Barcode Vector Graphic (Proportionally centered horizontally and vertically with safe quiet zones)
-        const barcodeTop = headerBandHeight + 2;
-        const barcodeAvailableHeight = canvasHeight - headerBandHeight - footerBandHeight - 4;
-        const maxSafeW = Math.round(canvasWidth * 0.88); // 6% quiet zone on each side
+        // 3. Barcode Vector Graphic: Compact, centered, crisp
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(image, barcodeDrawX, barcodeDrawY, drawW, drawH);
 
-        const imgAspect = (image.width && image.height) ? (image.width / image.height) : 2.6;
-        let drawH = barcodeAvailableHeight;
-        let drawW = drawH * imgAspect;
-
-        if (drawW > maxSafeW) {
-          drawW = maxSafeW;
-          drawH = drawW / imgAspect;
-        }
-
-        const drawX = Math.round((canvasWidth - drawW) / 2);
-        const drawY = Math.round(barcodeTop + (barcodeAvailableHeight - drawH) / 2);
-        ctx.drawImage(image, drawX, drawY, drawW, drawH);
-
-        // 4. Footer: Barcode Code (Left) + Role (Right) - Large & Sharp, Vertically Centered
-        const footerCenterY = canvasHeight - Math.round(footerBandHeight / 2);
+        // 4. Footer: Barcode Code (Left) + Role (Right)
         ctx.fillStyle = "#000000";
         ctx.textBaseline = "middle";
 
@@ -565,11 +577,12 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
                 color: "#000000",
                 borderRadius: "4px",
                 border: "none",
-                padding: "8px 12px",
+                padding: "12px 14px",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
-                justifyContent: "space-between",
+                justifyContent: "center",
+                gap: "4px",
                 textAlign: "center",
                 fontFamily: "Arial, Tahoma, sans-serif",
                 boxShadow: "0 4px 14px rgba(0,0,0,0.06)"
@@ -581,10 +594,10 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
                 display: "flex", 
                 alignItems: "center", 
                 justifyContent: "space-between",
-                paddingBottom: "2px"
+                paddingBottom: "1px"
               }}>
                 <span style={{ 
-                  fontSize: labelSize.startsWith("50") || labelSize.startsWith("60") ? "15px" : "13px", 
+                  fontSize: labelSize.startsWith("50") || labelSize.startsWith("60") ? "14.5px" : "12.5px", 
                   fontWeight: "900", 
                   color: "#000000",
                   whiteSpace: "nowrap",
@@ -595,15 +608,15 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
                   {employee.name}
                 </span>
                 {includeStoreName && (
-                  <span style={{ fontSize: labelSize.startsWith("50") || labelSize.startsWith("60") ? "12px" : "10.5px", fontWeight: "900", letterSpacing: "1px", color: "#000000" }}>
+                  <span style={{ fontSize: labelSize.startsWith("50") || labelSize.startsWith("60") ? "11px" : "9.5px", fontWeight: "900", letterSpacing: "1px", color: "#000000" }}>
                     ★ NELLY ★
                   </span>
                 )}
               </div>
 
-              {/* Barcode Vector Graphic (Centered) */}
-              <div style={{ display: "flex", justifyContent: "center", width: "100%", overflow: "hidden", margin: "2px 0" }}>
-                <svg ref={barcodeSvgRef} style={{ maxWidth: "90%", height: labelSize === "60x40" || labelSize === "50x40" ? "54px" : labelSize === "50x30" ? "46px" : "34px" }} />
+              {/* Barcode Vector Graphic (Compact & Centered) */}
+              <div style={{ display: "flex", justifyContent: "center", width: "100%", overflow: "hidden", margin: "1px 0" }}>
+                <svg ref={barcodeSvgRef} style={{ maxWidth: "82%", height: labelSize === "60x40" || labelSize === "50x40" ? "42px" : labelSize === "50x30" ? "34px" : "22px" }} />
               </div>
 
               {/* Barcode Numbers & Code (Clean Borderless) */}
@@ -612,7 +625,7 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
                 display: "flex", 
                 alignItems: "center", 
                 justifyContent: "space-between",
-                paddingTop: "2px"
+                paddingTop: "1px"
               }}>
                 <span className="num-font" dir="ltr" style={{ 
                   fontSize: labelSize.startsWith("50") || labelSize.startsWith("60") ? "15px" : "13.5px", 
