@@ -82,6 +82,35 @@ export default function POSReceiptModal({ isOpen, onClose, invoice, onNewSale })
           vertical-align: middle !important;
           padding: 4px 2px !important;
         }
+        #printable-receipt table.receipt-grid-table th:nth-child(1),
+        #printable-receipt table.receipt-grid-table td:nth-child(1),
+        .thermal-receipt table.receipt-grid-table th:nth-child(1),
+        .thermal-receipt table.receipt-grid-table td:nth-child(1) {
+          width: 42% !important;
+          text-align: right !important;
+          padding-right: 4px !important;
+        }
+        #printable-receipt table.receipt-grid-table th:nth-child(2),
+        #printable-receipt table.receipt-grid-table td:nth-child(2),
+        .thermal-receipt table.receipt-grid-table th:nth-child(2),
+        .thermal-receipt table.receipt-grid-table td:nth-child(2) {
+          width: 16% !important;
+          text-align: center !important;
+        }
+        #printable-receipt table.receipt-grid-table th:nth-child(3),
+        #printable-receipt table.receipt-grid-table td:nth-child(3),
+        .thermal-receipt table.receipt-grid-table th:nth-child(3),
+        .thermal-receipt table.receipt-grid-table td:nth-child(3) {
+          width: 20% !important;
+          text-align: center !important;
+        }
+        #printable-receipt table.receipt-grid-table th:nth-child(4),
+        #printable-receipt table.receipt-grid-table td:nth-child(4),
+        .thermal-receipt table.receipt-grid-table th:nth-child(4),
+        .thermal-receipt table.receipt-grid-table td:nth-child(4) {
+          width: 22% !important;
+          text-align: center !important;
+        }
       }
     `;
 
@@ -259,57 +288,57 @@ export default function POSReceiptModal({ isOpen, onClose, invoice, onNewSale })
                   borderCollapse: "collapse", 
                   border: "1.5px solid #000000",
                   color: "#000000",
-                  direction: "rtl"
+                  direction: "rtl",
+                  margin: "6px 0"
                 }}
               >
-                <colgroup>
-                  <col style={{ width: "42%" }} />
-                  <col style={{ width: "16%" }} />
-                  <col style={{ width: "20%" }} />
-                  <col style={{ width: "22%" }} />
-                </colgroup>
                 <thead>
-                  <tr style={{ 
-                    background: "#f0f0f0", 
-                    borderBottom: "1.5px solid #000000" 
-                  }}>
+                  <tr style={{ background: "#f0f0f0" }}>
                     <th style={{ 
+                      width: "42%",
                       textAlign: "right", 
-                      padding: "5px 6px", 
+                      padding: "5px 4px", 
                       fontWeight: "900", 
                       color: "#000000", 
                       border: "1px solid #000000",
-                      verticalAlign: "middle" 
+                      verticalAlign: "middle",
+                      boxSizing: "border-box"
                     }}>
                       اسم الصنف
                     </th>
                     <th style={{ 
+                      width: "16%",
                       textAlign: "center", 
                       padding: "5px 2px", 
                       fontWeight: "900", 
                       color: "#000000", 
                       border: "1px solid #000000",
-                      verticalAlign: "middle" 
+                      verticalAlign: "middle",
+                      boxSizing: "border-box"
                     }}>
                       الكمية
                     </th>
                     <th style={{ 
+                      width: "20%",
                       textAlign: "center", 
                       padding: "5px 2px", 
                       fontWeight: "900", 
                       color: "#000000", 
                       border: "1px solid #000000",
-                      verticalAlign: "middle" 
+                      verticalAlign: "middle",
+                      boxSizing: "border-box"
                     }}>
                       السعر
                     </th>
                     <th style={{ 
+                      width: "22%",
                       textAlign: "center", 
                       padding: "5px 2px", 
                       fontWeight: "900", 
                       color: "#000000", 
                       border: "1px solid #000000",
-                      verticalAlign: "middle" 
+                      verticalAlign: "middle",
+                      boxSizing: "border-box"
                     }}>
                       الإجمالي
                     </th>
@@ -319,48 +348,53 @@ export default function POSReceiptModal({ isOpen, onClose, invoice, onNewSale })
                   {items.map((it, idx) => (
                     <tr key={idx}>
                       <td style={{ 
+                        width: "42%",
                         textAlign: "right", 
-                        padding: "5px 6px", 
+                        padding: "5px 4px", 
                         fontWeight: "800", 
                         color: "#000000", 
                         border: "1px solid #000000",
                         verticalAlign: "middle",
                         lineHeight: "1.3",
-                        wordBreak: "break-word"
+                        wordBreak: "break-word",
+                        boxSizing: "border-box"
                       }}>
                         {it.name}
                       </td>
                       <td style={{ 
+                        width: "16%",
                         textAlign: "center", 
                         padding: "5px 2px", 
                         fontWeight: "900", 
                         color: "#000000", 
                         border: "1px solid #000000",
                         verticalAlign: "middle",
-                        whiteSpace: "nowrap"
-                      }} className="num-font">
+                        boxSizing: "border-box"
+                      }}>
                         {it.quantity}
                       </td>
                       <td style={{ 
+                        width: "20%",
                         textAlign: "center", 
                         padding: "5px 2px", 
                         fontWeight: "800", 
                         color: "#000000", 
                         border: "1px solid #000000",
                         verticalAlign: "middle",
-                        whiteSpace: "nowrap"
-                      }} className="num-font">
+                        boxSizing: "border-box"
+                      }}>
                         {formatNumber(it.sellingPrice)}
                       </td>
                       <td style={{ 
+                        width: "22%",
                         textAlign: "center", 
                         padding: "5px 2px", 
                         fontWeight: "900", 
                         color: "#000000", 
                         border: "1px solid #000000",
                         verticalAlign: "middle",
-                        whiteSpace: "nowrap"
-                      }} className="num-font">
+                        boxSizing: "border-box"
+                      }}>
                         {formatNumber(it.subtotal || it.quantity * it.sellingPrice)}
                       </td>
                     </tr>

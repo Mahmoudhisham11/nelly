@@ -992,14 +992,42 @@ export default function POSPage() {
                       </div>
                     ) : (
                       <div className="pos-cart-items-list">
-                        {cart.map((item) => (
-                          <div key={item.id} className="pos-cart-single-row" style={{ padding: "0.75rem 1rem" }}>
-                            <div className="pos-cart-item-details">
-                              <div className="pos-item-title" style={{ fontSize: "0.95rem" }}>{item.name}</div>
-                              <div className="pos-item-subtext" style={{ fontSize: "0.8rem", marginTop: "2px" }}>
-                                {formatNumber(item.sellingPrice)} ج.م × {item.quantity} = <strong style={{ color: "var(--rose-700)" }}>{formatNumber(item.sellingPrice * item.quantity)} ج.م</strong>
+                        {cart.map((item) => {
+                          const liveStock = shopProducts.find(p => p.id === (item.productId || item.id))?.quantity ?? item.stock ?? 0;
+                          const remainingStockAfterCart = Math.max(0, liveStock - item.quantity);
+
+                          return (
+                            <div key={item.id} className="pos-cart-single-row" style={{ padding: "0.85rem 1rem", alignItems: "center" }}>
+                              <div className="pos-cart-item-details">
+                                <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                                  <span className="pos-item-title" style={{ fontSize: "0.95rem", fontWeight: "900" }}>{item.name}</span>
+                                  <span 
+                                    style={{ 
+                                      fontSize: "0.74rem", 
+                                      fontWeight: "800",
+                                      background: liveStock <= 3 ? "#fef2f2" : "#ecfdf5",
+                                      color: liveStock <= 3 ? "#dc2626" : "#059669",
+                                      border: `1px solid ${liveStock <= 3 ? "#fecaca" : "#a7f3d0"}`,
+                                      padding: "2px 8px",
+                                      borderRadius: "6px",
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      gap: "3px"
+                                    }}
+                                    title="إجمالي الكمية المتوفرة بالمحل"
+                                  >
+                                    📦 رصيد المحل الكلي: <strong className="num-font" dir="ltr">{liveStock}</strong> قطعة
+                                  </span>
+                                </div>
+                                <div className="pos-item-subtext" style={{ fontSize: "0.82rem", marginTop: "4px", display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+                                  <span>
+                                    {formatNumber(item.sellingPrice)} ج.م × {item.quantity} = <strong style={{ color: "var(--rose-700)", fontWeight: "900" }}>{formatNumber(item.sellingPrice * item.quantity)} ج.م</strong>
+                                  </span>
+                                  <span style={{ color: "#7c3aed", fontSize: "0.75rem", fontWeight: "700" }}>
+                                    (المتبقي بالمحل بعد السلة: <strong className="num-font" dir="ltr">{remainingStockAfterCart}</strong> قطعة)
+                                  </span>
+                                </div>
                               </div>
-                            </div>
 
                             <div className="pos-qty-button-group">
                               <button 
@@ -1025,8 +1053,9 @@ export default function POSPage() {
                                 <Trash2 size={16} />
                               </button>
                             </div>
-                          </div>
-                        ))}
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
