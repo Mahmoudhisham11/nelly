@@ -89,6 +89,7 @@ export default function POSPage() {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // Shift Invoices Table State & Filters
+  const [showShiftInvoices, setShowShiftInvoices] = useState(false);
   const [invoiceSearchQuery, setInvoiceSearchQuery] = useState("");
   const [paymentFilter, setPaymentFilter] = useState("all");
   const [selectedInvoiceForDetails, setSelectedInvoiceForDetails] = useState(null);
@@ -748,16 +749,54 @@ export default function POSPage() {
               </div>
             </div>
 
-            {/* Close Shift Big Action */}
-            <button 
-              type="button"
-              onClick={() => setIsCloseShiftModalOpen(true)}
-              className="btn-close-shift-action"
-              title="تقفيل الوردية ونقل الفواتير لأرشيف تقفيلة الأيام (reports)"
-            >
-              <Lock size={18} />
-              <span>تقفيل الوردية وأرشفة الحسابات 🔒</span>
-            </button>
+            {/* Top Bar Actions: Show Invoices & Close Shift */}
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+              {/* Toggle Shift Invoices Button */}
+              <button 
+                type="button"
+                onClick={() => setShowShiftInvoices(!showShiftInvoices)}
+                className="btn-pos-toggle-invoices"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.6rem",
+                  padding: "0.7rem 1.25rem",
+                  borderRadius: "14px",
+                  fontWeight: "800",
+                  fontSize: "0.92rem",
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                  background: showShiftInvoices ? "linear-gradient(135deg, #db2777, #be185d)" : "#ffffff",
+                  color: showShiftInvoices ? "#ffffff" : "#be185d",
+                  border: `1.5px solid ${showShiftInvoices ? "#be185d" : "#fbcfe8"}`,
+                  boxShadow: showShiftInvoices ? "0 4px 14px rgba(219, 39, 119, 0.3)" : "0 2px 8px rgba(0,0,0,0.04)"
+                }}
+                title={showShiftInvoices ? "العودة لسلة البيع والكاشير" : "عرض فواتير الوردية الحالية"}
+              >
+                {showShiftInvoices ? (
+                  <>
+                    <ShoppingCart size={18} />
+                    <span>🛒 العودة لسلة البيع والكاشير</span>
+                  </>
+                ) : (
+                  <>
+                    <Receipt size={18} />
+                    <span>📋 عرض فواتير الوردية ({shiftStats.count})</span>
+                  </>
+                )}
+              </button>
+
+              {/* Close Shift Big Action */}
+              <button 
+                type="button"
+                onClick={() => setIsCloseShiftModalOpen(true)}
+                className="btn-close-shift-action"
+                title="تقفيل الوردية ونقل الفواتير لأرشيف تقفيلة الأيام (reports)"
+              >
+                <Lock size={18} />
+                <span>تقفيل الوردية وأرشفة الحسابات 🔒</span>
+              </button>
+            </div>
           </div>
 
           {/* =========================================================
@@ -814,26 +853,25 @@ export default function POSPage() {
           </div>
 
           {/* =========================================================
-              3. MAIN WORKSPACE GRID: Register (Right) + Shift Table (Left)
+              3. MAIN WORKSPACE: Full Width Cart OR Full Width Shift Invoices
               ========================================================= */}
-          <div className="pos-workspace-grid">
-
-            {/* -------------------------------------------------------
-                RIGHT COLUMN: Register, Scanner, and Shopping Cart
-                ------------------------------------------------------- */}
-            <div className="pos-register-container">
+          {!showShiftInvoices ? (
+            /* -------------------------------------------------------
+                FULL-WIDTH SHOPPING CART & REGISTER
+                ------------------------------------------------------- */
+            <div className="pos-register-container" style={{ width: "100%" }}>
               
-              {/* Barcode & Search Input */}
+              {/* Barcode & Search Input (Full Width Prominent Top Bar) */}
               <div className="pos-scanner-container">
-                <label className="pos-scanner-label">
-                  <Barcode size={17} color="var(--rose-600)" />
-                  <span>إضافة منتج من المحل (امسح الباركود أو اكتب الاسم)</span>
+                <label className="pos-scanner-label" style={{ fontSize: "0.9rem" }}>
+                  <Barcode size={19} color="var(--rose-600)" />
+                  <span>إضافة منتج من المحل (امسح الباركود أو اكتب اسم الصنف)</span>
                 </label>
                 <div className="pos-scanner-input-wrap">
                   <input
                     ref={searchInputRef}
                     type="text"
-                    placeholder="امسح الباركود أو اكتب اسم الصنف..."
+                    placeholder="امسح الباركود أو اكتب اسم الصنف للإضافة السريعة..."
                     value={searchTerm}
                     onChange={(e) => {
                       setSearchTerm(e.target.value);
@@ -844,8 +882,9 @@ export default function POSPage() {
                       if (searchTerm.trim()) setSearchDropdownOpen(true);
                     }}
                     className="pos-scanner-input-field"
+                    style={{ height: "48px", fontSize: "0.95rem" }}
                   />
-                  <Search size={19} className="pos-scanner-leading-icon" />
+                  <Search size={20} className="pos-scanner-leading-icon" />
 
                   {/* Autocomplete Menu */}
                   {searchDropdownOpen && matchingShopProducts.length > 0 && (
@@ -885,378 +924,423 @@ export default function POSPage() {
                 </div>
               </div>
 
-              {/* Cart Header */}
-              <div className="pos-cart-top-bar">
-                <div className="pos-cart-title-text">
-                  <ShoppingCart size={18} color="var(--rose-600)" />
-                  <span>سلة البيع ({cart.reduce((a, c) => a + c.quantity, 0)} قطعة)</span>
-                </div>
+              {/* 2-Column Full-Width Interior Grid on Large Screens */}
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(380px, 1fr))",
+                gap: "20px",
+                alignItems: "start",
+                marginTop: "4px"
+              }}>
+                {/* RIGHT COLUMN: Cart Items & Customer Info */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                  {/* Cart Header */}
+                  <div className="pos-cart-top-bar">
+                    <div className="pos-cart-title-text" style={{ fontSize: "1rem" }}>
+                      <ShoppingCart size={20} color="var(--rose-600)" />
+                      <span>سلة البيع ({cart.reduce((a, c) => a + c.quantity, 0)} قطعة)</span>
+                    </div>
 
-                <div className="pos-cart-actions-group">
-                  {/* Held Invoices */}
-                  <button 
-                    type="button"
-                    onClick={() => setIsHeldInvoicesModalOpen(true)}
-                    className="btn-pos-held-invoices"
-                    title="استعراض الفواتير المعلقة"
-                    style={{ gap: "6px", padding: "0.35rem 0.75rem", fontSize: "0.75rem", fontWeight: "800" }}
-                  >
-                    <FolderClock size={16} />
-                    <span>المعلقة</span>
-                    {heldInvoices.length > 0 && (
-                      <span className="pos-badge-held-counter">{heldInvoices.length}</span>
-                    )}
-                  </button>
+                    <div className="pos-cart-actions-group">
+                      {/* Held Invoices */}
+                      <button 
+                        type="button"
+                        onClick={() => setIsHeldInvoicesModalOpen(true)}
+                        className="btn-pos-held-invoices"
+                        title="استعراض الفواتير المعلقة"
+                        style={{ gap: "6px", padding: "0.4rem 0.85rem", fontSize: "0.8rem", fontWeight: "800" }}
+                      >
+                        <FolderClock size={16} />
+                        <span>المعلقة</span>
+                        {heldInvoices.length > 0 && (
+                          <span className="pos-badge-held-counter">{heldInvoices.length}</span>
+                        )}
+                      </button>
 
-                  {/* Hold Current Cart */}
-                  {cart.length > 0 && (
-                    <button
-                      onClick={handleHoldInvoice}
-                      className="btn-pos-hold-action"
-                      title="تعليق الفاتورة الحالية لخدمة زبون آخر"
-                    >
-                      <PauseCircle size={15} />
-                      <span>تعليق</span>
-                    </button>
-                  )}
+                      {/* Hold Current Cart */}
+                      {cart.length > 0 && (
+                        <button
+                          onClick={handleHoldInvoice}
+                          className="btn-pos-hold-action"
+                          title="تعليق الفاتورة الحالية لخدمة زبون آخر"
+                        >
+                          <PauseCircle size={15} />
+                          <span>تعليق</span>
+                        </button>
+                      )}
 
-                  {/* Clear Cart */}
-                  {cart.length > 0 && (
-                    <button 
-                      onClick={clearCart} 
-                      className="btn-pos-clear-action"
-                      title="تفريغ السلة"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Cart Items List */}
-              <div className="pos-cart-items-wrapper">
-                {cart.length === 0 ? (
-                  <div className="pos-cart-empty-placeholder">
-                    <ShoppingCart size={32} color="var(--text-muted)" style={{ opacity: 0.35 }} />
-                    <p>سلة البيع فارغة</p>
-                    <span>امسح باركود المنتج لإضافته فوراً</span>
+                      {/* Clear Cart */}
+                      {cart.length > 0 && (
+                        <button 
+                          onClick={clearCart} 
+                          className="btn-pos-clear-action"
+                          title="تفريغ السلة"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      )}
+                    </div>
                   </div>
-                ) : (
-                  <div className="pos-cart-items-list">
-                    {cart.map((item) => (
-                      <div key={item.id} className="pos-cart-single-row">
-                        <div className="pos-cart-item-details">
-                          <div className="pos-item-title">{item.name}</div>
-                          <div className="pos-item-subtext">
-                            {formatNumber(item.sellingPrice)} ج.م × {item.quantity} = <strong>{formatNumber(item.sellingPrice * item.quantity)} ج.م</strong>
-                          </div>
-                        </div>
 
-                        <div className="pos-qty-button-group">
-                          <button 
-                            onClick={() => updateQuantity(item.id, 1)}
-                            className="btn-pos-qty"
-                          >
-                            <Plus size={13} />
-                          </button>
-                          <span className="pos-qty-display-number">{item.quantity}</span>
-                          <button 
-                            onClick={() => updateQuantity(item.id, -1)}
-                            className="btn-pos-qty"
-                          >
-                            <Minus size={13} />
-                          </button>
-                          <button 
-                            onClick={() => removeFromCart(item.id)}
-                            className="btn-pos-delete-item"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
+                  {/* Cart Items List */}
+                  <div className="pos-cart-items-wrapper" style={{ maxHeight: "360px", minHeight: "160px" }}>
+                    {cart.length === 0 ? (
+                      <div className="pos-cart-empty-placeholder" style={{ height: "160px" }}>
+                        <ShoppingCart size={38} color="var(--text-muted)" style={{ opacity: 0.35 }} />
+                        <p style={{ fontSize: "0.95rem" }}>سلة البيع فارغة</p>
+                        <span>امسح باركود المنتج أو ابحث باسمه لإضافته فوراً</span>
                       </div>
-                    ))}
+                    ) : (
+                      <div className="pos-cart-items-list">
+                        {cart.map((item) => (
+                          <div key={item.id} className="pos-cart-single-row" style={{ padding: "0.75rem 1rem" }}>
+                            <div className="pos-cart-item-details">
+                              <div className="pos-item-title" style={{ fontSize: "0.95rem" }}>{item.name}</div>
+                              <div className="pos-item-subtext" style={{ fontSize: "0.8rem", marginTop: "2px" }}>
+                                {formatNumber(item.sellingPrice)} ج.م × {item.quantity} = <strong style={{ color: "var(--rose-700)" }}>{formatNumber(item.sellingPrice * item.quantity)} ج.م</strong>
+                              </div>
+                            </div>
+
+                            <div className="pos-qty-button-group">
+                              <button 
+                                onClick={() => updateQuantity(item.id, 1)}
+                                className="btn-pos-qty"
+                                style={{ width: "30px", height: "30px" }}
+                              >
+                                <Plus size={15} />
+                              </button>
+                              <span className="pos-qty-display-number" style={{ fontSize: "1rem", width: "26px" }}>{item.quantity}</span>
+                              <button 
+                                onClick={() => updateQuantity(item.id, -1)}
+                                className="btn-pos-qty"
+                                style={{ width: "30px", height: "30px" }}
+                              >
+                                <Minus size={15} />
+                              </button>
+                              <button 
+                                onClick={() => removeFromCart(item.id)}
+                                className="btn-pos-delete-item"
+                                style={{ padding: "5px", marginLeft: "4px" }}
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
 
-              {/* Customer Selector Row */}
-              <div className="pos-control-row">
-                <div className="pos-label-between">
-                  <span className="pos-label-title">
-                    <User size={14} color="var(--rose-600)" />
-                    <span>العميل</span>
-                  </span>
-                  <button 
-                    onClick={() => setIsNewCustomerModalOpen(true)}
-                    className="btn-pos-quick-add-customer"
-                  >
-                    <UserPlus size={13} />
-                    <span>+ عميل جديد</span>
-                  </button>
-                </div>
-                <select
-                  value={selectedCustomer?.id || ""}
-                  onChange={(e) => {
-                    const c = customers.find(item => item.id === e.target.value);
-                    setSelectedCustomer(c || null);
-                  }}
-                  className="pos-select-box"
-                >
-                  <option value="">عميل نقدي (بدون حساب آجل)</option>
-                  {customers.map(c => (
-                    <option key={c.id} value={c.id}>
-                      {c.name} {c.phone ? `(${c.phone})` : ""}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Sales Employee Selector Row */}
-              <div className="pos-control-row">
-                <div className="pos-label-between">
-                  <span className="pos-label-title">
-                    <Users size={14} color="var(--rose-600)" />
-                    <span>موظف المبيعات (عمولة 1%)</span>
-                  </span>
-                </div>
-                <select
-                  value={selectedSellerEmployee?.id || ""}
-                  onChange={(e) => {
-                    const emp = employees.find(item => item.id === e.target.value);
-                    setSelectedSellerEmployee(emp || null);
-                  }}
-                  className="pos-select-box"
-                >
-                  <option value="">بدون تحديد موظف مبيعات</option>
-                  {employees.map(emp => (
-                    <option key={emp.id} value={emp.id}>
-                      {emp.name} (كود: {emp.code}) - عمولة {((emp.commissionRate || 0.01) * 100).toFixed(0)}%
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Discount Row with Wholesale Barrier */}
-              <div className="pos-control-row">
-                <div className="pos-label-between">
-                  <span className="pos-label-title">
-                    <span>خصم الفاتورة</span>
-                  </span>
-                  <div className="pos-discount-chips-wrap">
-                    <button 
-                      type="button"
-                      onClick={() => setDiscountType("fixed")}
-                      className={`pos-chip-toggle ${discountType === "fixed" ? "active" : ""}`}
+                  {/* Customer Selector Row */}
+                  <div className="pos-control-row">
+                    <div className="pos-label-between">
+                      <span className="pos-label-title">
+                        <User size={15} color="var(--rose-600)" />
+                        <span>العميل</span>
+                      </span>
+                      <button 
+                        onClick={() => setIsNewCustomerModalOpen(true)}
+                        className="btn-pos-quick-add-customer"
+                      >
+                        <UserPlus size={14} />
+                        <span>+ عميل جديد</span>
+                      </button>
+                    </div>
+                    <select
+                      value={selectedCustomer?.id || ""}
+                      onChange={(e) => {
+                        const c = customers.find(item => item.id === e.target.value);
+                        setSelectedCustomer(c || null);
+                      }}
+                      className="pos-select-box"
+                      style={{ padding: "0.6rem 0.85rem", fontSize: "0.88rem" }}
                     >
-                      ج.م
-                    </button>
-                    <button 
-                      type="button"
-                      onClick={() => setDiscountType("percent")}
-                      className={`pos-chip-toggle ${discountType === "percent" ? "active" : ""}`}
+                      <option value="">عميل نقدي (بدون حساب آجل)</option>
+                      {customers.map(c => (
+                        <option key={c.id} value={c.id}>
+                          {c.name} {c.phone ? `(${c.phone})` : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Sales Employee Selector Row */}
+                  <div className="pos-control-row">
+                    <div className="pos-label-between">
+                      <span className="pos-label-title">
+                        <Users size={15} color="var(--rose-600)" />
+                        <span>موظف المبيعات (عمولة 1%)</span>
+                      </span>
+                    </div>
+                    <select
+                      value={selectedSellerEmployee?.id || ""}
+                      onChange={(e) => {
+                        const emp = employees.find(item => item.id === e.target.value);
+                        setSelectedSellerEmployee(emp || null);
+                      }}
+                      className="pos-select-box"
+                      style={{ padding: "0.6rem 0.85rem", fontSize: "0.88rem" }}
                     >
-                      %
-                    </button>
+                      <option value="">بدون تحديد موظف مبيعات</option>
+                      {employees.map(emp => (
+                        <option key={emp.id} value={emp.id}>
+                          {emp.name} (كود: {emp.code}) - عمولة {((emp.commissionRate || 0.01) * 100).toFixed(0)}%
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
-                <input 
-                  type="number"
-                  min="0"
-                  placeholder="قيمة الخصم..."
-                  value={discountValue}
-                  onChange={(e) => setDiscountValue(e.target.value)}
-                  className="pos-input-general"
-                />
 
-                {isDiscountViolatingWholesale && (
-                  <div className="p-2 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs flex items-center gap-1.5 mt-1">
-                    <AlertCircle size={14} className="shrink-0" />
-                    <span>ممنوع: الخصم يخفض الإجمالي لسعر جملة البضاعة ({cartTotalCost} ج.م) أو أقل منه.</span>
+                {/* LEFT COLUMN: Payment, Discount, Net Breakdown & Checkout */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                  {/* Discount Row with Wholesale Barrier */}
+                  <div className="pos-control-row">
+                    <div className="pos-label-between">
+                      <span className="pos-label-title">
+                        <span>خصم الفاتورة</span>
+                      </span>
+                      <div className="pos-discount-chips-wrap">
+                        <button 
+                          type="button"
+                          onClick={() => setDiscountType("fixed")}
+                          className={`pos-chip-toggle ${discountType === "fixed" ? "active" : ""}`}
+                        >
+                          ج.م
+                        </button>
+                        <button 
+                          type="button"
+                          onClick={() => setDiscountType("percent")}
+                          className={`pos-chip-toggle ${discountType === "percent" ? "active" : ""}`}
+                        >
+                          %
+                        </button>
+                      </div>
+                    </div>
+                    <input 
+                      type="number"
+                      min="0"
+                      placeholder="قيمة الخصم..."
+                      value={discountValue}
+                      onChange={(e) => setDiscountValue(e.target.value)}
+                      className="pos-input-general"
+                      style={{ padding: "0.6rem 0.85rem", fontSize: "0.9rem" }}
+                    />
+
+                    {isDiscountViolatingWholesale && (
+                      <div className="p-2 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs flex items-center gap-1.5 mt-1">
+                        <AlertCircle size={14} className="shrink-0" />
+                        <span>ممنوع: الخصم يخفض الإجمالي لسعر جملة البضاعة ({cartTotalCost} ج.م) أو أقل منه.</span>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
 
-              {/* Payment Methods */}
-              <div className="pos-control-row">
-                <span className="pos-label-title mb-1">طريقة الدفع:</span>
-                <div className="pos-payment-selector-grid">
-                  {["نقدي", "فيزا", "تحويل", "آجل"].map((m) => (
-                    <button
-                      key={m}
-                      type="button"
-                      onClick={() => setPaymentMethod(m)}
-                      className={`btn-pos-method-choice ${paymentMethod === m ? "active" : ""}`}
-                    >
-                      {m === "نقدي" && <Banknote size={14} />}
-                      {m === "فيزا" && <CreditCard size={14} />}
-                      {m === "تحويل" && <Smartphone size={14} />}
-                      {m === "آجل" && <Clock size={14} />}
-                      <span>{m}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
+                  {/* Payment Methods */}
+                  <div className="pos-control-row">
+                    <span className="pos-label-title mb-1">طريقة الدفع:</span>
+                    <div className="pos-payment-selector-grid">
+                      {["نقدي", "فيزا", "تحويل", "آجل"].map((m) => (
+                        <button
+                          key={m}
+                          type="button"
+                          onClick={() => setPaymentMethod(m)}
+                          className={`btn-pos-method-choice ${paymentMethod === m ? "active" : ""}`}
+                          style={{ padding: "0.65rem 0.4rem", fontSize: "0.82rem" }}
+                        >
+                          {m === "نقدي" && <Banknote size={15} />}
+                          {m === "فيزا" && <CreditCard size={15} />}
+                          {m === "تحويل" && <Smartphone size={15} />}
+                          {m === "آجل" && <Clock size={15} />}
+                          <span>{m}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
 
-              {/* Received Cash Input */}
-              <div className="pos-control-row">
-                <div className="pos-label-between">
-                  <span className="pos-label-title">المبلغ المستلم من العميل:</span>
-                  {cartFinalTotal > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setReceivedCash(cartFinalTotal.toString())}
-                      className="btn-pos-quick-add-customer"
-                    >
-                      المبلغ بالكامل ({formatNumber(cartFinalTotal)} ج.م)
-                    </button>
-                  )}
-                </div>
-                <input 
-                  type="number"
-                  min="0"
-                  step="any"
-                  placeholder={`المطلوب سداده: ${formatNumber(cartFinalTotal)} ج.م`}
-                  value={receivedCash}
-                  onChange={(e) => setReceivedCash(e.target.value)}
-                  className="pos-input-general font-mono font-bold text-base"
-                />
+                  {/* Received Cash Input */}
+                  <div className="pos-control-row">
+                    <div className="pos-label-between">
+                      <span className="pos-label-title">المبلغ المستلم من العميل:</span>
+                      {cartFinalTotal > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setReceivedCash(cartFinalTotal.toString())}
+                          className="btn-pos-quick-add-customer"
+                        >
+                          المبلغ بالكامل ({formatNumber(cartFinalTotal)} ج.م)
+                        </button>
+                      )}
+                    </div>
+                    <input 
+                      type="number"
+                      min="0"
+                      step="any"
+                      placeholder={`المطلوب سداده: ${formatNumber(cartFinalTotal)} ج.م`}
+                      value={receivedCash}
+                      onChange={(e) => setReceivedCash(e.target.value)}
+                      className="pos-input-general font-mono font-bold text-base"
+                      style={{ padding: "0.6rem 0.85rem" }}
+                    />
 
-                {/* Instant visual indicator for remaining / change right below input */}
-                {cartFinalTotal > 0 && receivedCash !== "" && parsedReceivedCash > 0 && (
-                  <div className={`pos-received-feedback ${changeForCustomer > 0 ? "change-mode" : remainingDue > 0 ? "debt-mode" : "exact-mode"}`}>
+                    {/* Instant visual indicator for remaining / change right below input */}
+                    {cartFinalTotal > 0 && receivedCash !== "" && parsedReceivedCash > 0 && (
+                      <div className={`pos-received-feedback ${changeForCustomer > 0 ? "change-mode" : remainingDue > 0 ? "debt-mode" : "exact-mode"}`}>
+                        {changeForCustomer > 0 && (
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                            <span style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: "800" }}>
+                              <Coins size={16} />
+                              <span>المتبقي للعميل (الباقي / الفكة المسترجعة):</span>
+                            </span>
+                            <span style={{ fontFamily: "var(--font-numbers)", fontWeight: "900", fontSize: "1.1rem" }}>
+                              {formatNumber(changeForCustomer)} ج.م
+                            </span>
+                          </div>
+                        )}
+
+                        {remainingDue > 0 && (
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                            <span style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: "800" }}>
+                              <AlertCircle size={16} />
+                              <span>المتبقي على العميل (المطلوب سداده):</span>
+                            </span>
+                            <span style={{ fontFamily: "var(--font-numbers)", fontWeight: "900", fontSize: "1.1rem" }}>
+                              {formatNumber(remainingDue)} ج.م
+                            </span>
+                          </div>
+                        )}
+
+                        {parsedReceivedCash === cartFinalTotal && (
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                            <span style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: "800" }}>
+                              <CheckCircle2 size={16} />
+                              <span>تم استلام المبلغ بالكامل بالضبط:</span>
+                            </span>
+                            <span style={{ fontFamily: "var(--font-numbers)", fontWeight: "800", fontSize: "0.85rem" }}>
+                              المتبقي: 0 ج.م
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Net Bill Breakdown & Total */}
+                  <div className="pos-net-summary-panel" style={{ padding: "1.1rem" }}>
+                    <div className="pos-calc-row">
+                      <span>إجمالي سعر الأصناف:</span>
+                      <span className="font-mono font-bold" style={{ fontSize: "0.95rem" }}>{formatNumber(cartSubtotal)} ج.م</span>
+                    </div>
+
+                    {calculatedDiscount > 0 && (
+                      <div className="pos-calc-row text-red-500">
+                        <span>الخصم المطبق:</span>
+                        <span className="font-mono font-bold" style={{ fontSize: "0.95rem" }}>-{formatNumber(calculatedDiscount)} ج.م</span>
+                      </div>
+                    )}
+
+                    <div className="pos-calc-row pos-row-grand-total">
+                      <span className="font-bold text-sm text-[var(--text-primary)]">الصافي المطلوب:</span>
+                      <span className="pos-grand-price-text" style={{ fontSize: "1.45rem" }}>
+                        {formatNumber(cartFinalTotal)} ج.م
+                      </span>
+                    </div>
+
+                    {/* When customer gives more -> change / remainder to return */}
                     {changeForCustomer > 0 && (
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                        <span style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: "800" }}>
-                          <Coins size={16} />
-                          <span>المتبقي للعميل (الباقي / الفكة المسترجعة):</span>
+                      <div className="pos-calc-row pos-row-change">
+                        <span className="flex items-center gap-1 font-bold">
+                          <Coins size={14} />
+                          <span>المتبقي للعميل (الباقي):</span>
                         </span>
-                        <span style={{ fontFamily: "var(--font-numbers)", fontWeight: "900", fontSize: "1.1rem" }}>
+                        <span className="font-mono font-black text-base">
                           {formatNumber(changeForCustomer)} ج.م
                         </span>
                       </div>
                     )}
 
+                    {/* When customer gives less -> remainder still owed */}
                     {remainingDue > 0 && (
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                        <span style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: "800" }}>
-                          <AlertCircle size={16} />
-                          <span>المتبقي على العميل (المطلوب سداده):</span>
+                      <div className="pos-calc-row pos-row-debt">
+                        <span className="flex items-center gap-1 font-bold">
+                          <AlertCircle size={14} />
+                          <span>{paymentMethod === "آجل" ? "المتبقي في حساب العميل (آجل):" : "المتبقي المطلوب سداده:"}</span>
                         </span>
-                        <span style={{ fontFamily: "var(--font-numbers)", fontWeight: "900", fontSize: "1.1rem" }}>
+                        <span className="font-mono font-black text-base">
                           {formatNumber(remainingDue)} ج.م
                         </span>
                       </div>
                     )}
+                  </div>
 
-                    {parsedReceivedCash === cartFinalTotal && (
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                        <span style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: "800" }}>
-                          <CheckCircle2 size={16} />
-                          <span>تم استلام المبلغ بالكامل بالضبط:</span>
-                        </span>
-                        <span style={{ fontFamily: "var(--font-numbers)", fontWeight: "800", fontSize: "0.85rem" }}>
-                          المتبقي: 0 ج.م
-                        </span>
-                      </div>
+                  {/* Big Checkout Action Button */}
+                  <button
+                    onClick={handleCheckout}
+                    disabled={cart.length === 0 || isDiscountViolatingWholesale || isSubmitting}
+                    className="btn-pos-submit-sale"
+                    style={{ padding: "1.1rem", fontSize: "1.05rem" }}
+                  >
+                    {isSubmitting ? (
+                      <span>جاري إصدار الفاتورة...</span>
+                    ) : (
+                      <>
+                        <CheckCircle2 size={22} />
+                        <span>إتمام عملية البيع وطباعة الفاتورة ({formatNumber(cartFinalTotal)} ج.م)</span>
+                      </>
                     )}
-                  </div>
-                )}
-              </div>
-
-              {/* Net Bill Breakdown & Total */}
-              <div className="pos-net-summary-panel">
-                <div className="pos-calc-row">
-                  <span>إجمالي سعر الأصناف:</span>
-                  <span className="font-mono font-bold">{formatNumber(cartSubtotal)} ج.م</span>
+                  </button>
                 </div>
-
-                {calculatedDiscount > 0 && (
-                  <div className="pos-calc-row text-red-500">
-                    <span>الخصم المطبق:</span>
-                    <span className="font-mono font-bold">-{formatNumber(calculatedDiscount)} ج.م</span>
-                  </div>
-                )}
-
-                <div className="pos-calc-row pos-row-grand-total">
-                  <span className="font-bold text-sm text-[var(--text-primary)]">الصافي المطلوب:</span>
-                  <span className="pos-grand-price-text">
-                    {formatNumber(cartFinalTotal)} ج.م
-                  </span>
-                </div>
-
-                {/* When customer gives more -> change / remainder to return */}
-                {changeForCustomer > 0 && (
-                  <div className="pos-calc-row pos-row-change">
-                    <span className="flex items-center gap-1 font-bold">
-                      <Coins size={14} />
-                      <span>المتبقي للعميل (الباقي):</span>
-                    </span>
-                    <span className="font-mono font-black text-base">
-                      {formatNumber(changeForCustomer)} ج.م
-                    </span>
-                  </div>
-                )}
-
-                {/* When customer gives less -> remainder still owed */}
-                {remainingDue > 0 && (
-                  <div className="pos-calc-row pos-row-debt">
-                    <span className="flex items-center gap-1 font-bold">
-                      <AlertCircle size={14} />
-                      <span>{paymentMethod === "آجل" ? "المتبقي في حساب العميل (آجل):" : "المتبقي المطلوب سداده:"}</span>
-                    </span>
-                    <span className="font-mono font-black text-base">
-                      {formatNumber(remainingDue)} ج.م
-                    </span>
-                  </div>
-                )}
               </div>
-
-              {/* Big Checkout Action Button */}
-              <button
-                onClick={handleCheckout}
-                disabled={cart.length === 0 || isDiscountViolatingWholesale || isSubmitting}
-                className="btn-pos-submit-sale"
-              >
-                {isSubmitting ? (
-                  <span>جاري إصدار الفاتورة...</span>
-                ) : (
-                  <>
-                    <CheckCircle2 size={19} />
-                    <span>إتمام عملية البيع وطباعة الفاتورة ({formatNumber(cartFinalTotal)} ج.م)</span>
-                  </>
-                )}
-              </button>
 
             </div>
-
-            {/* -------------------------------------------------------
-                LEFT COLUMN: Current Shift Invoices Data Table
-                ------------------------------------------------------- */}
-            <div className="pos-shift-table-panel">
+          ) : (
+            /* -------------------------------------------------------
+                FULL-WIDTH CURRENT SHIFT INVOICES DATA TABLE
+                ------------------------------------------------------- */
+            <div className="pos-shift-table-panel" style={{ width: "100%" }}>
               
-              {/* Table Inner Header */}
+              {/* Table Inner Header with Close / Return to Cart Action */}
               <div className="pos-shift-header-inner">
                 <div className="flex items-center gap-2">
                   <h2 className="pos-shift-heading-text">
-                    <Receipt size={20} color="var(--rose-600)" />
+                    <Receipt size={22} color="var(--rose-600)" />
                     <span>فواتير الوردية الحالية</span>
                   </h2>
-                  <span className="pos-shift-badge-counter">
+                  <span className="pos-shift-badge-counter" style={{ fontSize: "0.85rem", padding: "0.25rem 0.75rem" }}>
                     {currentShiftSales.length} فاتورة مسجلة
                   </span>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowShiftInvoices(false)}
+                  className="btn-secondary"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    padding: "0.5rem 1rem",
+                    fontSize: "0.85rem",
+                    fontWeight: "800",
+                    background: "#ffffff",
+                    borderColor: "#fbcfe8",
+                    color: "#db2777"
+                  }}
+                >
+                  <X size={16} />
+                  <span>إغلاق الفواتير والعودة للسلة</span>
+                </button>
               </div>
 
               {/* Search & Filter Toolbar */}
               <div className="pos-table-filter-bar">
-                <div className="pos-table-search-wrapper">
-                  <Search size={17} style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", pointerEvents: "none" }} />
+                <div className="pos-table-search-wrapper" style={{ flex: "1 1 300px" }}>
+                  <Search size={18} style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", pointerEvents: "none" }} />
                   <input
                     type="text"
-                    placeholder="ابحث برقم الفاتورة أو اسم العميل..."
+                    placeholder="ابحث برقم الفاتورة أو اسم العميل أو الهاتف..."
                     value={invoiceSearchQuery}
                     onChange={(e) => setInvoiceSearchQuery(e.target.value)}
                     className="pos-table-search-input-field"
+                    style={{ height: "42px" }}
                   />
                   {invoiceSearchQuery && (
                     <button
@@ -1296,7 +1380,7 @@ export default function POSPage() {
                     </h3>
                     <p style={{ fontSize: "0.85rem", maxWidth: "420px", margin: "0 auto" }}>
                       {currentShiftSales.length === 0
-                        ? "الوردية جديدة وفارغة. استخدم شريط الباركود على اليمين لإجراء عمليات البيع."
+                        ? "الوردية جديدة وفارغة. اضغط على زر العودة للسلة لإجراء عمليات البيع."
                         : "لا توجد فواتير تطابق نص البحث أو الفلتر المحدد."}
                     </p>
                   </div>
@@ -1381,8 +1465,7 @@ export default function POSPage() {
               </div>
 
             </div>
-
-          </div>
+          )}
         </div>
       </div>
 
