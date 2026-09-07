@@ -2239,25 +2239,39 @@ h1, h2, h3, h4, h5, h6 {
     max-width: 80mm !important;
     width: 100% !important;
     margin: 0 auto !important;
-    padding: 3mm 2mm !important;
+    padding: 2mm 3mm !important;
     border: none !important;
     box-shadow: none !important;
     background: #ffffff !important;
     page-break-inside: avoid !important;
-    font-size: 10pt !important;
+    font-size: 9.5pt !important;
     color: #000000 !important;
     font-weight: 700 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    box-sizing: border-box !important;
   }
 
-  #printable-receipt table {
+  #printable-receipt *,
+  .thermal-receipt * {
+    color: #000000 !important;
+    border-color: #000000 !important;
+    box-sizing: border-box !important;
+  }
+
+  #printable-receipt table,
+  .thermal-receipt table {
     width: 100% !important;
+    table-layout: fixed !important;
     border-collapse: collapse !important;
+    direction: rtl !important;
   }
 
   #printable-receipt th,
-  #printable-receipt td {
+  #printable-receipt td,
+  .thermal-receipt th,
+  .thermal-receipt td {
+    vertical-align: top !important;
     color: #000000 !important;
   }
 

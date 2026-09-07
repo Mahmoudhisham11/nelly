@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { formatNumber } from "@/lib/utils";
 import { 
   Printer, 
@@ -13,6 +13,68 @@ import {
 export default function POSReceiptModal({ isOpen, onClose, invoice, onNewSale }) {
   const receiptRef = useRef(null);
   const [includePolicy, setIncludePolicy] = useState(true);
+
+  // Dynamically inject zero-margin print style for thermal receipt rolls when modal is open
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const styleId = "pos-thermal-receipt-print-style";
+    let styleEl = document.getElementById(styleId);
+    if (!styleEl) {
+      styleEl = document.createElement("style");
+      styleEl.id = styleId;
+      document.head.appendChild(styleEl);
+    }
+    styleEl.innerHTML = `
+      @page {
+        margin: 0 !important;
+        size: auto;
+      }
+      @media print {
+        html, body {
+          margin: 0 !important;
+          padding: 0 !important;
+          background: #ffffff !important;
+          width: 100% !important;
+        }
+        #printable-receipt,
+        .thermal-receipt {
+          margin: 0 auto !important;
+          padding: 2mm 3mm !important;
+          width: 100% !important;
+          max-width: 80mm !important;
+          box-shadow: none !important;
+          border: none !important;
+          background: #ffffff !important;
+        }
+        #printable-receipt *,
+        .thermal-receipt * {
+          color: #000000 !important;
+          border-color: #000000 !important;
+          box-sizing: border-box !important;
+        }
+        #printable-receipt table,
+        .thermal-receipt table {
+          width: 100% !important;
+          table-layout: fixed !important;
+          border-collapse: collapse !important;
+          direction: rtl !important;
+        }
+        #printable-receipt th,
+        #printable-receipt td,
+        .thermal-receipt th,
+        .thermal-receipt td {
+          vertical-align: top !important;
+          color: #000000 !important;
+        }
+      }
+    `;
+
+    return () => {
+      const el = document.getElementById(styleId);
+      if (el) el.remove();
+    };
+  }, [isOpen]);
 
   if (!isOpen || !invoice) return null;
 
@@ -171,30 +233,38 @@ export default function POSReceiptModal({ isOpen, onClose, invoice, onNewSale })
               </div>
             </div>
 
-            {/* 3. Items Table - All Columns Center-Aligned */}
+            {/* 3. Items Table - Professional Fixed-Layout POS Thermal Table */}
             <div style={{ marginBottom: "10px" }}>
               <table style={{ 
                 width: "100%", 
+                tableLayout: "fixed",
                 fontSize: "0.78rem", 
                 borderCollapse: "collapse", 
-                color: "#000000"
+                color: "#000000",
+                direction: "rtl"
               }}>
+                <colgroup>
+                  <col style={{ width: "46%" }} />
+                  <col style={{ width: "15%" }} />
+                  <col style={{ width: "18%" }} />
+                  <col style={{ width: "21%" }} />
+                </colgroup>
                 <thead>
                   <tr style={{ 
-                    background: "#f9fafb", 
+                    background: "#f3f4f6", 
                     borderTop: "1.5px solid #000000", 
                     borderBottom: "1.5px solid #000000" 
                   }}>
-                    <th style={{ textAlign: "center", padding: "6px 4px", fontWeight: "900", color: "#000000" }}>
-                      اسم المنتج
+                    <th style={{ textAlign: "right", padding: "6px 2px", fontWeight: "900", color: "#000000", verticalAlign: "middle" }}>
+                      اسم الصنف
                     </th>
-                    <th style={{ textAlign: "center", padding: "6px 4px", fontWeight: "900", color: "#000000", width: "45px" }}>
+                    <th style={{ textAlign: "center", padding: "6px 2px", fontWeight: "900", color: "#000000", verticalAlign: "middle" }}>
                       الكمية
                     </th>
-                    <th style={{ textAlign: "center", padding: "6px 4px", fontWeight: "900", color: "#000000", width: "55px" }}>
+                    <th style={{ textAlign: "center", padding: "6px 2px", fontWeight: "900", color: "#000000", verticalAlign: "middle" }}>
                       السعر
                     </th>
-                    <th style={{ textAlign: "center", padding: "6px 4px", fontWeight: "900", color: "#000000", width: "65px" }}>
+                    <th style={{ textAlign: "left", padding: "6px 2px", fontWeight: "900", color: "#000000", verticalAlign: "middle" }}>
                       الإجمالي
                     </th>
                   </tr>
@@ -204,19 +274,49 @@ export default function POSReceiptModal({ isOpen, onClose, invoice, onNewSale })
                     <tr 
                       key={idx} 
                       style={{ 
-                        borderBottom: "1px dashed #d1d5db"
+                        borderBottom: "1px dashed #000000"
                       }}
                     >
-                      <td style={{ textAlign: "center", padding: "6px 4px", fontWeight: "800", color: "#000000", wordBreak: "break-word" }}>
+                      <td style={{ 
+                        textAlign: "right", 
+                        padding: "6px 2px", 
+                        fontWeight: "800", 
+                        color: "#000000", 
+                        verticalAlign: "top",
+                        lineHeight: "1.25",
+                        wordBreak: "normal",
+                        overflowWrap: "break-word"
+                      }}>
                         {it.name}
                       </td>
-                      <td style={{ textAlign: "center", padding: "6px 4px", fontWeight: "900", color: "#000000" }} className="num-font">
+                      <td style={{ 
+                        textAlign: "center", 
+                        padding: "6px 2px", 
+                        fontWeight: "900", 
+                        color: "#000000",
+                        verticalAlign: "top",
+                        whiteSpace: "nowrap"
+                      }} className="num-font">
                         {it.quantity}
                       </td>
-                      <td style={{ textAlign: "center", padding: "6px 4px", fontWeight: "800", color: "#000000" }} className="num-font">
+                      <td style={{ 
+                        textAlign: "center", 
+                        padding: "6px 2px", 
+                        fontWeight: "800", 
+                        color: "#000000",
+                        verticalAlign: "top",
+                        whiteSpace: "nowrap"
+                      }} className="num-font">
                         {formatNumber(it.sellingPrice)}
                       </td>
-                      <td style={{ textAlign: "center", padding: "6px 4px", fontWeight: "900", color: "#000000" }} className="num-font">
+                      <td style={{ 
+                        textAlign: "left", 
+                        padding: "6px 2px", 
+                        fontWeight: "900", 
+                        color: "#000000",
+                        verticalAlign: "top",
+                        whiteSpace: "nowrap"
+                      }} className="num-font">
                         {formatNumber(it.subtotal || it.quantity * it.sellingPrice)}
                       </td>
                     </tr>
@@ -240,7 +340,8 @@ export default function POSReceiptModal({ isOpen, onClose, invoice, onNewSale })
                 justifyContent: "space-between", 
                 alignItems: "center",
                 fontWeight: "900",
-                fontSize: "0.95rem"
+                fontSize: "0.95rem",
+                color: "#000000"
               }}>
                 <span>الإجمالي:</span>
                 <span className="num-font" style={{ fontSize: "1.05rem" }}>
@@ -252,12 +353,12 @@ export default function POSReceiptModal({ isOpen, onClose, invoice, onNewSale })
                 <div style={{ 
                   display: "flex", 
                   justifyContent: "space-between", 
-                  color: "#dc2626", 
+                  color: "#000000", 
                   fontWeight: "800",
-                  fontSize: "0.75rem",
-                  borderTop: "1px dashed #e5e7eb",
-                  paddingTop: "3px",
-                  marginTop: "3px"
+                  fontSize: "0.78rem",
+                  borderTop: "1px dashed #000000",
+                  paddingTop: "4px",
+                  marginTop: "4px"
                 }}>
                   <span>الخصم المطبق:</span>
                   <span className="num-font">-{formatNumber(invoice.discount)} ج.م</span>
@@ -265,21 +366,21 @@ export default function POSReceiptModal({ isOpen, onClose, invoice, onNewSale })
               )}
 
               {invoice.receivedCash > 0 && (
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", fontWeight: "800", color: "#374151", marginTop: "2px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.78rem", fontWeight: "800", color: "#000000", marginTop: "3px" }}>
                   <span>المبلغ المدفوع:</span>
                   <span className="num-font">{formatNumber(invoice.receivedCash)} ج.م</span>
                 </div>
               )}
 
               {invoice.changeAmount > 0 && (
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", color: "#059669", fontWeight: "800", marginTop: "2px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.78rem", color: "#000000", fontWeight: "800", marginTop: "3px" }}>
                   <span>الباقي للعميل:</span>
                   <span className="num-font">{formatNumber(invoice.changeAmount)} ج.م</span>
                 </div>
               )}
 
               {invoice.remainingDue > 0 && (
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", color: "#b91c1c", fontWeight: "900", marginTop: "2px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.78rem", color: "#000000", fontWeight: "900", marginTop: "3px" }}>
                   <span>المتبقي آجل:</span>
                   <span className="num-font">{formatNumber(invoice.remainingDue)} ج.م</span>
                 </div>

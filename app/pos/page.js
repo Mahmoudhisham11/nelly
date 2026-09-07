@@ -66,6 +66,7 @@ export default function POSPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchDropdownOpen, setSearchDropdownOpen] = useState(false);
   const [cart, setCart] = useState([]);
+  const [cartInitialized, setCartInitialized] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [discountType, setDiscountType] = useState("fixed"); // "fixed" | "percent"
   const [discountValue, setDiscountValue] = useState("");
@@ -133,6 +134,75 @@ export default function POSPage() {
       console.error("Error saving held invoices:", e);
     }
   };
+
+  // Load active POS cart from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("nelly_active_pos_cart");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          setCart(parsed);
+        } else if (parsed && typeof parsed === "object") {
+          if (Array.isArray(parsed.cart)) setCart(parsed.cart);
+          if (parsed.selectedCustomer) setSelectedCustomer(parsed.selectedCustomer);
+          if (parsed.selectedSellerEmployee) setSelectedSellerEmployee(parsed.selectedSellerEmployee);
+          if (parsed.discountType) setDiscountType(parsed.discountType);
+          if (parsed.discountValue !== undefined) setDiscountValue(parsed.discountValue);
+          if (parsed.paymentMethod) setPaymentMethod(parsed.paymentMethod);
+          if (parsed.receivedCash !== undefined) setReceivedCash(parsed.receivedCash);
+          if (parsed.orderNotes !== undefined) setOrderNotes(parsed.orderNotes);
+        }
+      }
+    } catch (e) {
+      console.error("Error loading active cart:", e);
+    } finally {
+      setCartInitialized(true);
+    }
+  }, []);
+
+  // Persist active POS cart to localStorage whenever it or related fields change
+  useEffect(() => {
+    if (!cartInitialized) return;
+
+    try {
+      if (cart.length === 0 && !selectedCustomer && !selectedSellerEmployee && !discountValue && !orderNotes && !receivedCash) {
+        localStorage.removeItem("nelly_active_pos_cart");
+      } else {
+        const payload = {
+          cart,
+          selectedCustomer,
+          selectedSellerEmployee,
+          discountType,
+          discountValue,
+          paymentMethod,
+          receivedCash,
+          orderNotes
+        };
+        localStorage.setItem("nelly_active_pos_cart", JSON.stringify(payload));
+      }
+    } catch (e) {
+      console.error("Error saving active cart:", e);
+    }
+  }, [cart, selectedCustomer, selectedSellerEmployee, discountType, discountValue, paymentMethod, receivedCash, orderNotes, cartInitialized]);
+
+  // Sync stock of items in cart when live shopProducts update
+  useEffect(() => {
+    if (!cartInitialized || shopProducts.length === 0 || cart.length === 0) return;
+
+    setCart(prevCart => {
+      let changed = false;
+      const updated = prevCart.map(item => {
+        const live = shopProducts.find(p => p.id === (item.productId || item.id));
+        if (live && live.quantity !== undefined && live.quantity !== item.stock) {
+          changed = true;
+          return { ...item, stock: Number(live.quantity ?? 0) };
+        }
+        return item;
+      });
+      return changed ? updated : prevCart;
+    });
+  }, [shopProducts, cartInitialized]);
 
   // Close search dropdown on click outside
   useEffect(() => {
@@ -303,6 +373,11 @@ export default function POSPage() {
     setDiscountValue("");
     setReceivedCash("");
     setOrderNotes("");
+    try {
+      localStorage.removeItem("nelly_active_pos_cart");
+    } catch (e) {
+      console.error("Error removing active cart from localStorage:", e);
+    }
   };
 
   // Calculations
