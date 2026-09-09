@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { buildSystemPrompt } from "@/lib/aiService";
 
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
-const DEFAULT_MODEL = "minimax/minimax-m3:free";
+const DEFAULT_MODEL = process.env.OPENROUTER_MODEL || "openrouter/free";
 
 export async function POST(req) {
   try {
