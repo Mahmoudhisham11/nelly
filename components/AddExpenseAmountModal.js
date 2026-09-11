@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { X, PlusCircle, DollarSign, Calendar, CreditCard, CheckCircle2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { X, PlusCircle, DollarSign, CreditCard } from "lucide-react";
 import { formatNumber } from "@/lib/utils";
 import CustomSelect from "@/components/CustomSelect";
+import styles from "./AddExpenseAmountModal.module.css";
 
 const PAYMENT_METHODS = [
   { value: "نقدي", label: "نقدي (كاش)" },
@@ -17,7 +18,7 @@ export default function AddExpenseAmountModal({
   onClose, 
   item, 
   currentMonth, 
-  monthLabel,
+  monthLabel, 
   currentAmount = 0, 
   onAddAmount 
 }) {
@@ -83,80 +84,41 @@ export default function AddExpenseAmountModal({
     }
   };
 
+  const isCurrentAmountActive = currentAmount > 0;
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div 
-        className="modal-content"
+        className={`modal-content ${styles.modalContainer}`}
         onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: "480px", padding: "26px" }}
       >
         {/* Header */}
-        <div style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: "18px",
-          paddingBottom: "12px",
-          borderBottom: "1px solid #f0e1ec"
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div style={{
-              width: "40px",
-              height: "40px",
-              borderRadius: "12px",
-              background: "linear-gradient(135deg, #059669 0%, #047857 100%)",
-              color: "#ffffff",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "0 4px 14px rgba(5, 150, 105, 0.25)"
-            }}>
+        <div className={styles.modalHeader}>
+          <div className={styles.headerBrand}>
+            <div className={styles.headerIcon}>
               <PlusCircle size={22} />
             </div>
             <div>
-              <h3 style={{ fontSize: "1.2rem", fontWeight: "900", color: "#1e1322" }}>
+              <h3 className={styles.headerTitle}>
                 إضافة وصرف مبلغ لبند المصروف
               </h3>
-              <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", fontWeight: "600" }}>
-                البند: <strong style={{ color: "#1e1322" }}>{item.name}</strong> • شهر: <strong style={{ color: "#db2777" }}>{monthLabel}</strong>
+              <p className={styles.headerSubtitle}>
+                البند: <strong className={styles.itemNameHighlight}>{item.name}</strong> • شهر: <strong className={styles.monthHighlight}>{monthLabel}</strong>
               </p>
             </div>
           </div>
 
-          <button 
-            onClick={onClose}
-            style={{
-              background: "#fdf2f8",
-              border: "1px solid #fbcfe8",
-              color: "#db2777",
-              width: "30px",
-              height: "30px",
-              borderRadius: "8px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer"
-            }}
-          >
+          <button onClick={onClose} className={styles.closeBtn}>
             <X size={16} />
           </button>
         </div>
 
         {/* Current Month Status Ribbon */}
-        <div style={{
-          background: currentAmount > 0 ? "#fdf2f8" : "#ecfdf5",
-          border: `1px solid ${currentAmount > 0 ? "#fbcfe8" : "#a7f3d0"}`,
-          borderRadius: "12px",
-          padding: "12px 14px",
-          marginBottom: "18px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between"
-        }}>
-          <span style={{ fontSize: "0.85rem", fontWeight: "700", color: "#4a3650" }}>
+        <div className={`${styles.ribbon} ${isCurrentAmountActive ? styles.ribbonActive : styles.ribbonZero}`}>
+          <span className={styles.ribbonLabel}>
             إجمالي المصروف الحالي في هذا الشهر:
           </span>
-          <strong style={{ fontSize: "1.1rem", color: currentAmount > 0 ? "#be185d" : "#047857" }}>
+          <strong className={`${styles.ribbonValue} ${isCurrentAmountActive ? styles.ribbonValueActive : styles.ribbonValueZero}`}>
             <span className="num-font" dir="ltr">{formatNumber(currentAmount)}</span> ج.م
           </strong>
         </div>
@@ -166,48 +128,37 @@ export default function AddExpenseAmountModal({
           {/* Amount to Add */}
           <div className="form-group">
             <label className="form-label">
-              المبلغ المراد إضافته (ج.م) <span style={{ color: "#db2777" }}>*</span>
+              المبلغ المراد إضافته (ج.م) <span className={styles.requiredStar}>*</span>
             </label>
-            <div style={{ position: "relative" }}>
+            <div className={styles.inputWrapper}>
               <input 
                 type="number"
                 step="any"
                 min="0.01"
-                className="form-input num-font"
+                className={`form-input num-font ${styles.amountInput}`}
                 dir="ltr"
                 placeholder="أدخل المبلغ..."
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                style={{ paddingRight: "40px", textAlign: "right", fontSize: "1.1rem", fontWeight: "800" }}
                 required
                 autoFocus
               />
-              <DollarSign size={20} color="#059669" style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)" }} />
+              <DollarSign size={20} className={styles.dollarIcon} />
             </div>
           </div>
 
           {/* New Total Preview */}
           {addVal > 0 && (
-            <div style={{
-              background: "#f9fafb",
-              border: "1px solid #e5e7eb",
-              borderRadius: "10px",
-              padding: "10px 14px",
-              marginBottom: "14px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              fontSize: "0.85rem"
-            }}>
-              <span style={{ color: "#4b5563", fontWeight: "700" }}>الإجمالي الجديد بعد الإضافة:</span>
-              <strong style={{ color: "#be185d", fontSize: "1.05rem" }}>
+            <div className={styles.previewBox}>
+              <span className={styles.previewLabel}>الإجمالي الجديد بعد الإضافة:</span>
+              <strong className={styles.previewValue}>
                 <span className="num-font" dir="ltr">{formatNumber(simulatedNewTotal)}</span> ج.م
               </strong>
             </div>
           )}
 
           {/* Date & Payment Method */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+          <div className={styles.gridRow}>
             <div className="form-group">
               <label className="form-label">تاريخ الصرف</label>
               <input 
@@ -221,7 +172,7 @@ export default function AddExpenseAmountModal({
                 required
               />
               {dateError && (
-                <span style={{ color: "#dc2626", fontSize: "0.75rem", fontWeight: "700", marginTop: "3px", display: "block" }}>
+                <span className={styles.dateError}>
                   {dateError}
                 </span>
               )}
@@ -251,20 +202,18 @@ export default function AddExpenseAmountModal({
           </div>
 
           {/* Action Buttons */}
-          <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "18px" }}>
+          <div className={styles.actionRow}>
             <button 
               type="button" 
               onClick={onClose}
-              className="btn-secondary"
-              style={{ padding: "9px 18px" }}
+              className={`btn-secondary ${styles.cancelBtn}`}
             >
               إلغاء
             </button>
             <button 
               type="submit" 
               disabled={isSubmitting || !amount || addVal <= 0}
-              className="btn-primary"
-              style={{ padding: "9px 24px", background: "linear-gradient(135deg, #059669 0%, #047857 100%)" }}
+              className={`btn-primary ${styles.submitBtn}`}
             >
               {isSubmitting ? "جاري الحفظ..." : "تأكيد إضافة المبلغ"}
             </button>

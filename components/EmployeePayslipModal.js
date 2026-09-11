@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useRef } from "react";
-import { X, Printer, Calendar, Clock, Award, MinusCircle, DollarSign, FileText } from "lucide-react";
-import { formatCurrency, formatNumber } from "@/lib/utils";
+import { useRef } from "react";
+import { X, Printer, Calendar, Clock, DollarSign, FileText } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
+import styles from "./EmployeePayslipModal.module.css";
 
 export default function EmployeePayslipModal({ isOpen, onClose, employee, monthSummary }) {
   const printRef = useRef(null);
@@ -33,56 +34,29 @@ export default function EmployeePayslipModal({ isOpen, onClose, employee, monthS
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div 
-        className="modal-content"
+        className={`modal-content ${styles.modalContainer}`}
         onClick={(e) => e.stopPropagation()}
-        style={{ 
-          maxWidth: "680px", 
-          maxHeight: "min(92vh, 800px)", 
-          display: "flex", 
-          flexDirection: "column", 
-          overflow: "hidden",
-          padding: 0 
-        }}
       >
         {/* Header (No print) */}
-        <div style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "18px 24px",
-          borderBottom: "1px solid #f0e1ec",
-          background: "#ffffff",
-          flexShrink: 0
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div style={{
-              width: "40px",
-              height: "40px",
-              borderRadius: "12px",
-              background: "linear-gradient(135deg, #ec4899 0%, #db2777 100%)",
-              color: "#ffffff",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "0 4px 14px rgba(219, 39, 119, 0.25)"
-            }}>
+        <div className={styles.modalHeader}>
+          <div className={styles.headerBrand}>
+            <div className={styles.headerIcon}>
               <FileText size={22} />
             </div>
             <div>
-              <h3 style={{ fontSize: "1.25rem", fontWeight: "900", color: "#1e1322", margin: 0 }}>
+              <h3 className={styles.headerTitle}>
                 مفردات مرتب ومستحقات الموظف
               </h3>
-              <p style={{ fontSize: "0.82rem", color: "#5a4663", margin: "2px 0 0 0", fontWeight: "600" }}>
+              <p className={styles.headerSubtitle}>
                 كشف حساب شهري مفصل لشهر {monthSummary.monthLabel || ""} (محسوب بساعات العمل والعمولة)
               </p>
             </div>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <div className={styles.headerActions}>
             <button
               onClick={handlePrint}
-              className="btn-secondary"
-              style={{ padding: "8px 14px", display: "flex", alignItems: "center", gap: "6px" }}
+              className={`btn-secondary ${styles.printBtn}`}
             >
               <Printer size={16} color="#db2777" />
               <span>طباعة الكشف</span>
@@ -90,14 +64,7 @@ export default function EmployeePayslipModal({ isOpen, onClose, employee, monthS
             <button 
               type="button"
               onClick={onClose}
-              style={{
-                background: "#fdf2f8",
-                border: "none",
-                borderRadius: "10px",
-                padding: "8px",
-                cursor: "pointer",
-                color: "#db2777"
-              }}
+              className={styles.closeBtn}
             >
               <X size={18} />
             </button>
@@ -107,114 +74,69 @@ export default function EmployeePayslipModal({ isOpen, onClose, employee, monthS
         {/* Scrollable Printable Area */}
         <div 
           ref={printRef} 
-          style={{ 
-            padding: "20px 24px", 
-            overflowY: "auto", 
-            flex: "1 1 auto",
-            display: "flex", 
-            flexDirection: "column", 
-            gap: "18px" 
-          }}
+          className={styles.printableArea}
         >
           {/* Header of Payslip */}
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            borderBottom: "2px solid #e5e7eb",
-            paddingBottom: "12px"
-          }}>
+          <div className={styles.payslipHeader}>
             <div>
-              <h2 style={{ fontSize: "1.6rem", fontWeight: "900", color: "#db2777", margin: 0 }}>Nelly Store</h2>
-              <p style={{ fontSize: "0.82rem", color: "#6b7280", margin: "2px 0 0 0", fontWeight: "600" }}>
+              <h2 className={styles.brandName}>Nelly Store</h2>
+              <p className={styles.brandDesc}>
                 كشف حساب ومفردات الراتب الشهري
               </p>
             </div>
-            <div style={{ textAlign: "left", fontSize: "0.82rem", color: "#4b5563", fontWeight: "600" }}>
-              <p style={{ margin: 0 }}>تاريخ الإصدار: {new Date().toLocaleDateString("ar-EG")}</p>
-              <p style={{ margin: "2px 0 0 0" }}>الفترة: <span className="num-font" style={{ fontWeight: "800" }}>{monthSummary.monthLabel}</span></p>
+            <div className={styles.metaInfo}>
+              <p className={styles.metaLine}>تاريخ الإصدار: {new Date().toLocaleDateString("ar-EG")}</p>
+              <p className={styles.metaPeriod}>الفترة: <span className={`num-font ${styles.periodHighlight}`}>{monthSummary.monthLabel}</span></p>
             </div>
           </div>
 
           {/* Employee Basic Info Card */}
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))",
-            gap: "12px",
-            padding: "14px 16px",
-            borderRadius: "14px",
-            background: "#fdf2f8",
-            border: "1px solid #fbcfe8"
-          }}>
+          <div className={styles.employeeInfoCard}>
             <div>
-              <span style={{ fontSize: "0.78rem", color: "#6b7280", fontWeight: "700", display: "block" }}>اسم الموظف</span>
-              <span style={{ fontSize: "1rem", fontWeight: "900", color: "#1e1322" }}>{employee.name}</span>
+              <span className={styles.infoLabel}>اسم الموظف</span>
+              <span className={styles.infoValueName}>{employee.name}</span>
             </div>
             <div>
-              <span style={{ fontSize: "0.78rem", color: "#6b7280", fontWeight: "700", display: "block" }}>كود الموظف</span>
-              <span className="num-font" style={{ fontSize: "0.95rem", fontWeight: "900", color: "#db2777" }}>{employee.code}</span>
+              <span className={styles.infoLabel}>كود الموظف</span>
+              <span className={`num-font ${styles.infoValueCode}`}>{employee.code}</span>
             </div>
             <div>
-              <span style={{ fontSize: "0.78rem", color: "#6b7280", fontWeight: "700", display: "block" }}>الوظيفة</span>
-              <span style={{ fontSize: "0.9rem", fontWeight: "700", color: "#374151" }}>{employee.role || "بائع ومسؤول مبيعات"}</span>
+              <span className={styles.infoLabel}>الوظيفة</span>
+              <span className={styles.infoValueGeneral}>{employee.role || "بائع ومسؤول مبيعات"}</span>
             </div>
             <div>
-              <span style={{ fontSize: "0.78rem", color: "#6b7280", fontWeight: "700", display: "block" }}>رقم الهاتف</span>
-              <span className="num-font" style={{ fontSize: "0.9rem", fontWeight: "700", color: "#374151" }}>{employee.phone || "---"}</span>
+              <span className={styles.infoLabel}>رقم الهاتف</span>
+              <span className={`num-font ${styles.infoValueGeneral}`}>{employee.phone || "---"}</span>
             </div>
           </div>
 
           {/* Attendance Stats & Work Shift */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "12px" }}>
-            <div style={{
-              padding: "12px 14px",
-              borderRadius: "12px",
-              background: "#f9fafb",
-              border: "1px solid #e5e7eb",
-              display: "flex",
-              alignItems: "center",
-              gap: "10px"
-            }}>
+          <div className={styles.statsGrid}>
+            <div className={styles.statBox}>
               <Calendar size={22} color="#6366f1" />
               <div>
-                <p style={{ margin: 0, fontSize: "0.75rem", color: "#6b7280", fontWeight: "700" }}>أيام الحضور الفعلية</p>
-                <p className="num-font" style={{ margin: 0, fontSize: "1.05rem", fontWeight: "900", color: "#1e1322" }}>
+                <p className={styles.statBoxTitle}>أيام الحضور الفعلية</p>
+                <p className={`num-font ${styles.statBoxValue}`}>
                   {attendanceDays} يوم عمل
                 </p>
               </div>
             </div>
 
-            <div style={{
-              padding: "12px 14px",
-              borderRadius: "12px",
-              background: "#f9fafb",
-              border: "1px solid #e5e7eb",
-              display: "flex",
-              alignItems: "center",
-              gap: "10px"
-            }}>
+            <div className={styles.statBox}>
               <Clock size={22} color="#0891b2" />
               <div>
-                <p style={{ margin: 0, fontSize: "0.75rem", color: "#6b7280", fontWeight: "700" }}>إجمالي ساعات العمل</p>
-                <p className="num-font" style={{ margin: 0, fontSize: "1.05rem", fontWeight: "900", color: "#1e1322" }}>
+                <p className={styles.statBoxTitle}>إجمالي ساعات العمل</p>
+                <p className={`num-font ${styles.statBoxValue}`}>
                   {hoursWorked} ساعة و {minutesWorked} دقيقة
                 </p>
               </div>
             </div>
 
-            <div style={{
-              padding: "12px 14px",
-              borderRadius: "12px",
-              background: "#f9fafb",
-              border: "1px solid #e5e7eb",
-              display: "flex",
-              alignItems: "center",
-              gap: "10px"
-            }}>
+            <div className={styles.statBox}>
               <DollarSign size={22} color="#db2777" />
               <div>
-                <p style={{ margin: 0, fontSize: "0.75rem", color: "#6b7280", fontWeight: "700" }}>معدل أجر الساعة (10س/يوم)</p>
-                <p className="num-font" style={{ margin: 0, fontSize: "1.05rem", fontWeight: "900", color: "#db2777" }}>
+                <p className={styles.statBoxTitle}>معدل أجر الساعة (10س/يوم)</p>
+                <p className={`num-font ${styles.statBoxValueRose}`}>
                   {formatCurrency(hourlyRate)} / س
                 </p>
               </div>
@@ -222,61 +144,61 @@ export default function EmployeePayslipModal({ isOpen, onClose, employee, monthS
           </div>
 
           {/* Financial Breakdown Table */}
-          <div style={{ border: "1px solid #e5e7eb", borderRadius: "12px", overflow: "hidden" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "right", fontSize: "0.9rem" }}>
-              <thead style={{ background: "#f3f4f6", color: "#374151", fontWeight: "800" }}>
+          <div className={styles.tableWrapper}>
+            <table className={styles.table}>
+              <thead className={styles.thead}>
                 <tr>
-                  <th style={{ padding: "10px 14px" }}>البند المالي</th>
-                  <th style={{ padding: "10px 14px", textAlign: "center" }}>البيان / الحساب</th>
-                  <th style={{ padding: "10px 14px", textAlign: "left" }}>المبلغ المستحق</th>
+                  <th className={styles.thItem}>البند المالي</th>
+                  <th className={styles.thCenter}>البيان / الحساب</th>
+                  <th className={styles.thLeft}>المبلغ المستحق</th>
                 </tr>
               </thead>
-              <tbody style={{ fontWeight: "700" }}>
+              <tbody>
                 {/* Contract Base Salary */}
-                <tr style={{ borderBottom: "1px solid #e5e7eb", background: "#fdf8fb" }}>
-                  <td style={{ padding: "10px 14px", color: "#6b7280" }}>الراتب التعاقدي الشهري (المعياري)</td>
-                  <td style={{ padding: "10px 14px", textAlign: "center", fontSize: "0.78rem", color: "#6b7280" }}>30 يوم × 10 ساعات = 300س</td>
-                  <td className="num-font" style={{ padding: "10px 14px", textAlign: "left", fontWeight: "700", color: "#6b7280" }}>
+                <tr className={styles.trBase}>
+                  <td className={styles.tdMuted}>الراتب التعاقدي الشهري (المعياري)</td>
+                  <td className={styles.tdMutedCenter}>30 يوم × 10 ساعات = 300س</td>
+                  <td className={`num-font ${styles.tdMutedLeft}`}>
                     {formatCurrency(baseSalary)}
                   </td>
                 </tr>
 
                 {/* Earned Salary from worked hours */}
-                <tr style={{ borderBottom: "1px solid #e5e7eb", color: "#059669" }}>
-                  <td style={{ padding: "10px 14px" }}>
+                <tr className={styles.trEarned}>
+                  <td className={styles.tdEarned}>
                     <div>
-                      <span style={{ fontWeight: "800" }}>أجر ساعات العمل الفعلية المستحق</span>
-                      <span style={{ display: "block", fontSize: "0.72rem", color: "#6b7280" }}>
+                      <span className={styles.titleBold}>أجر ساعات العمل الفعلية المستحق</span>
+                      <span className={styles.subDetail}>
                         ({hoursWorked}س و {minutesWorked}د × {formatCurrency(hourlyRate)}/ساعة)
                       </span>
                     </div>
                   </td>
-                  <td style={{ padding: "10px 14px", textAlign: "center", fontSize: "0.78rem" }}>أساسي فعلي (+)</td>
-                  <td className="num-font" style={{ padding: "10px 14px", textAlign: "left", fontWeight: "900", color: "#059669" }}>
+                  <td className={styles.tdCenterSub}>أساسي فعلي (+)</td>
+                  <td className={`num-font ${styles.tdValueGreen}`}>
                     +{formatCurrency(earnedSalary)}
                   </td>
                 </tr>
 
                 {/* Sales Commission */}
-                <tr style={{ borderBottom: "1px solid #e5e7eb", color: totalCommission > 0 ? "#2563eb" : "#4b5563" }}>
-                  <td style={{ padding: "10px 14px" }}>
+                <tr className={totalCommission > 0 ? styles.trCommission : styles.trCommissionZero}>
+                  <td className={styles.tdEarned}>
                     <div>
-                      <span style={{ fontWeight: "800" }}>إجمالي عمولات المبيعات (المحققة من الفواتير)</span>
-                      <span style={{ display: "block", fontSize: "0.72rem", color: "#6b7280" }}>تضاف لصافي المرتب مع كل فاتورة بيع</span>
+                      <span className={styles.titleBold}>إجمالي عمولات المبيعات (المحققة من الفواتير)</span>
+                      <span className={styles.subDetail}>تضاف لصافي المرتب مع كل فاتورة بيع</span>
                     </div>
                   </td>
-                  <td style={{ padding: "10px 14px", textAlign: "center", fontSize: "0.78rem" }}>عمولة مبيعات (+)</td>
-                  <td className="num-font" style={{ padding: "10px 14px", textAlign: "left", fontWeight: "900", color: "#2563eb" }}>
+                  <td className={styles.tdCenterSub}>عمولة مبيعات (+)</td>
+                  <td className={`num-font ${styles.tdValueBlue}`}>
                     +{formatCurrency(totalCommission)}
                   </td>
                 </tr>
 
                 {/* Bonuses */}
                 {totalBonus > 0 && (
-                  <tr style={{ borderBottom: "1px solid #e5e7eb", color: "#059669" }}>
-                    <td style={{ padding: "10px 14px" }}>إجمالي العلاوات والمكافآت</td>
-                    <td style={{ padding: "10px 14px", textAlign: "center", fontSize: "0.78rem" }}>إضافة (+)</td>
-                    <td className="num-font" style={{ padding: "10px 14px", textAlign: "left", fontWeight: "900" }}>
+                  <tr className={styles.trBonus}>
+                    <td className={styles.tdEarned}>إجمالي العلاوات والمكافآت</td>
+                    <td className={styles.tdCenterSub}>إضافة (+)</td>
+                    <td className={`num-font ${styles.tdValueGreen}`}>
                       +{formatCurrency(totalBonus)}
                     </td>
                   </tr>
@@ -284,10 +206,10 @@ export default function EmployeePayslipModal({ isOpen, onClose, employee, monthS
 
                 {/* Penalties */}
                 {totalPenalty > 0 && (
-                  <tr style={{ borderBottom: "1px solid #e5e7eb", color: "#dc2626" }}>
-                    <td style={{ padding: "10px 14px" }}>إجمالي الجزاءات والخصومات</td>
-                    <td style={{ padding: "10px 14px", textAlign: "center", fontSize: "0.78rem" }}>خصم (-)</td>
-                    <td className="num-font" style={{ padding: "10px 14px", textAlign: "left", fontWeight: "900" }}>
+                  <tr className={styles.trPenalty}>
+                    <td className={styles.tdEarned}>إجمالي الجزاءات والخصومات</td>
+                    <td className={styles.tdCenterSub}>خصم (-)</td>
+                    <td className={`num-font ${styles.tdValueGeneric}`}>
                       -{formatCurrency(totalPenalty)}
                     </td>
                   </tr>
@@ -295,10 +217,10 @@ export default function EmployeePayslipModal({ isOpen, onClose, employee, monthS
 
                 {/* Advances */}
                 {totalAdvance > 0 && (
-                  <tr style={{ borderBottom: "1px solid #e5e7eb", color: "#d97706" }}>
-                    <td style={{ padding: "10px 14px" }}>إجمالي المسحوبات والسلف</td>
-                    <td style={{ padding: "10px 14px", textAlign: "center", fontSize: "0.78rem" }}>خصم (-)</td>
-                    <td className="num-font" style={{ padding: "10px 14px", textAlign: "left", fontWeight: "900" }}>
+                  <tr className={styles.trAdvance}>
+                    <td className={styles.tdEarned}>إجمالي المسحوبات والسلف</td>
+                    <td className={styles.tdCenterSub}>خصم (-)</td>
+                    <td className={`num-font ${styles.tdValueGeneric}`}>
                       -{formatCurrency(totalAdvance)}
                     </td>
                   </tr>
@@ -308,57 +230,36 @@ export default function EmployeePayslipModal({ isOpen, onClose, employee, monthS
           </div>
 
           {/* Net Salary Highlight */}
-          <div style={{
-            padding: "16px 20px",
-            borderRadius: "14px",
-            background: "linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%)",
-            border: "2px solid #db2777",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between"
-          }}>
+          <div className={styles.netSalaryCard}>
             <div>
-              <p style={{ margin: 0, fontSize: "0.85rem", fontWeight: "900", color: "#db2777" }}>
+              <p className={styles.netSalaryTitle}>
                 الصافي النهائي المستحق للصرف
               </p>
-              <p style={{ margin: "2px 0 0 0", fontSize: "0.75rem", color: "#6b7280", fontWeight: "600" }}>
+              <p className={styles.netSalaryFormula}>
                 أجر الساعات الفعلية + عمولات المبيعات + العلاوات - الجزاءات - المسحوبات
               </p>
             </div>
-            <div className="num-font" style={{ fontSize: "1.9rem", fontWeight: "900", color: "#db2777" }}>
+            <div className={`num-font ${styles.netSalaryAmount}`}>
               {formatCurrency(netSalary)}
             </div>
           </div>
 
           {/* Details of Transactions if any */}
           {transactions.length > 0 && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-              <h4 style={{ fontSize: "0.82rem", fontWeight: "800", color: "#4b5563", margin: 0 }}>سجل الحركات المالية للشهر</h4>
-              <div style={{ maxHeight: "140px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "6px" }}>
+            <div className={styles.txLogWrapper}>
+              <h4 className={styles.txLogTitle}>سجل الحركات المالية للشهر</h4>
+              <div className={styles.txLogList}>
                 {transactions.map((tx) => (
                   <div
                     key={tx.id}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      padding: "8px 12px",
-                      borderRadius: "8px",
-                      background: "#f9fafb",
-                      border: "1px solid #f3f4f6",
-                      fontSize: "0.82rem"
-                    }}
+                    className={styles.txLogRow}
                   >
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <span className="num-font" style={{ color: "#6b7280" }}>{tx.date}</span>
-                      <span style={{ fontWeight: "700", color: "#1e1322" }}>{tx.notes || tx.type}</span>
+                    <div className={styles.txLogLeft}>
+                      <span className={`num-font ${styles.txLogDate}`}>{tx.date}</span>
+                      <span className={styles.txLogNote}>{tx.notes || tx.type}</span>
                     </div>
                     <span
-                      className="num-font"
-                      style={{
-                        fontWeight: "900",
-                        color: tx.type === "bonus" || tx.type === "commission" ? "#059669" : "#dc2626"
-                      }}
+                      className={`num-font ${tx.type === "bonus" || tx.type === "commission" ? styles.txLogAmountPositive : styles.txLogAmountNegative}`}
                     >
                       {tx.type === "bonus" || tx.type === "commission" ? "+" : "-"}
                       {formatCurrency(tx.amount)}
@@ -371,14 +272,7 @@ export default function EmployeePayslipModal({ isOpen, onClose, employee, monthS
         </div>
 
         {/* Fixed Footer */}
-        <div style={{
-          display: "flex",
-          justifyContent: "flex-end",
-          padding: "16px 24px",
-          borderTop: "1px solid #f0e1ec",
-          background: "#ffffff",
-          flexShrink: 0
-        }}>
+        <div className={styles.modalFooter}>
           <button
             onClick={onClose}
             className="btn-secondary"

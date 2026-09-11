@@ -1,0 +1,115 @@
+.headerBrand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.headerIconWrapper {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(219, 39, 119, 0.1);
+  color: var(--rose-600);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.headerTitle {
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.headerSubtitle {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 2px 0 0 0;
+}
+
+.closeBtn {
+  padding: 0.55rem 1.1rem !important;
+  font-size: 0.85rem !important;
+  font-weight: 800 !important;
+  background: #ffffff !important;
+  border-color: #fbcfe8 !important;
+  color: #db2777 !important;
+}
+
+.searchWrapper {
+  flex: 1 1 300px;
+}
+
+.searchIcon {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.searchInput {
+  height: 42px !important;
+}
+
+.clearSearchBtn {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loadingState {
+  padding: 4rem;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.emptyState {
+  padding: 4rem 1.5rem;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.emptyStateIcon {
+  margin: 0 auto 12px auto;
+  opacity: 0.35;
+  color: var(--rose-400);
+}
+
+.emptyStateTitle {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.emptyStateText {
+  font-size: 0.85rem;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.invoiceNumberCell {
+  color: var(--rose-600);
+}
+
+.timeCell {
+  font-size: 0.775rem;
+  color: var(--text-secondary);
+}
+
+.actionCell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}

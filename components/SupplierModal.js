@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { X, Truck, Phone, DollarSign, FileText, CheckCircle2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { X, Truck, Phone, DollarSign } from "lucide-react";
+import styles from "./SupplierModal.module.css";
 
 export default function SupplierModal({ isOpen, onClose, onSave, supplierToEdit }) {
   const [name, setName] = useState("");
@@ -75,58 +76,26 @@ export default function SupplierModal({ isOpen, onClose, onSave, supplierToEdit 
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div 
-        className="modal-content"
+        className={`modal-content ${styles.modalContainer}`}
         onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: "520px", padding: "28px" }}
       >
         {/* Header */}
-        <div style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: "22px",
-          paddingBottom: "14px",
-          borderBottom: "1px solid #f0e1ec"
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div style={{
-              width: "42px",
-              height: "42px",
-              borderRadius: "12px",
-              background: "linear-gradient(135deg, #ec4899 0%, #db2777 100%)",
-              color: "#ffffff",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "0 4px 14px rgba(219, 39, 119, 0.25)"
-            }}>
+        <div className={styles.modalHeader}>
+          <div className={styles.headerBrand}>
+            <div className={styles.headerIcon}>
               <Truck size={22} />
             </div>
             <div>
-              <h3 style={{ fontSize: "1.25rem", fontWeight: "900", color: "#1e1322" }}>
+              <h3 className={styles.headerTitle}>
                 {supplierToEdit ? "تعديل بيانات المورد" : "إضافة مورد جديد"}
               </h3>
-              <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", fontWeight: "600" }}>
+              <p className={styles.headerSubtitle}>
                 تسجيل بيانات المورد والحساب والرصيد المالي
               </p>
             </div>
           </div>
 
-          <button 
-            onClick={onClose}
-            style={{
-              background: "#fdf2f8",
-              border: "1px solid #fbcfe8",
-              color: "#db2777",
-              width: "32px",
-              height: "32px",
-              borderRadius: "10px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer"
-            }}
-          >
+          <button onClick={onClose} className={styles.closeBtn}>
             <X size={18} />
           </button>
         </div>
@@ -136,7 +105,7 @@ export default function SupplierModal({ isOpen, onClose, onSave, supplierToEdit 
           {/* Supplier Name */}
           <div className="form-group">
             <label className="form-label">
-              اسم المورد / الشركة <span style={{ color: "#db2777" }}>*</span>
+              اسم المورد / الشركة <span className={styles.requiredStar}>*</span>
             </label>
             <input 
               type="text"
@@ -151,50 +120,34 @@ export default function SupplierModal({ isOpen, onClose, onSave, supplierToEdit 
           {/* Phone (Optional) */}
           <div className="form-group">
             <label className="form-label">
-              رقم الهاتف / الواتساب <span style={{ fontSize: "0.78rem", color: "var(--text-muted)", fontWeight: "normal" }}>(اختياري)</span>
+              رقم الهاتف / الواتساب <span className={styles.optionalTag}>(اختياري)</span>
             </label>
-            <div style={{ position: "relative" }}>
+            <div className={styles.inputWrapper}>
               <input 
                 type="tel"
-                className="form-input num-font"
+                className={`form-input num-font ${styles.phoneInput}`}
                 dir="ltr"
                 placeholder="01012345678"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                style={{ paddingRight: "40px", textAlign: "right" }}
               />
-              <Phone size={18} color="#db2777" style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)" }} />
+              <Phone size={18} className={styles.inputIcon} />
             </div>
           </div>
 
           {/* Initial Balance Configuration (Only on Add or explicitly shown) */}
           {!supplierToEdit && (
-            <div style={{
-              background: "#fcf8fa",
-              border: "1.5px solid #f0e1ec",
-              borderRadius: "14px",
-              padding: "16px",
-              marginBottom: "16px"
-            }}>
-              <label className="form-label" style={{ marginBottom: "10px", display: "block" }}>
+            <div className={styles.balanceBox}>
+              <label className={`form-label ${styles.balanceLabel}`}>
                 الرصيد المالي الافتتاحي:
               </label>
 
               {/* Balance Type Selector */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px", marginBottom: "12px" }}>
+              <div className={styles.balanceGrid}>
                 <button
                   type="button"
                   onClick={() => setBalanceType("payable")}
-                  style={{
-                    padding: "8px",
-                    borderRadius: "10px",
-                    border: balanceType === "payable" ? "1.5px solid #db2777" : "1px solid #e5e7eb",
-                    background: balanceType === "payable" ? "#fdf2f8" : "#ffffff",
-                    color: balanceType === "payable" ? "#be185d" : "#4b5563",
-                    fontWeight: "800",
-                    fontSize: "0.82rem",
-                    cursor: "pointer"
-                  }}
+                  className={`${styles.typeBtn} ${balanceType === "payable" ? styles.typeBtnPayableActive : ""}`}
                 >
                   له فلوس (+)
                 </button>
@@ -202,16 +155,7 @@ export default function SupplierModal({ isOpen, onClose, onSave, supplierToEdit 
                 <button
                   type="button"
                   onClick={() => setBalanceType("receivable")}
-                  style={{
-                    padding: "8px",
-                    borderRadius: "10px",
-                    border: balanceType === "receivable" ? "1.5px solid #7e22ce" : "1px solid #e5e7eb",
-                    background: balanceType === "receivable" ? "#faf5ff" : "#ffffff",
-                    color: balanceType === "receivable" ? "#7e22ce" : "#4b5563",
-                    fontWeight: "800",
-                    fontSize: "0.82rem",
-                    cursor: "pointer"
-                  }}
+                  className={`${styles.typeBtn} ${balanceType === "receivable" ? styles.typeBtnReceivableActive : ""}`}
                 >
                   عليه فلوس (-)
                 </button>
@@ -219,35 +163,25 @@ export default function SupplierModal({ isOpen, onClose, onSave, supplierToEdit 
                 <button
                   type="button"
                   onClick={() => { setBalanceType("zero"); setBalanceAmount("0"); }}
-                  style={{
-                    padding: "8px",
-                    borderRadius: "10px",
-                    border: balanceType === "zero" ? "1.5px solid #059669" : "1px solid #e5e7eb",
-                    background: balanceType === "zero" ? "#ecfdf5" : "#ffffff",
-                    color: balanceType === "zero" ? "#047857" : "#4b5563",
-                    fontWeight: "800",
-                    fontSize: "0.82rem",
-                    cursor: "pointer"
-                  }}
+                  className={`${styles.typeBtn} ${balanceType === "zero" ? styles.typeBtnZeroActive : ""}`}
                 >
                   حسابه خالص (0)
                 </button>
               </div>
 
               {balanceType !== "zero" && (
-                <div style={{ position: "relative" }}>
+                <div className={styles.inputWrapper}>
                   <input 
                     type="number"
                     step="any"
-                    className="form-input num-font"
+                    className={`form-input num-font ${styles.balanceAmountInput}`}
                     dir="ltr"
                     placeholder="أدخل المبلغ بالجنيه (ج.م)..."
                     value={balanceAmount}
                     onChange={(e) => setBalanceAmount(e.target.value)}
-                    style={{ paddingRight: "40px", textAlign: "right" }}
                     required
                   />
-                  <DollarSign size={18} color="#db2777" style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)" }} />
+                  <DollarSign size={18} className={styles.inputIcon} />
                 </div>
               )}
             </div>
@@ -266,20 +200,18 @@ export default function SupplierModal({ isOpen, onClose, onSave, supplierToEdit 
           </div>
 
           {/* Action Buttons */}
-          <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "22px" }}>
+          <div className={styles.actionRow}>
             <button 
               type="button" 
               onClick={onClose}
-              className="btn-secondary"
-              style={{ padding: "10px 20px" }}
+              className={`btn-secondary ${styles.cancelBtn}`}
             >
               إلغاء
             </button>
             <button 
               type="submit" 
               disabled={isSubmitting}
-              className="btn-primary"
-              style={{ padding: "10px 24px" }}
+              className={`btn-primary ${styles.submitBtn}`}
             >
               {isSubmitting ? "جاري الحفظ..." : (supplierToEdit ? "حفظ التعديلات" : "إضافة المورد")}
             </button>

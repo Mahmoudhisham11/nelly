@@ -2,11 +2,16 @@
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import Sidebar from "@/components/Sidebar";
 import Navbar from "@/components/Navbar";
 import POSReceiptModal from "@/components/POSReceiptModal";
+import POSHeldInvoicesModal from "@/components/pos/POSHeldInvoicesModal";
+import POSNewCustomerModal from "@/components/pos/POSNewCustomerModal";
+import POSCloseShiftModal from "@/components/pos/POSCloseShiftModal";
+import POSReturnModal from "@/components/pos/POSReturnModal";
+import POSInvoiceDetailsModal from "@/components/pos/POSInvoiceDetailsModal";
+import POSShiftInvoices from "@/components/pos/POSShiftInvoices";
 import { subscribeToShopProducts } from "@/lib/shopService";
 import { subscribeToCustomers, addCustomer } from "@/lib/customersService";
 import { subscribeToEmployees } from "@/lib/employeesService";
@@ -33,22 +38,17 @@ import {
   UserPlus, 
   CheckCircle2, 
   AlertCircle, 
-  RotateCcw, 
-  Sparkles,
-  Receipt,
-  X,
-  Store,
-  PauseCircle,
-  FolderClock,
-  Lock,
-  Eye,
-  CalendarCheck,
-  Printer,
-  TrendingUp,
-  DollarSign,
-  Coins,
-  Users
+  Sparkles, 
+  Receipt, 
+  PauseCircle, 
+  FolderClock, 
+  Lock, 
+  TrendingUp, 
+  DollarSign, 
+  Coins, 
+  Users 
 } from "lucide-react";
+import styles from "./pos.module.css";
 
 export default function POSPage() {
   const router = useRouter();
@@ -750,27 +750,12 @@ export default function POSPage() {
             </div>
 
             {/* Top Bar Actions: Show Invoices & Close Shift */}
-            <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+            <div className={styles.topActionsWrap}>
               {/* Toggle Shift Invoices Button */}
               <button 
                 type="button"
                 onClick={() => setShowShiftInvoices(!showShiftInvoices)}
-                className="btn-pos-toggle-invoices"
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "0.6rem",
-                  padding: "0.7rem 1.25rem",
-                  borderRadius: "14px",
-                  fontWeight: "800",
-                  fontSize: "0.92rem",
-                  cursor: "pointer",
-                  transition: "all 0.2s ease",
-                  background: showShiftInvoices ? "linear-gradient(135deg, #db2777, #be185d)" : "#ffffff",
-                  color: showShiftInvoices ? "#ffffff" : "#be185d",
-                  border: `1.5px solid ${showShiftInvoices ? "#be185d" : "#fbcfe8"}`,
-                  boxShadow: showShiftInvoices ? "0 4px 14px rgba(219, 39, 119, 0.3)" : "0 2px 8px rgba(0,0,0,0.04)"
-                }}
+                className={`btn-pos-toggle-invoices ${styles.toggleInvoicesBtn} ${showShiftInvoices ? styles.toggleInvoicesBtnActive : styles.toggleInvoicesBtnInactive}`}
                 title={showShiftInvoices ? "العودة لسلة البيع والكاشير" : "عرض فواتير الوردية الحالية"}
               >
                 {showShiftInvoices ? (
@@ -859,11 +844,11 @@ export default function POSPage() {
             /* -------------------------------------------------------
                 FULL-WIDTH SHOPPING CART & REGISTER
                 ------------------------------------------------------- */
-            <div className="pos-register-container" style={{ width: "100%" }}>
+            <div className="pos-register-container">
               
               {/* Barcode & Search Input (Full Width Prominent Top Bar) */}
               <div className="pos-scanner-container">
-                <label className="pos-scanner-label" style={{ fontSize: "0.9rem" }}>
+                <label className={`pos-scanner-label ${styles.scannerLabel}`}>
                   <Barcode size={19} color="var(--rose-600)" />
                   <span>إضافة منتج من المحل (امسح الباركود أو اكتب اسم الصنف)</span>
                 </label>
@@ -881,8 +866,7 @@ export default function POSPage() {
                     onFocus={() => {
                       if (searchTerm.trim()) setSearchDropdownOpen(true);
                     }}
-                    className="pos-scanner-input-field"
-                    style={{ height: "48px", fontSize: "0.95rem" }}
+                    className={`pos-scanner-input-field ${styles.scannerInput}`}
                   />
                   <Search size={20} className="pos-scanner-leading-icon" />
 
@@ -902,18 +886,17 @@ export default function POSPage() {
                               }
                               addToCart(p);
                             }}
-                            className="pos-search-result-item"
-                            style={isOut ? { opacity: 0.55, cursor: "not-allowed", background: "#fef2f2" } : {}}
+                            className={`pos-search-result-item ${isOut ? styles.outOfStockItem : ""}`}
                           >
                             <div>
-                              <div className="pos-result-name" style={isOut ? { color: "#991b1b" } : {}}>
-                                {p.name} {isOut && <span style={{ fontSize: "0.72rem", color: "#dc2626", fontWeight: "bold", marginRight: "4px" }}>(نفد ❌)</span>}
+                              <div className={`pos-result-name ${isOut ? styles.outOfStockText : ""}`}>
+                                {p.name} {isOut && <span className={styles.outOfStockBadge}>(نفد ❌)</span>}
                               </div>
                               <div className="pos-result-meta">
-                                باركود: {p.barcode || "—"} | الرصيد: <strong style={{ color: isOut ? "#dc2626" : "inherit" }}>{stockCount}</strong> قطعة
+                                باركود: {p.barcode || "—"} | الرصيد: <strong className={isOut ? styles.outOfStockStock : ""}>{stockCount}</strong> قطعة
                               </div>
                             </div>
-                            <div className="pos-result-price" style={isOut ? { color: "#991b1b" } : {}}>
+                            <div className={`pos-result-price ${isOut ? styles.outOfStockText : ""}`}>
                               {formatNumber(p.sellingPrice)} ج.م
                             </div>
                           </div>
@@ -925,18 +908,12 @@ export default function POSPage() {
               </div>
 
               {/* 2-Column Full-Width Interior Grid on Large Screens */}
-              <div style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(380px, 1fr))",
-                gap: "20px",
-                alignItems: "start",
-                marginTop: "4px"
-              }}>
+              <div className={styles.registerGrid}>
                 {/* RIGHT COLUMN: Cart Items & Customer Info */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                <div className={styles.cartColumn}>
                   {/* Cart Header */}
                   <div className="pos-cart-top-bar">
-                    <div className="pos-cart-title-text" style={{ fontSize: "1rem" }}>
+                    <div className={`pos-cart-title-text ${styles.cartTitleText}`}>
                       <ShoppingCart size={20} color="var(--rose-600)" />
                       <span>سلة البيع ({cart.reduce((a, c) => a + c.quantity, 0)} قطعة)</span>
                     </div>
@@ -946,9 +923,8 @@ export default function POSPage() {
                       <button 
                         type="button"
                         onClick={() => setIsHeldInvoicesModalOpen(true)}
-                        className="btn-pos-held-invoices"
+                        className={`btn-pos-held-invoices ${styles.heldInvoicesBtn}`}
                         title="استعراض الفواتير المعلقة"
-                        style={{ gap: "6px", padding: "0.4rem 0.85rem", fontSize: "0.8rem", fontWeight: "800" }}
                       >
                         <FolderClock size={16} />
                         <span>المعلقة</span>
@@ -983,11 +959,11 @@ export default function POSPage() {
                   </div>
 
                   {/* Cart Items List */}
-                  <div className="pos-cart-items-wrapper" style={{ maxHeight: "360px", minHeight: "160px" }}>
+                  <div className={`pos-cart-items-wrapper ${styles.cartItemsWrapper}`}>
                     {cart.length === 0 ? (
-                      <div className="pos-cart-empty-placeholder" style={{ height: "160px" }}>
-                        <ShoppingCart size={38} color="var(--text-muted)" style={{ opacity: 0.35 }} />
-                        <p style={{ fontSize: "0.95rem" }}>سلة البيع فارغة</p>
+                      <div className={`pos-cart-empty-placeholder ${styles.cartEmptyPlaceholder}`}>
+                        <ShoppingCart size={38} color="var(--text-muted)" className={styles.cartEmptyIcon} />
+                        <p className={styles.cartEmptyTitle}>سلة البيع فارغة</p>
                         <span>امسح باركود المنتج أو ابحث باسمه لإضافته فوراً</span>
                       </div>
                     ) : (
@@ -997,62 +973,48 @@ export default function POSPage() {
                           const remainingStockAfterCart = Math.max(0, liveStock - item.quantity);
 
                           return (
-                            <div key={item.id} className="pos-cart-single-row" style={{ padding: "0.85rem 1rem", alignItems: "center" }}>
+                            <div key={item.id} className={`pos-cart-single-row ${styles.cartSingleRow}`}>
                               <div className="pos-cart-item-details">
-                                <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                                  <span className="pos-item-title" style={{ fontSize: "0.95rem", fontWeight: "900" }}>{item.name}</span>
+                                <div className={styles.itemHeaderGroup}>
+                                  <span className={`pos-item-title ${styles.itemTitle}`}>{item.name}</span>
                                   <span 
-                                    style={{ 
-                                      fontSize: "0.74rem", 
-                                      fontWeight: "800",
-                                      background: liveStock <= 3 ? "#fef2f2" : "#ecfdf5",
-                                      color: liveStock <= 3 ? "#dc2626" : "#059669",
-                                      border: `1px solid ${liveStock <= 3 ? "#fecaca" : "#a7f3d0"}`,
-                                      padding: "2px 8px",
-                                      borderRadius: "6px",
-                                      display: "inline-flex",
-                                      alignItems: "center",
-                                      gap: "3px"
-                                    }}
+                                    className={liveStock <= 3 ? styles.stockPillLow : styles.stockPillNormal}
                                     title="إجمالي الكمية المتوفرة بالمحل"
                                   >
                                     📦 رصيد المحل الكلي: <strong className="num-font" dir="ltr">{liveStock}</strong> قطعة
                                   </span>
                                 </div>
-                                <div className="pos-item-subtext" style={{ fontSize: "0.82rem", marginTop: "4px", display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+                                <div className={`pos-item-subtext ${styles.itemSubtext}`}>
                                   <span>
-                                    {formatNumber(item.sellingPrice)} ج.م × {item.quantity} = <strong style={{ color: "var(--rose-700)", fontWeight: "900" }}>{formatNumber(item.sellingPrice * item.quantity)} ج.م</strong>
+                                    {formatNumber(item.sellingPrice)} ج.م × {item.quantity} = <strong className={styles.itemPriceTotal}>{formatNumber(item.sellingPrice * item.quantity)} ج.م</strong>
                                   </span>
-                                  <span style={{ color: "#7c3aed", fontSize: "0.75rem", fontWeight: "700" }}>
+                                  <span className={styles.remainingShopStock}>
                                     (المتبقي بالمحل بعد السلة: <strong className="num-font" dir="ltr">{remainingStockAfterCart}</strong> قطعة)
                                   </span>
                                 </div>
                               </div>
 
-                            <div className="pos-qty-button-group">
-                              <button 
-                                onClick={() => updateQuantity(item.id, 1)}
-                                className="btn-pos-qty"
-                                style={{ width: "30px", height: "30px" }}
-                              >
-                                <Plus size={15} />
-                              </button>
-                              <span className="pos-qty-display-number" style={{ fontSize: "1rem", width: "26px" }}>{item.quantity}</span>
-                              <button 
-                                onClick={() => updateQuantity(item.id, -1)}
-                                className="btn-pos-qty"
-                                style={{ width: "30px", height: "30px" }}
-                              >
-                                <Minus size={15} />
-                              </button>
-                              <button 
-                                onClick={() => removeFromCart(item.id)}
-                                className="btn-pos-delete-item"
-                                style={{ padding: "5px", marginLeft: "4px" }}
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </div>
+                              <div className="pos-qty-button-group">
+                                <button 
+                                  onClick={() => updateQuantity(item.id, 1)}
+                                  className={`btn-pos-qty ${styles.qtyBtn}`}
+                                >
+                                  <Plus size={15} />
+                                </button>
+                                <span className={`pos-qty-display-number ${styles.qtyDisplay}`}>{item.quantity}</span>
+                                <button 
+                                  onClick={() => updateQuantity(item.id, -1)}
+                                  className={`btn-pos-qty ${styles.qtyBtn}`}
+                                >
+                                  <Minus size={15} />
+                                </button>
+                                <button 
+                                  onClick={() => removeFromCart(item.id)}
+                                  className={`btn-pos-delete-item ${styles.deleteItemBtn}`}
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
                             </div>
                           );
                         })}
@@ -1081,8 +1043,7 @@ export default function POSPage() {
                         const c = customers.find(item => item.id === e.target.value);
                         setSelectedCustomer(c || null);
                       }}
-                      className="pos-select-box"
-                      style={{ padding: "0.6rem 0.85rem", fontSize: "0.88rem" }}
+                      className={`pos-select-box ${styles.selectInput}`}
                     >
                       <option value="">عميل نقدي (بدون حساب آجل)</option>
                       {customers.map(c => (
@@ -1107,8 +1068,7 @@ export default function POSPage() {
                         const emp = employees.find(item => item.id === e.target.value);
                         setSelectedSellerEmployee(emp || null);
                       }}
-                      className="pos-select-box"
-                      style={{ padding: "0.6rem 0.85rem", fontSize: "0.88rem" }}
+                      className={`pos-select-box ${styles.selectInput}`}
                     >
                       <option value="">بدون تحديد موظف مبيعات</option>
                       {employees.map(emp => (
@@ -1121,7 +1081,7 @@ export default function POSPage() {
                 </div>
 
                 {/* LEFT COLUMN: Payment, Discount, Net Breakdown & Checkout */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                <div className={styles.paymentColumn}>
                   {/* Discount Row with Wholesale Barrier */}
                   <div className="pos-control-row">
                     <div className="pos-label-between">
@@ -1151,8 +1111,7 @@ export default function POSPage() {
                       placeholder="قيمة الخصم..."
                       value={discountValue}
                       onChange={(e) => setDiscountValue(e.target.value)}
-                      className="pos-input-general"
-                      style={{ padding: "0.6rem 0.85rem", fontSize: "0.9rem" }}
+                      className={`pos-input-general ${styles.discountInput}`}
                     />
 
                     {isDiscountViolatingWholesale && (
@@ -1172,8 +1131,7 @@ export default function POSPage() {
                           key={m}
                           type="button"
                           onClick={() => setPaymentMethod(m)}
-                          className={`btn-pos-method-choice ${paymentMethod === m ? "active" : ""}`}
-                          style={{ padding: "0.65rem 0.4rem", fontSize: "0.82rem" }}
+                          className={`btn-pos-method-choice ${paymentMethod === m ? "active" : ""} ${styles.methodBtn}`}
                         >
                           {m === "نقدي" && <Banknote size={15} />}
                           {m === "فيزا" && <CreditCard size={15} />}
@@ -1206,44 +1164,43 @@ export default function POSPage() {
                       placeholder={`المطلوب سداده: ${formatNumber(cartFinalTotal)} ج.م`}
                       value={receivedCash}
                       onChange={(e) => setReceivedCash(e.target.value)}
-                      className="pos-input-general font-mono font-bold text-base"
-                      style={{ padding: "0.6rem 0.85rem" }}
+                      className={`pos-input-general font-mono font-bold text-base ${styles.receivedInput}`}
                     />
 
                     {/* Instant visual indicator for remaining / change right below input */}
                     {cartFinalTotal > 0 && receivedCash !== "" && parsedReceivedCash > 0 && (
                       <div className={`pos-received-feedback ${changeForCustomer > 0 ? "change-mode" : remainingDue > 0 ? "debt-mode" : "exact-mode"}`}>
                         {changeForCustomer > 0 && (
-                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                            <span style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: "800" }}>
+                          <div className={styles.receivedFeedbackRow}>
+                            <span className={styles.feedbackLabel}>
                               <Coins size={16} />
                               <span>المتبقي للعميل (الباقي / الفكة المسترجعة):</span>
                             </span>
-                            <span style={{ fontFamily: "var(--font-numbers)", fontWeight: "900", fontSize: "1.1rem" }}>
+                            <span className={styles.feedbackValue}>
                               {formatNumber(changeForCustomer)} ج.م
                             </span>
                           </div>
                         )}
 
                         {remainingDue > 0 && (
-                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                            <span style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: "800" }}>
+                          <div className={styles.receivedFeedbackRow}>
+                            <span className={styles.feedbackLabel}>
                               <AlertCircle size={16} />
                               <span>المتبقي على العميل (المطلوب سداده):</span>
                             </span>
-                            <span style={{ fontFamily: "var(--font-numbers)", fontWeight: "900", fontSize: "1.1rem" }}>
+                            <span className={styles.feedbackValue}>
                               {formatNumber(remainingDue)} ج.م
                             </span>
                           </div>
                         )}
 
                         {parsedReceivedCash === cartFinalTotal && (
-                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                            <span style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: "800" }}>
+                          <div className={styles.receivedFeedbackRow}>
+                            <span className={styles.feedbackLabel}>
                               <CheckCircle2 size={16} />
                               <span>تم استلام المبلغ بالكامل بالضبط:</span>
                             </span>
-                            <span style={{ fontFamily: "var(--font-numbers)", fontWeight: "800", fontSize: "0.85rem" }}>
+                            <span className={styles.feedbackExactValue}>
                               المتبقي: 0 ج.م
                             </span>
                           </div>
@@ -1253,22 +1210,22 @@ export default function POSPage() {
                   </div>
 
                   {/* Net Bill Breakdown & Total */}
-                  <div className="pos-net-summary-panel" style={{ padding: "1.1rem" }}>
+                  <div className={`pos-net-summary-panel ${styles.netSummaryPanel}`}>
                     <div className="pos-calc-row">
                       <span>إجمالي سعر الأصناف:</span>
-                      <span className="font-mono font-bold" style={{ fontSize: "0.95rem" }}>{formatNumber(cartSubtotal)} ج.م</span>
+                      <span className={`font-mono font-bold ${styles.subtotalVal}`}>{formatNumber(cartSubtotal)} ج.م</span>
                     </div>
 
                     {calculatedDiscount > 0 && (
                       <div className="pos-calc-row text-red-500">
                         <span>الخصم المطبق:</span>
-                        <span className="font-mono font-bold" style={{ fontSize: "0.95rem" }}>-{formatNumber(calculatedDiscount)} ج.م</span>
+                        <span className={`font-mono font-bold ${styles.discountVal}`}>-{formatNumber(calculatedDiscount)} ج.م</span>
                       </div>
                     )}
 
                     <div className="pos-calc-row pos-row-grand-total">
                       <span className="font-bold text-sm text-[var(--text-primary)]">الصافي المطلوب:</span>
-                      <span className="pos-grand-price-text" style={{ fontSize: "1.45rem" }}>
+                      <span className={`pos-grand-price-text ${styles.grandTotalVal}`}>
                         {formatNumber(cartFinalTotal)} ج.م
                       </span>
                     </div>
@@ -1304,8 +1261,7 @@ export default function POSPage() {
                   <button
                     onClick={handleCheckout}
                     disabled={cart.length === 0 || isDiscountViolatingWholesale || isSubmitting}
-                    className="btn-pos-submit-sale"
-                    style={{ padding: "1.1rem", fontSize: "1.05rem" }}
+                    className={`btn-pos-submit-sale ${styles.submitSaleBtn}`}
                   >
                     {isSubmitting ? (
                       <span>جاري إصدار الفاتورة...</span>
@@ -1321,787 +1277,77 @@ export default function POSPage() {
 
             </div>
           ) : (
-            /* -------------------------------------------------------
-                FULL-WIDTH CURRENT SHIFT INVOICES DATA TABLE
-                ------------------------------------------------------- */
-            <div className="pos-shift-table-panel" style={{ width: "100%" }}>
-              
-              {/* Table Inner Header with Close / Return to Cart Action */}
-              <div className="pos-shift-header-inner">
-                <div className="flex items-center gap-2">
-                  <h2 className="pos-shift-heading-text">
-                    <Receipt size={22} color="var(--rose-600)" />
-                    <span>فواتير الوردية الحالية</span>
-                  </h2>
-                  <span className="pos-shift-badge-counter" style={{ fontSize: "0.85rem", padding: "0.25rem 0.75rem" }}>
-                    {currentShiftSales.length} فاتورة مسجلة
-                  </span>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setShowShiftInvoices(false)}
-                  className="btn-secondary"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    padding: "0.5rem 1rem",
-                    fontSize: "0.85rem",
-                    fontWeight: "800",
-                    background: "#ffffff",
-                    borderColor: "#fbcfe8",
-                    color: "#db2777"
-                  }}
-                >
-                  <X size={16} />
-                  <span>إغلاق الفواتير والعودة للسلة</span>
-                </button>
-              </div>
-
-              {/* Search & Filter Toolbar */}
-              <div className="pos-table-filter-bar">
-                <div className="pos-table-search-wrapper" style={{ flex: "1 1 300px" }}>
-                  <Search size={18} style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", pointerEvents: "none" }} />
-                  <input
-                    type="text"
-                    placeholder="ابحث برقم الفاتورة أو اسم العميل أو الهاتف..."
-                    value={invoiceSearchQuery}
-                    onChange={(e) => setInvoiceSearchQuery(e.target.value)}
-                    className="pos-table-search-input-field"
-                    style={{ height: "42px" }}
-                  />
-                  {invoiceSearchQuery && (
-                    <button
-                      onClick={() => setInvoiceSearchQuery("")}
-                      style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer" }}
-                    >
-                      <X size={15} />
-                    </button>
-                  )}
-                </div>
-
-                {/* Filter Tabs */}
-                <div className="pos-filter-tabs-group">
-                  {["all", "نقدي", "فيزا", "تحويل", "آجل"].map((m) => (
-                    <button
-                      key={m}
-                      onClick={() => setPaymentFilter(m)}
-                      className={`btn-pos-filter-tab ${paymentFilter === m ? "active" : ""}`}
-                    >
-                      {m === "all" ? "الكل" : m}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Data Table Container with safe horizontal scrolling */}
-              <div className="pos-table-scroll-wrap">
-                {loading ? (
-                  <div style={{ padding: "4rem", textAlign: "center", color: "var(--text-muted)" }}>
-                    <p>جاري تحميل فواتير الوردية...</p>
-                  </div>
-                ) : filteredShiftSales.length === 0 ? (
-                  <div style={{ padding: "4rem 1.5rem", textAlign: "center", color: "var(--text-muted)" }}>
-                    <Receipt size={48} color="var(--rose-400)" style={{ margin: "0 auto 12px auto", opacity: 0.35 }} />
-                    <h3 style={{ fontSize: "1.1rem", fontWeight: "800", color: "var(--text-primary)", marginBottom: "6px" }}>
-                      لا توجد فواتير مبيعات في هذه الوردية حالياً
-                    </h3>
-                    <p style={{ fontSize: "0.85rem", maxWidth: "420px", margin: "0 auto" }}>
-                      {currentShiftSales.length === 0
-                        ? "الوردية جديدة وفارغة. اضغط على زر العودة للسلة لإجراء عمليات البيع."
-                        : "لا توجد فواتير تطابق نص البحث أو الفلتر المحدد."}
-                    </p>
-                  </div>
-                ) : (
-                  <table className="pos-invoices-data-table">
-                    <thead>
-                      <tr>
-                        <th>رقم الفاتورة</th>
-                        <th>الوقت</th>
-                        <th>العميل</th>
-                        <th>الأصناف</th>
-                        <th>طريقة الدفع</th>
-                        <th>الإجمالي</th>
-                        <th>الربح</th>
-                        <th>الإجراءات</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredShiftSales.map((inv) => (
-                        <tr 
-                          key={inv.id}
-                          onClick={() => setSelectedInvoiceForDetails(inv)}
-                          className="pos-table-row-item"
-                        >
-                          <td className="font-mono font-bold" style={{ color: "var(--rose-600)" }}>
-                            {inv.invoiceNumber}
-                          </td>
-                          <td style={{ fontSize: "0.775rem", color: "var(--text-secondary)" }}>
-                            {new Date(inv.date || inv.createdAt).toLocaleTimeString("ar-EG", { hour: '2-digit', minute: '2-digit' })}
-                          </td>
-                          <td>
-                            <div className="font-bold text-xs text-[var(--text-primary)]">
-                              {inv.customer?.name || "عميل نقدي"}
-                            </div>
-                            {inv.customer?.phone && (
-                              <div className="font-mono text-[11px] text-[var(--text-muted)]">
-                                {inv.customer.phone}
-                              </div>
-                            )}
-                          </td>
-                          <td>
-                            <span className="pos-items-pill">
-                              {inv.itemsCount || (inv.items || []).reduce((a, c) => a + (c.quantity || 1), 0)} قطعة
-                            </span>
-                          </td>
-                          <td>
-                            <span className={`pos-payment-tag tag-${inv.paymentMethod}`}>
-                              {inv.paymentMethod || "نقدي"}
-                            </span>
-                          </td>
-                          <td className="font-mono font-bold text-sm text-[var(--text-primary)]">
-                            {formatNumber(inv.total)} ج.م
-                          </td>
-                          <td className="font-mono font-bold text-xs text-emerald-600">
-                            +{formatNumber(inv.totalProfit)} ج.م
-                          </td>
-                          <td>
-                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }} onClick={(e) => e.stopPropagation()}>
-                              <button
-                                onClick={() => setSelectedInvoiceForDetails(inv)}
-                                className="btn-pos-row-action btn-action-inspect"
-                                title="عرض الأصناف وتفاصيل الفاتورة"
-                              >
-                                <Eye size={14} />
-                                <span>الأصناف</span>
-                              </button>
-                              <button
-                                onClick={() => handleReturnFullInvoice(inv)}
-                                className="btn-pos-row-action btn-action-refund"
-                                title="مرتجع كامل الفاتورة وإلغاؤها"
-                              >
-                                <RotateCcw size={14} />
-                                <span>مرتجع</span>
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-
-            </div>
+            <POSShiftInvoices
+              show={showShiftInvoices}
+              onClose={() => setShowShiftInvoices(false)}
+              invoiceSearchQuery={invoiceSearchQuery}
+              setInvoiceSearchQuery={setInvoiceSearchQuery}
+              paymentFilter={paymentFilter}
+              setPaymentFilter={setPaymentFilter}
+              loading={loading}
+              currentShiftSales={currentShiftSales}
+              filteredShiftSales={filteredShiftSales}
+              onInspectInvoice={(inv) => setSelectedInvoiceForDetails(inv)}
+              onReturnFullInvoice={handleReturnFullInvoice}
+            />
           )}
         </div>
       </div>
 
-      {/* =========================================================
-          MODAL 1: Invoice Items Details & Return
-          ========================================================= */}
-      {selectedInvoiceForDetails && (
-        <div className="modal-overlay" onClick={() => setSelectedInvoiceForDetails(null)}>
-          <div 
-            className="modal-content invoice-details-modal" 
-            onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: "760px", padding: 0 }}
-          >
-            <div className="modal-header">
-              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                <div style={{
-                  width: "42px",
-                  height: "42px",
-                  borderRadius: "12px",
-                  background: "rgba(219, 39, 119, 0.1)",
-                  color: "var(--rose-600)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0
-                }}>
-                  <Receipt size={22} />
-                </div>
-                <div>
-                  <h3 className="modal-title font-mono font-bold" style={{ fontSize: "1.1rem" }}>
-                    فاتورة: {selectedInvoiceForDetails.invoiceNumber}
-                  </h3>
-                  <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "2px" }}>
-                    {new Date(selectedInvoiceForDetails.date || selectedInvoiceForDetails.createdAt).toLocaleString("ar-EG")}
-                  </p>
-                </div>
-              </div>
-              <button 
-                type="button"
-                onClick={() => setSelectedInvoiceForDetails(null)} 
-                className="modal-close-btn"
-                title="إغلاق"
-              >
-                <X size={18} />
-              </button>
-            </div>
+      {/* MODAL 1: Invoice Items Details & Return */}
+      <POSInvoiceDetailsModal
+        invoice={selectedInvoiceForDetails}
+        onClose={() => setSelectedInvoiceForDetails(null)}
+        onReturnItem={handleReturnItem}
+        onReturnFullInvoice={handleReturnFullInvoice}
+        onPrintInvoice={(inv) => {
+          setCompletedInvoice(inv);
+          setIsReceiptModalOpen(true);
+        }}
+      />
 
-            <div className="modal-body" style={{ padding: "1.25rem" }}>
-              {/* Meta Grid */}
-              <div className="invoice-meta-grid" style={{ marginBottom: "1.25rem" }}>
-                <div className="meta-box">
-                  <span className="meta-label">العميل</span>
-                  <span className="meta-val">{selectedInvoiceForDetails.customer?.name || "عميل نقدي"}</span>
-                </div>
-                <div className="meta-box">
-                  <span className="meta-label">الكاشير</span>
-                  <span className="meta-val">{selectedInvoiceForDetails.cashier?.name || "كاشير المحل"}</span>
-                </div>
-                <div className="meta-box">
-                  <span className="meta-label">طريقة الدفع</span>
-                  <span className="meta-val">{selectedInvoiceForDetails.paymentMethod || "نقدي"}</span>
-                </div>
-                <div className="meta-box">
-                  <span className="meta-label">إجمالي الفاتورة</span>
-                  <span className="meta-val font-mono font-bold text-[var(--rose-600)]" style={{ fontSize: "1.05rem" }}>
-                    {formatNumber(selectedInvoiceForDetails.total)} ج.م
-                  </span>
-                </div>
-              </div>
+      {/* MODAL 2: Return Single Item */}
+      <POSReturnModal
+        itemToReturn={itemToReturn}
+        onClose={() => setItemToReturn(null)}
+        returnQuantity={returnQuantity}
+        setReturnQuantity={setReturnQuantity}
+        returnReason={returnReason}
+        setReturnReason={setReturnReason}
+        isReturning={isReturning}
+        onConfirmReturn={handleConfirmReturnItem}
+      />
 
-              {/* Items Table Header */}
-              <h4 style={{ fontSize: "0.875rem", fontWeight: "800", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px", color: "var(--text-primary)" }}>
-                <ShoppingCart size={16} color="var(--rose-600)" />
-                الأصناف المباعة في هذه الفاتورة ({(selectedInvoiceForDetails.items || []).length} صنف):
-              </h4>
+      {/* MODAL 3: Close Shift Confirmation */}
+      <POSCloseShiftModal
+        isOpen={isCloseShiftModalOpen}
+        onClose={() => setIsCloseShiftModalOpen(false)}
+        shiftStats={shiftStats}
+        shiftNotes={shiftNotes}
+        setShiftNotes={setShiftNotes}
+        isClosingShift={isClosingShift}
+        onConfirmCloseShift={handleConfirmCloseShift}
+      />
 
-              {/* Items Table */}
-              <div style={{ border: "1px solid var(--border-card)", borderRadius: "14px", overflow: "hidden", background: "#ffffff" }}>
-                <table style={{ width: "100%", fontSize: "0.85rem", textAlign: "right", borderCollapse: "collapse" }}>
-                  <thead style={{ background: "#fdf8fa", borderBottom: "1.5px solid var(--border-card)" }}>
-                    <tr>
-                      <th style={{ padding: "10px 12px", fontWeight: "800", color: "var(--text-secondary)" }}>الصنف</th>
-                      <th style={{ padding: "10px", textAlign: "center", fontWeight: "800", color: "var(--text-secondary)" }}>الباركود</th>
-                      <th style={{ padding: "10px", textAlign: "center", fontWeight: "800", color: "var(--text-secondary)" }}>الكمية</th>
-                      <th style={{ padding: "10px", textAlign: "center", fontWeight: "800", color: "var(--text-secondary)" }}>السعر</th>
-                      <th style={{ padding: "10px", textAlign: "center", fontWeight: "800", color: "var(--text-secondary)" }}>الإجمالي</th>
-                      <th style={{ padding: "10px 12px", textAlign: "center", fontWeight: "800", color: "var(--text-secondary)" }}>إجراء المرتجع</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(selectedInvoiceForDetails.items || []).map((itm, idx) => (
-                      <tr key={idx} style={{ borderBottom: "1px solid #f8eff4" }}>
-                        <td style={{ padding: "10px 12px", fontWeight: "700", color: "var(--text-primary)" }}>{itm.name}</td>
-                        <td style={{ padding: "10px", textAlign: "center", fontFamily: "var(--font-numbers)", fontSize: "0.75rem", color: "var(--text-muted)" }}>
-                          {itm.barcode || "—"}
-                        </td>
-                        <td style={{ padding: "10px", textAlign: "center", fontWeight: "800", fontFamily: "var(--font-numbers)" }}>
-                          {itm.quantity}
-                        </td>
-                        <td style={{ padding: "10px", textAlign: "center", fontFamily: "var(--font-numbers)" }}>
-                          {formatNumber(itm.sellingPrice)} ج.م
-                        </td>
-                        <td style={{ padding: "10px", textAlign: "center", fontWeight: "900", fontFamily: "var(--font-numbers)", color: "var(--rose-600)" }}>
-                          {formatNumber(itm.subtotal || itm.quantity * itm.sellingPrice)} ج.م
-                        </td>
-                        <td style={{ padding: "10px 12px", textAlign: "center" }}>
-                          <button
-                            type="button"
-                            onClick={() => handleReturnItem(selectedInvoiceForDetails, itm)}
-                            className="btn-return-single-item"
-                          >
-                            <RotateCcw size={13} />
-                            <span>مرتجع صنف</span>
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+      {/* MODAL 4: Suspended Invoices */}
+      <POSHeldInvoicesModal
+        isOpen={isHeldInvoicesModalOpen}
+        onClose={() => setIsHeldInvoicesModalOpen(false)}
+        heldInvoices={heldInvoices}
+        onRestore={handleRestoreHeldInvoice}
+        onDelete={handleDeleteHeldInvoice}
+      />
 
-            {/* Pinned Modal Footer */}
-            <div className="modal-footer" style={{ justifyContent: "space-between", flexWrap: "wrap" }}>
-              <button
-                type="button"
-                onClick={() => handleReturnFullInvoice(selectedInvoiceForDetails)}
-                className="btn-danger-return-full"
-              >
-                <RotateCcw size={15} />
-                <span>مرتجع كامل الفاتورة وحذفها</span>
-              </button>
-
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCompletedInvoice(selectedInvoiceForDetails);
-                    setIsReceiptModalOpen(true);
-                  }}
-                  className="btn-print-invoice"
-                >
-                  <Printer size={15} />
-                  <span>طباعة الفاتورة</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedInvoiceForDetails(null)}
-                  className="btn-close-modal"
-                >
-                  إغلاق
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* =========================================================
-          MODAL 2: Return Single Item
-          ========================================================= */}
-      {itemToReturn && (
-        <div 
-          className="modal-overlay" 
-          onClick={() => setItemToReturn(null)}
-          style={{ zIndex: 100010 }}
-        >
-          <div 
-            className="modal-content" 
-            onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: "480px", padding: 0 }}
-          >
-            <div className="modal-header">
-              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <div style={{
-                  width: "38px",
-                  height: "38px",
-                  borderRadius: "10px",
-                  background: "#fffbeb",
-                  color: "#b45309",
-                  border: "1px solid #fde68a",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0
-                }}>
-                  <RotateCcw size={20} />
-                </div>
-                <div>
-                  <h3 className="modal-title font-bold" style={{ fontSize: "1.05rem", color: "#92400e" }}>
-                    تأكيد مرتجع صنف للمحل
-                  </h3>
-                  <p style={{ fontSize: "0.725rem", color: "var(--text-muted)", marginTop: "2px" }}>
-                    إعادة الصنف لرصيد بضاعة المحل ورد المبلغ للزبون
-                  </p>
-                </div>
-              </div>
-              <button 
-                type="button"
-                onClick={() => setItemToReturn(null)} 
-                className="modal-close-btn"
-                title="إلغاء"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="modal-body" style={{ padding: "1.25rem" }}>
-              <div style={{ background: "#fffbeb", border: "1px solid #fde68a", borderRadius: "12px", padding: "12px", marginBottom: "1rem", color: "#92400e", fontSize: "0.85rem" }}>
-                <div style={{ fontWeight: "800" }}>الصنف: {itemToReturn.item.name}</div>
-                <div style={{ fontSize: "0.775rem", marginTop: "4px", color: "#78350f" }}>
-                  الكمية المباعة أصلاً: <strong>{itemToReturn.item.quantity} قطعة</strong> بسعر ({formatNumber(itemToReturn.item.sellingPrice)} ج.م للقطعة)
-                </div>
-              </div>
-
-              <div style={{ marginBottom: "1.25rem" }}>
-                <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "800", marginBottom: "6px", color: "var(--text-secondary)" }}>
-                  الكمية المراد استرجاعها:
-                </label>
-                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <input 
-                    type="number"
-                    min="1"
-                    max={itemToReturn.item.quantity}
-                    value={returnQuantity}
-                    onChange={(e) => {
-                      const val = parseInt(e.target.value, 10) || 1;
-                      setReturnQuantity(Math.min(itemToReturn.item.quantity, Math.max(1, val)));
-                    }}
-                    className="pos-input-general font-mono font-bold text-center text-lg"
-                    style={{ width: "90px", padding: "8px" }}
-                  />
-                  <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
-                    من أصل {itemToReturn.item.quantity} قطعة
-                  </span>
-                </div>
-              </div>
-
-              <div style={{ marginBottom: "1.25rem", background: "#ecfdf5", padding: "10px 14px", borderRadius: "10px", border: "1px solid #a7f3d0" }}>
-                <span style={{ fontSize: "0.78rem", fontWeight: "800", color: "var(--emerald-700)" }}>
-                  المبلغ المسترد للعميل:
-                </span>
-                <div style={{ fontFamily: "var(--font-numbers)", fontSize: "1.3rem", fontWeight: "900", color: "var(--emerald-600)" }}>
-                  {formatNumber(returnQuantity * itemToReturn.item.sellingPrice)} ج.م
-                </div>
-              </div>
-
-              <div style={{ marginBottom: "0.5rem" }}>
-                <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "800", marginBottom: "6px", color: "var(--text-secondary)" }}>
-                  سبب المرتجع:
-                </label>
-                <input 
-                  type="text"
-                  value={returnReason}
-                  onChange={(e) => setReturnReason(e.target.value)}
-                  placeholder="مثلاً: الصنف به عيب، اختيار غير مناسب..."
-                  className="pos-input-general"
-                />
-              </div>
-            </div>
-
-            {/* Pinned Modal Footer */}
-            <div className="modal-footer">
-              <button 
-                type="button"
-                onClick={() => setItemToReturn(null)} 
-                className="btn-cancel"
-              >
-                إلغاء
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmReturnItem}
-                disabled={isReturning}
-                className="btn-confirm-return"
-              >
-                {isReturning ? "جاري الإرجاع..." : "تأكيد المرتجع وإعادة الصنف للمحل"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* =========================================================
-          MODAL 3: Close Shift Confirmation
-          ========================================================= */}
-      {isCloseShiftModalOpen && (
-        <div className="modal-overlay" onClick={() => setIsCloseShiftModalOpen(false)}>
-          <div 
-            className="modal-content" 
-            onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: "560px", padding: 0 }}
-          >
-            <div className="modal-header">
-              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                <div style={{
-                  width: "42px",
-                  height: "42px",
-                  borderRadius: "12px",
-                  background: "linear-gradient(135deg, #1e1322, #3c143e)",
-                  color: "#ffffff",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                  boxShadow: "0 4px 12px rgba(30, 19, 34, 0.25)"
-                }}>
-                  <Lock size={20} />
-                </div>
-                <div>
-                  <h3 className="modal-title font-bold" style={{ fontSize: "1.1rem" }}>
-                    تقفيل الوردية وأرشفة الحسابات
-                  </h3>
-                  <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "2px" }}>
-                    نقل سجل مبيعات الوردية إلى تقفيلة الأيام (reports) وتصفير الكاشير
-                  </p>
-                </div>
-              </div>
-              <button 
-                type="button"
-                onClick={() => setIsCloseShiftModalOpen(false)} 
-                className="modal-close-btn"
-                title="إلغاء"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="modal-body" style={{ padding: "1.25rem" }}>
-              <div className="shift-summary-box" style={{ marginBottom: "1rem" }}>
-                <h4 style={{ fontSize: "0.875rem", fontWeight: "800", color: "var(--rose-700)", marginBottom: "10px", display: "flex", alignItems: "center", gap: "6px" }}>
-                  <CalendarCheck size={16} />
-                  ملخص الحسابات للوردية الحالية
-                </h4>
-
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "8px" }}>
-                  <div style={{ background: "#ffffff", padding: "10px", borderRadius: "10px", border: "1px solid var(--border-card)" }}>
-                    <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>عدد الفواتير:</span>
-                    <div style={{ fontWeight: "900", fontFamily: "var(--font-numbers)", fontSize: "1.1rem" }}>{shiftStats.count} فاتورة</div>
-                  </div>
-                  <div style={{ background: "#ffffff", padding: "10px", borderRadius: "10px", border: "1px solid var(--border-card)" }}>
-                    <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>إجمالي المبيعات:</span>
-                    <div style={{ fontWeight: "900", fontFamily: "var(--font-numbers)", fontSize: "1.1rem", color: "var(--rose-600)" }}>{formatNumber(shiftStats.sales)} ج.م</div>
-                  </div>
-                  <div style={{ background: "#ffffff", padding: "10px", borderRadius: "10px", border: "1px solid var(--border-card)" }}>
-                    <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>صافي الأرباح:</span>
-                    <div style={{ fontWeight: "900", fontFamily: "var(--font-numbers)", fontSize: "1.1rem", color: "var(--emerald-600)" }}>+{formatNumber(shiftStats.profit)} ج.م</div>
-                  </div>
-                  <div style={{ background: "#ffffff", padding: "10px", borderRadius: "10px", border: "1px solid var(--border-card)" }}>
-                    <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>الكاش في الدرج:</span>
-                    <div style={{ fontWeight: "900", fontFamily: "var(--font-numbers)", fontSize: "1.1rem", color: "#6b21a8" }}>{formatNumber(shiftStats.cash)} ج.م</div>
-                  </div>
-                </div>
-              </div>
-
-              {shiftStats.count === 0 ? (
-                <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: "12px", padding: "12px", marginBottom: "1rem", display: "flex", alignItems: "flex-start", gap: "8px" }}>
-                  <AlertCircle size={18} color="#2563eb" style={{ flexShrink: 0, marginTop: "2px" }} />
-                  <div style={{ fontSize: "0.8rem", color: "#1e40af", lineHeight: "1.5" }}>
-                    <strong>الوردية فارغة حالياً (0 فاتورة):</strong> لا توجد مبيعات في هذه الوردية لأرشفتها. يمكنك البدء بإجراء عمليات البيع أولاً.
-                  </div>
-                </div>
-              ) : (
-                <div className="alert-shift-warning" style={{ marginBottom: "1rem" }}>
-                  <AlertCircle size={18} color="#b45309" style={{ flexShrink: 0, marginTop: "2px" }} />
-                  <div style={{ fontSize: "0.775rem", color: "#78350f", lineHeight: "1.4" }}>
-                    <strong>تنبيه الإغلاق:</strong> سيتم ترحيل كافة فواتير ومبيعات هذه الوردية إلى سجل تقفيلة الأيام (reports)، وتصفير شاشة المبيعات للبدء بوردية جديدة.
-                  </div>
-                </div>
-              )}
-
-              <div style={{ marginBottom: "0.5rem" }}>
-                <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "800", marginBottom: "6px", color: "var(--text-secondary)" }}>
-                  ملاحظات التقفيل (اختياري):
-                </label>
-                <textarea
-                  rows="2"
-                  value={shiftNotes}
-                  onChange={(e) => setShiftNotes(e.target.value)}
-                  placeholder="مثلاً: تم تسليم الكاش للمدير بالكامل..."
-                  className="pos-input-general"
-                  style={{ resize: "none" }}
-                  disabled={shiftStats.count === 0}
-                />
-              </div>
-            </div>
-
-            {/* Pinned Modal Footer */}
-            <div className="modal-footer">
-              <button 
-                type="button"
-                onClick={() => setIsCloseShiftModalOpen(false)} 
-                className="btn-cancel"
-              >
-                إلغاء
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmCloseShift}
-                disabled={isClosingShift || shiftStats.count === 0}
-                className="btn-confirm-close-shift"
-                style={shiftStats.count === 0 ? { opacity: 0.5, cursor: "not-allowed" } : {}}
-              >
-                {isClosingShift ? "جاري التقفيل والأرشفة..." : "تأكيد تقفيل الوردية والأرشفة 🔒"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* =========================================================
-          MODAL 4: Suspended Invoices
-          ========================================================= */}
-      {isHeldInvoicesModalOpen && (
-        <div className="modal-overlay" onClick={() => setIsHeldInvoicesModalOpen(false)}>
-          <div 
-            className="modal-content" 
-            onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: "560px", padding: 0, overflow: "hidden" }}
-          >
-            <div className="modal-header">
-              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <div style={{
-                  width: "38px",
-                  height: "38px",
-                  borderRadius: "10px",
-                  background: "rgba(219, 39, 119, 0.1)",
-                  color: "var(--rose-600)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0
-                }}>
-                  <FolderClock size={20} />
-                </div>
-                <div>
-                  <h3 className="modal-title font-bold" style={{ fontSize: "1.05rem" }}>
-                    الفواتير المعلقة ({heldInvoices.length})
-                  </h3>
-                  <p style={{ fontSize: "0.725rem", color: "var(--text-muted)", marginTop: "2px" }}>
-                    اضغط على أي فاتورة لاستعادتها فوراً إلى سلة البيع
-                  </p>
-                </div>
-              </div>
-              <button 
-                type="button"
-                onClick={() => setIsHeldInvoicesModalOpen(false)} 
-                className="modal-close-btn"
-                title="إغلاق"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="modal-body" style={{ padding: "1.25rem" }}>
-              {heldInvoices.length === 0 ? (
-                <div style={{ textAlign: "center", padding: "2.5rem 1rem", color: "var(--text-muted)" }}>
-                  <PauseCircle size={44} style={{ margin: "0 auto 10px auto", opacity: 0.3 }} />
-                  <p style={{ fontWeight: "700" }}>لا توجد فواتير معلقة حالياً</p>
-                  <span style={{ fontSize: "0.75rem" }}>يمكنك تعليق أي سلة نشطة لخدمة زبون آخر مؤقتاً</span>
-                </div>
-              ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: "10px", maxHeight: "60vh", overflowY: "auto" }}>
-                  {heldInvoices.map((held) => (
-                    <div
-                      key={held.id}
-                      onClick={() => handleRestoreHeldInvoice(held)}
-                      className="held-invoice-card"
-                    >
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                        <div>
-                          <div style={{ fontWeight: "800", fontSize: "0.875rem", color: "var(--text-primary)" }}>
-                            {held.customer?.name || "عميل نقدي"}
-                          </div>
-                          <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "3px" }}>
-                            {new Date(held.createdAt).toLocaleTimeString("ar-EG")} • {(held.cart || []).length} صنف ({(held.cart || []).reduce((a, c) => a + c.quantity, 0)} قطعة)
-                          </div>
-                        </div>
-
-                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                          <span style={{ fontFamily: "var(--font-numbers)", fontWeight: "900", color: "var(--rose-600)", fontSize: "1rem" }}>
-                            {formatNumber(held.total)} ج.م
-                          </span>
-                          <button
-                            type="button"
-                            onClick={(e) => handleDeleteHeldInvoice(held.id, e)}
-                            style={{ 
-                              background: "#fef2f2", 
-                              border: "1px solid #fecaca", 
-                              color: "#ef4444", 
-                              cursor: "pointer", 
-                              padding: "6px",
-                              borderRadius: "8px",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center"
-                            }}
-                            title="حذف الفاتورة المعلقة"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* =========================================================
-          MODAL 5: Add Customer
-          ========================================================= */}
-      {isNewCustomerModalOpen && (
-        <div className="modal-overlay" onClick={() => setIsNewCustomerModalOpen(false)}>
-          <div 
-            className="modal-content" 
-            onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: "440px", padding: 0 }}
-          >
-            <div className="modal-header">
-              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <div style={{
-                  width: "38px",
-                  height: "38px",
-                  borderRadius: "10px",
-                  background: "rgba(219, 39, 119, 0.1)",
-                  color: "var(--rose-600)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0
-                }}>
-                  <UserPlus size={20} />
-                </div>
-                <div>
-                  <h3 className="modal-title font-bold" style={{ fontSize: "1.05rem" }}>
-                    إضافة عميل جديد
-                  </h3>
-                  <p style={{ fontSize: "0.725rem", color: "var(--text-muted)", marginTop: "2px" }}>
-                    تسجيل بيانات العميل وربطه بالسلة الحالية
-                  </p>
-                </div>
-              </div>
-              <button 
-                type="button"
-                onClick={() => setIsNewCustomerModalOpen(false)} 
-                className="modal-close-btn"
-                title="إغلاق"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <form onSubmit={handleAddNewCustomer} style={{ display: "flex", flexDirection: "column", flex: "1 1 auto", overflow: "hidden" }}>
-              <div className="modal-body" style={{ padding: "1.25rem" }}>
-                <div style={{ marginBottom: "14px" }}>
-                  <label style={{ display: "block", fontSize: "0.825rem", fontWeight: "800", marginBottom: "6px", color: "var(--text-secondary)" }}>
-                    اسم العميل: <span style={{ color: "#dc2626" }}>*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={newCustomerName}
-                    onChange={(e) => setNewCustomerName(e.target.value)}
-                    placeholder="مثلاً: سارة محمد..."
-                    className="pos-input-general"
-                    autoFocus
-                  />
-                </div>
-
-                <div style={{ marginBottom: "10px" }}>
-                  <label style={{ display: "block", fontSize: "0.825rem", fontWeight: "800", marginBottom: "6px", color: "var(--text-secondary)" }}>
-                    رقم الهاتف:
-                  </label>
-                  <input
-                    type="tel"
-                    value={newCustomerPhone}
-                    onChange={(e) => setNewCustomerPhone(e.target.value)}
-                    placeholder="010XXXXXXXX"
-                    className="pos-input-general font-mono"
-                    dir="ltr"
-                    style={{ textAlign: "right" }}
-                  />
-                </div>
-              </div>
-
-              {/* Pinned Modal Footer */}
-              <div className="modal-footer">
-                <button 
-                  type="button" 
-                  onClick={() => setIsNewCustomerModalOpen(false)} 
-                  className="btn-cancel"
-                >
-                  إلغاء
-                </button>
-                <button type="submit" className="btn-primary" style={{ padding: "9px 20px" }}>
-                  <UserPlus size={16} />
-                  <span>حفظ وتحديد العميل</span>
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* MODAL 5: Add Customer */}
+      <POSNewCustomerModal
+        isOpen={isNewCustomerModalOpen}
+        onClose={() => setIsNewCustomerModalOpen(false)}
+        newCustomerName={newCustomerName}
+        setNewCustomerName={setNewCustomerName}
+        newCustomerPhone={newCustomerPhone}
+        setNewCustomerPhone={setNewCustomerPhone}
+        onSubmit={handleAddNewCustomer}
+      />
 
       {/* =========================================================
           MODAL 6: Receipt Print / Share

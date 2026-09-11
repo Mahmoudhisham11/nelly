@@ -7,11 +7,11 @@ import CustomSelect from "@/components/CustomSelect";
 import { 
   X, 
   Sparkles, 
-  Barcode, 
   Package, 
   Save,
   Wand2
 } from "lucide-react";
+import styles from "./ProductModal.module.css";
 
 export const CATEGORIES = [
   "ميكاب",
@@ -61,7 +61,6 @@ export default function ProductModal({
           description: productToEdit.description || ""
         });
       } else {
-        // Pristine and empty for new product registration
         setFormData({
           barcode: "",
           name: "",
@@ -177,44 +176,27 @@ export default function ProductModal({
   const profitPerUnit = retail - cost;
   const profitMarginPercent = cost > 0 ? Math.round((profitPerUnit / cost) * 100) : 0;
   const totalWholesaleValue = (Number(formData.quantity) || 0) * cost;
+  const hasProfitDetails = !hideSellingPrice && cost > 0 && retail > 0;
 
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div 
-        className="modal-content" 
+        className={`modal-content ${styles.modalContainer}`} 
         onClick={(e) => e.stopPropagation()}
-        style={{ 
-          maxWidth: "600px", 
-          maxHeight: "min(92vh, 780px)",
-          display: "flex", 
-          flexDirection: "column",
-          overflow: "hidden" 
-        }}
       >
         {/* Header */}
         <div className="modal-header">
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <div style={{
-              width: "42px",
-              height: "42px",
-              borderRadius: "12px",
-              background: "linear-gradient(135deg, #ec4899 0%, #db2777 100%)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#fff",
-              flexShrink: 0,
-              boxShadow: "0 4px 12px rgba(219, 39, 119, 0.25)"
-            }}>
+          <div className={styles.headerBrand}>
+            <div className={styles.headerIcon}>
               <Package size={22} />
             </div>
             <div>
-              <h2 className="modal-title" style={{ fontSize: "1.2rem", fontWeight: "800", color: "#1e1322", margin: 0 }}>
+              <h2 className={`modal-title ${styles.headerTitle}`}>
                 {productToEdit 
                   ? (isShop ? "تعديل بيانات الصنف بالمحل" : "تعديل بيانات الصنف") 
                   : (isShop ? "تسجيل صنف جديد بالمحل" : "تسجيل صنف جديد بالمخزن")}
               </h2>
-              <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", fontWeight: "600", margin: 0, marginTop: "2px" }}>
+              <p className={styles.headerSubtitle}>
                 {isShop ? "بضاعة محل نيللي لمستحضرات التجميل والميكاب" : "مخزن نيللي لمستحضرات التجميل والميكاب"}
               </p>
             </div>
@@ -230,62 +212,26 @@ export default function ProductModal({
         </div>
 
         {/* Form Container */}
-        <form 
-          onSubmit={handleSubmit}
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            flex: "1 1 auto",
-            minHeight: 0,
-            overflow: "hidden"
-          }}
-        >
+        <form onSubmit={handleSubmit} className={styles.form}>
           {/* Scrollable Body */}
-          <div 
-            className="modal-body"
-            style={{ 
-              padding: "20px 24px",
-              overflowY: "auto"
-            }}
-          >
+          <div className={`modal-body ${styles.modalBody}`}>
             {errors.submit && (
-              <div style={{
-                background: "#fef2f2",
-                border: "1.5px solid #fecaca",
-                borderRadius: "12px",
-                padding: "10px 14px",
-                marginBottom: "16px",
-                color: "#b91c1c",
-                fontSize: "0.85rem",
-                fontWeight: "700"
-              }}>
+              <div className={styles.submitError}>
                 {errors.submit}
               </div>
             )}
 
             {/* Row 1: Barcode & Name */}
-            <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1.8fr", gap: "14px", marginBottom: "14px" }}>
-              <div className="form-group" style={{ marginBottom: 0 }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
-                  <label className="form-label" style={{ marginBottom: 0 }}>
-                    باركود الصنف <span style={{ color: "#db2777" }}>*</span>
+            <div className={styles.gridRow1}>
+              <div className={`form-group ${styles.formGroupNoMargin}`}>
+                <div className={styles.barcodeHeader}>
+                  <label className={`form-label ${styles.noMargin}`}>
+                    باركود الصنف <span className={styles.requiredRose}>*</span>
                   </label>
                   <button
                     type="button"
                     onClick={generateAutoBarcode}
-                    style={{
-                      background: "#fdf2f8",
-                      border: "1px solid #fbcfe8",
-                      borderRadius: "6px",
-                      color: "#db2777",
-                      fontSize: "0.75rem",
-                      fontWeight: "700",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "4px",
-                      padding: "2px 8px"
-                    }}
+                    className={styles.generateBarcodeBtn}
                     title="توليد باركود تلقائي"
                   >
                     <Wand2 size={12} />
@@ -294,19 +240,18 @@ export default function ProductModal({
                 </div>
                 <input 
                   type="text"
-                  className="form-input num-font"
+                  className={`form-input num-font ${styles.barcodeInput}`}
                   dir="ltr"
                   placeholder="622..."
                   value={formData.barcode}
                   onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
-                  style={{ fontWeight: "bold" }}
                 />
-                {errors.barcode && <span style={{ color: "#dc2626", fontSize: "0.75rem", fontWeight: "bold", display: "block", marginTop: "4px" }}>{errors.barcode}</span>}
+                {errors.barcode && <span className={styles.fieldError}>{errors.barcode}</span>}
               </div>
 
-              <div className="form-group" style={{ marginBottom: 0 }}>
+              <div className={`form-group ${styles.formGroupNoMargin}`}>
                 <label className="form-label">
-                  {isShop ? "اسم الصنف بالمحل" : "اسم الصنف بالمخزن"} <span style={{ color: "#db2777" }}>*</span>
+                  {isShop ? "اسم الصنف بالمحل" : "اسم الصنف بالمخزن"} <span className={styles.requiredRose}>*</span>
                 </label>
                 <input 
                   type="text"
@@ -315,13 +260,13 @@ export default function ProductModal({
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 />
-                {errors.name && <span style={{ color: "#dc2626", fontSize: "0.75rem", fontWeight: "bold", display: "block", marginTop: "4px" }}>{errors.name}</span>}
+                {errors.name && <span className={styles.fieldError}>{errors.name}</span>}
               </div>
             </div>
 
             {/* Row 2: Category & Brand */}
-            <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: "14px", marginBottom: "14px" }}>
-              <div className="form-group" style={{ marginBottom: 0 }}>
+            <div className={styles.gridRow2}>
+              <div className={`form-group ${styles.formGroupNoMargin}`}>
                 <label className="form-label">التصنيف / Category</label>
                 <CustomSelect 
                   options={CATEGORIES}
@@ -330,7 +275,7 @@ export default function ProductModal({
                 />
               </div>
 
-              <div className="form-group" style={{ marginBottom: 0 }}>
+              <div className={`form-group ${styles.formGroupNoMargin}`}>
                 <label className="form-label">الماركة / البراند</label>
                 <input 
                   type="text"
@@ -343,97 +288,73 @@ export default function ProductModal({
             </div>
 
             {/* Row 3: Quantity, Wholesale Price, and optional Selling Price */}
-            <div style={{ 
-              display: "grid", 
-              gridTemplateColumns: hideSellingPrice ? "1fr 1fr" : "1fr 1fr 1fr", 
-              gap: "12px", 
-              marginBottom: "14px" 
-            }}>
-              <div className="form-group" style={{ marginBottom: 0 }}>
+            <div className={hideSellingPrice ? styles.gridRow3Two : styles.gridRow3Full}>
+              <div className={`form-group ${styles.formGroupNoMargin}`}>
                 <label className="form-label">
-                  {isShop ? "الكمية المتوفرة بالمحل" : "الكمية المتوفرة"} <span style={{ color: "#db2777" }}>*</span>
+                  {isShop ? "الكمية المتوفرة بالمحل" : "الكمية المتوفرة"} <span className={styles.requiredRose}>*</span>
                 </label>
                 <input 
                   type="number"
                   min="0"
                   dir="ltr"
-                  className="form-input num-font"
+                  className={`form-input num-font ${styles.priceInput}`}
                   placeholder="0"
                   value={formData.quantity}
                   onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-                  style={{ fontSize: "1.05rem", fontWeight: "700" }}
                 />
-                {errors.quantity && <span style={{ color: "#dc2626", fontSize: "0.75rem", fontWeight: "bold", display: "block", marginTop: "4px" }}>{errors.quantity}</span>}
+                {errors.quantity && <span className={styles.fieldError}>{errors.quantity}</span>}
               </div>
 
-              <div className="form-group" style={{ marginBottom: 0 }}>
+              <div className={`form-group ${styles.formGroupNoMargin}`}>
                 <label className="form-label">
-                  سعر التكلفة/الجملة <span style={{ color: "#db2777" }}>*</span>
+                  سعر التكلفة/الجملة <span className={styles.requiredRose}>*</span>
                 </label>
-                <div style={{ position: "relative" }}>
+                <div className={styles.inputWithCurrency}>
                   <input 
                     type="number"
                     min="0"
                     step="0.5"
                     dir="ltr"
-                    className="form-input num-font"
+                    className={`form-input num-font ${styles.priceInput}`}
                     placeholder="0.00"
                     value={formData.wholesalePrice}
                     onChange={(e) => setFormData({ ...formData, wholesalePrice: e.target.value })}
-                    style={{ fontSize: "1.05rem", fontWeight: "700", paddingLeft: "40px" }}
                   />
-                  <span style={{
-                    position: "absolute",
-                    left: "10px",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    color: "#9d174d",
-                    fontSize: "0.8rem",
-                    fontWeight: "bold"
-                  }}>
+                  <span className={styles.currencyTag}>
                     ج.م
                   </span>
                 </div>
-                {errors.wholesalePrice && <span style={{ color: "#dc2626", fontSize: "0.75rem", fontWeight: "bold", display: "block", marginTop: "4px" }}>{errors.wholesalePrice}</span>}
+                {errors.wholesalePrice && <span className={styles.fieldError}>{errors.wholesalePrice}</span>}
               </div>
 
               {!hideSellingPrice && (
-                <div className="form-group" style={{ marginBottom: 0 }}>
+                <div className={`form-group ${styles.formGroupNoMargin}`}>
                   <label className="form-label">
-                    سعر البيع (قطاعي) <span style={{ color: "#16a34a" }}>*</span>
+                    سعر البيع (قطاعي) <span className={styles.requiredGreen}>*</span>
                   </label>
-                  <div style={{ position: "relative" }}>
+                  <div className={styles.inputWithCurrency}>
                     <input 
                       type="number"
                       min="0"
                       step="0.5"
                       dir="ltr"
-                      className="form-input num-font"
+                      className={`form-input num-font ${styles.sellingPriceInput}`}
                       placeholder={cost > 0 ? (cost * 1.25).toFixed(1) : "0.00"}
                       value={formData.sellingPrice}
                       onChange={(e) => setFormData({ ...formData, sellingPrice: e.target.value })}
-                      style={{ fontSize: "1.05rem", fontWeight: "700", paddingLeft: "40px", borderColor: "#86efac" }}
                     />
-                    <span style={{
-                      position: "absolute",
-                      left: "10px",
-                      top: "50%",
-                      transform: "translateY(-50%)",
-                      color: "#16a34a",
-                      fontSize: "0.8rem",
-                      fontWeight: "bold"
-                    }}>
+                    <span className={styles.currencyTagGreen}>
                       ج.م
                     </span>
                   </div>
-                  {errors.sellingPrice && <span style={{ color: "#dc2626", fontSize: "0.75rem", fontWeight: "bold", display: "block", marginTop: "4px" }}>{errors.sellingPrice}</span>}
+                  {errors.sellingPrice && <span className={styles.fieldError}>{errors.sellingPrice}</span>}
                 </div>
               )}
             </div>
 
             {/* Row 4: Min Threshold (Only if warehouse / not hidden) */}
             {!shouldHideThreshold && (
-              <div className="form-group" style={{ marginBottom: "14px" }}>
+              <div className={`form-group ${styles.thresholdGroup}`}>
                 <label className="form-label">حد التنبيه عند نقص المخزون (إعادة الطلب)</label>
                 <input 
                   type="number"
@@ -444,53 +365,33 @@ export default function ProductModal({
                   value={formData.minThreshold}
                   onChange={(e) => setFormData({ ...formData, minThreshold: e.target.value })}
                 />
-                {errors.minThreshold && <span style={{ color: "#dc2626", fontSize: "0.75rem", fontWeight: "bold", display: "block", marginTop: "4px" }}>{errors.minThreshold}</span>}
+                {errors.minThreshold && <span className={styles.fieldError}>{errors.minThreshold}</span>}
               </div>
             )}
 
             {/* Real-time valuation & profit banner */}
-            <div style={{
-              background: "linear-gradient(135deg, #fdf2f8 0%, #fef3f9 100%)",
-              border: "1.5px dashed #fbcfe8",
-              borderRadius: "14px",
-              padding: "14px 18px",
-              marginBottom: "4px"
-            }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: (!hideSellingPrice && cost > 0 && retail > 0) ? "8px" : "0" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <div className={styles.valuationBanner}>
+              <div className={`${styles.valuationTop} ${hasProfitDetails ? styles.valuationTopWithMargin : ""}`}>
+                <div className={styles.valuationLabelWrapper}>
                   <Sparkles size={18} color="#db2777" />
-                  <span style={{ fontSize: "0.88rem", color: "#1e1322", fontWeight: "800" }}>
+                  <span className={styles.valuationLabel}>
                     {isShop ? "إجمالي قيمة بضاعة هذا الصنف بالمحل (بالجملة):" : "إجمالي قيمة المخزون لهذا الصنف (بالجملة):"}
                   </span>
                 </div>
-                <div style={{ display: "flex", alignItems: "baseline", gap: "4px" }}>
-                  <span className="num-font" dir="ltr" style={{ fontSize: "1.25rem", fontWeight: "900", color: "#9d174d" }}>
+                <div className={styles.valuationValueWrapper}>
+                  <span className={`num-font ${styles.valuationValue}`} dir="ltr">
                     {formatNumber(totalWholesaleValue)}
                   </span>
-                  <span style={{ fontSize: "0.82rem", color: "#9d174d", fontWeight: "800" }}>ج.م</span>
+                  <span className={styles.valuationCurrency}>ج.م</span>
                 </div>
               </div>
 
-              {!hideSellingPrice && cost > 0 && retail > 0 && (
-                <div style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  paddingTop: "8px",
-                  borderTop: "1px dashed #fbcfe8",
-                  fontSize: "0.84rem"
-                }}>
-                  <span style={{ color: "#4b5563", fontWeight: "700" }}>
-                    ربح القطعة المتوقع: <strong style={{ color: profitPerUnit >= 0 ? "#16a34a" : "#dc2626" }}>{formatNumber(profitPerUnit)} ج.م</strong>
+              {hasProfitDetails && (
+                <div className={styles.valuationProfitRow}>
+                  <span className={styles.profitText}>
+                    ربح القطعة المتوقع: <strong className={profitPerUnit >= 0 ? styles.profitGreen : styles.profitRed}>{formatNumber(profitPerUnit)} ج.م</strong>
                   </span>
-                  <span style={{
-                    background: profitMarginPercent >= 0 ? "#ecfdf5" : "#fef2f2",
-                    color: profitMarginPercent >= 0 ? "#059669" : "#dc2626",
-                    padding: "2px 8px",
-                    borderRadius: "8px",
-                    fontWeight: "800",
-                    border: `1px solid ${profitMarginPercent >= 0 ? "#a7f3d0" : "#fecaca"}`
-                  }}>
+                  <span className={profitMarginPercent >= 0 ? styles.marginBadgePositive : styles.marginBadgeNegative}>
                     هامش الربح: %{profitMarginPercent}
                   </span>
                 </div>
@@ -499,7 +400,7 @@ export default function ProductModal({
           </div>
 
           {/* Action Footer */}
-          <div className="modal-footer" style={{ padding: "14px 24px" }}>
+          <div className={`modal-footer ${styles.modalFooter}`}>
             <button 
               type="button"
               onClick={onClose}
@@ -510,9 +411,8 @@ export default function ProductModal({
             </button>
             <button 
               type="submit"
-              className="btn-primary"
+              className={`btn-primary ${styles.submitBtn}`}
               disabled={isSubmitting}
-              style={{ minWidth: "140px" }}
             >
               <Save size={18} />
               {isSubmitting ? "جاري الحفظ..." : (productToEdit ? "حفظ التعديلات" : (isShop ? "إضافة الصنف للمحل" : "إضافة الصنف للمخزن"))}

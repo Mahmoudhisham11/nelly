@@ -8,10 +8,9 @@ import {
   Barcode as BarcodeIcon, 
   Copy, 
   Check, 
-  Sparkles,
-  Download,
-  RotateCw
+  Download
 } from "lucide-react";
+import styles from "./EmployeeBarcodeModal.module.css";
 
 export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
   const [copied, setCopied] = useState(false);
@@ -344,55 +343,36 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
     }
   };
 
-  const previewFontHeader = fontSizeMode === "mini" ? "9.5px" : fontSizeMode === "compact" ? "11px" : "13px";
-  const previewFontCode = fontSizeMode === "mini" ? "10px" : fontSizeMode === "compact" ? "11.5px" : "14px";
-  const previewFontRole = fontSizeMode === "mini" ? "9px" : fontSizeMode === "compact" ? "10px" : "12px";
+  const getContainerSizeClass = () => {
+    switch (labelSize) {
+      case "60x40": return styles.previewContainer60x40;
+      case "50x40": return styles.previewContainer50x40;
+      case "50x30": return styles.previewContainer50x30;
+      case "50x25": return styles.previewContainer50x25;
+      case "38x25": return styles.previewContainer38x25;
+      default: return styles.previewContainer38x20;
+    }
+  };
+
+  const isLargeLabel = labelSize.startsWith("50") || labelSize.startsWith("60");
 
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div 
-        className="modal-content"
+        className={`modal-content ${styles.modalContainer}`}
         onClick={(e) => e.stopPropagation()}
-        style={{ 
-          maxWidth: "500px", 
-          maxHeight: "min(92vh, 780px)",
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-          padding: 0,
-          background: "#ffffff", 
-          borderRadius: "20px" 
-        }}
       >
         {/* Header */}
-        <div style={{ 
-          display: "flex", 
-          alignItems: "center", 
-          justifyContent: "space-between", 
-          padding: "16px 20px",
-          borderBottom: "1px solid #f0e1ec",
-          background: "#ffffff",
-          flexShrink: 0
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div style={{
-              width: "38px",
-              height: "38px",
-              borderRadius: "10px",
-              background: "linear-gradient(135deg, #ec4899 0%, #db2777 100%)",
-              color: "#ffffff",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "0 4px 12px rgba(219, 39, 119, 0.25)"
-            }}>
+        <div className={styles.modalHeader}>
+          <div className={styles.headerBrand}>
+            <div className={styles.iconBox}>
               <BarcodeIcon size={20} />
             </div>
             <div>
-              <h3 style={{ fontSize: "1.15rem", fontWeight: "900", color: "#1e1322", margin: 0 }}>
+              <h3 className={styles.modalTitle}>
                 طباعة باركود الموظف للاستيكر الحراري
               </h3>
-              <span style={{ fontSize: "0.78rem", color: "#6b7280", fontWeight: "600" }}>
+              <span className={styles.modalSubtitle}>
                 مقاس مخصص لطابعات الباركود الحرارية (Sticker Label)
               </span>
             </div>
@@ -401,56 +381,34 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
           <button 
             type="button"
             onClick={onClose}
-            style={{
-              background: "#fdf2f8",
-              border: "none",
-              borderRadius: "10px",
-              padding: "8px",
-              cursor: "pointer",
-              color: "#db2777"
-            }}
+            className={styles.closeButton}
           >
             <X size={18} />
           </button>
         </div>
 
         {/* Scrollable Content */}
-        <div style={{ 
-          padding: "18px 22px", 
-          overflowY: "auto", 
-          flex: "1 1 auto",
-          display: "flex",
-          flexDirection: "column",
-          gap: "14px"
-        }}>
+        <div className={styles.scrollContent}>
           {/* Controls: Size, Orientation, Font Density */}
-          <div style={{
-            background: "#f8fafc",
-            border: "1px solid #e2e8f0",
-            borderRadius: "14px",
-            padding: "12px 14px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "10px"
-          }}>
+          <div className={styles.controlsBox}>
             {/* Label Size Buttons */}
             <div>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
-                <span style={{ fontSize: "0.82rem", fontWeight: "800", color: "#334155" }}>
+              <div className={styles.controlRow}>
+                <span className={styles.controlLabel}>
                   مقاس الاستيكر الحراري:
                 </span>
-                <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.78rem", fontWeight: "700", color: "#64748b", cursor: "pointer" }}>
+                <label className={styles.storeCheckboxLabel}>
                   <input
                     type="checkbox"
                     checked={includeStoreName}
                     onChange={(e) => setIncludeStoreName(e.target.checked)}
-                    style={{ accentColor: "#db2777" }}
+                    className={styles.pinkCheckbox}
                   />
                   <span>اسم نيللي</span>
                 </label>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "6px" }}>
+              <div className={styles.sizesGrid}>
                 {[
                   { id: "50x30", label: "50 × 30 مم", sub: "(المقاس الجديد بالصورة)" },
                   { id: "50x25", label: "50 × 25 مم", sub: "(مقاس عريض)" },
@@ -463,30 +421,21 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
                     key={size.id}
                     type="button"
                     onClick={() => setLabelSize(size.id)}
-                    style={{
-                      padding: "6px 4px",
-                      borderRadius: "10px",
-                      border: labelSize === size.id ? "2px solid #db2777" : "1px solid #cbd5e1",
-                      background: labelSize === size.id ? "#fdf2f8" : "#ffffff",
-                      color: labelSize === size.id ? "#db2777" : "#475569",
-                      cursor: "pointer",
-                      textAlign: "center",
-                      transition: "all 0.15s ease"
-                    }}
+                    className={`${styles.sizeBtn} ${labelSize === size.id ? styles.sizeBtnActive : styles.sizeBtnInactive}`}
                   >
-                    <strong style={{ fontSize: "0.78rem", display: "block" }}>{size.label}</strong>
-                    <span style={{ fontSize: "0.64rem", opacity: 0.85 }}>{size.sub}</span>
+                    <strong className={styles.sizeBtnLabel}>{size.label}</strong>
+                    <span className={styles.sizeBtnSub}>{size.sub}</span>
                   </button>
                 ))}
               </div>
             </div>
 
             {/* Font Density Options */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: "8px", borderTop: "1px dashed #cbd5e1" }}>
-              <span style={{ fontSize: "0.8rem", fontWeight: "800", color: "#334155" }}>
+            <div className={styles.densityRow}>
+              <span className={styles.densityLabel}>
                 حجم الكتابة على الاستيكر:
               </span>
-              <div style={{ display: "flex", gap: "6px" }}>
+              <div className={styles.densityBtnGroup}>
                 {[
                   { id: "compact", label: "متناسق واحترافي (موصى به)" },
                   { id: "standard", label: "خط عريض وكبير" },
@@ -496,16 +445,7 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
                     key={mode.id}
                     type="button"
                     onClick={() => setFontSizeMode(mode.id)}
-                    style={{
-                      padding: "4px 8px",
-                      borderRadius: "8px",
-                      border: fontSizeMode === mode.id ? "2px solid #db2777" : "1px solid #cbd5e1",
-                      background: fontSizeMode === mode.id ? "#fdf2f8" : "#ffffff",
-                      color: fontSizeMode === mode.id ? "#db2777" : "#475569",
-                      fontSize: "0.74rem",
-                      fontWeight: "800",
-                      cursor: "pointer"
-                    }}
+                    className={`${styles.densityBtn} ${fontSizeMode === mode.id ? styles.densityBtnActive : styles.densityBtnInactive}`}
                   >
                     {mode.label}
                   </button>
@@ -514,40 +454,22 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
             </div>
 
             {/* Orientation Buttons (Landscape vs Portrait) */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: "8px", borderTop: "1px dashed #cbd5e1" }}>
-              <span style={{ fontSize: "0.8rem", fontWeight: "800", color: "#334155" }}>
+            <div className={styles.orientationRow}>
+              <span className={styles.orientationLabel}>
                 اتجاه سحب الورقة في الطابعة:
               </span>
-              <div style={{ display: "flex", gap: "6px" }}>
+              <div className={styles.orientationBtnGroup}>
                 <button
                   type="button"
                   onClick={() => setOrientation("landscape")}
-                  style={{
-                    padding: "4px 10px",
-                    borderRadius: "8px",
-                    border: orientation === "landscape" ? "2px solid #db2777" : "1px solid #cbd5e1",
-                    background: orientation === "landscape" ? "#db2777" : "#ffffff",
-                    color: orientation === "landscape" ? "#ffffff" : "#475569",
-                    fontSize: "0.76rem",
-                    fontWeight: "800",
-                    cursor: "pointer"
-                  }}
+                  className={`${styles.orientationBtn} ${orientation === "landscape" ? styles.orientationBtnActive : styles.orientationBtnInactive}`}
                 >
                   بالعرض (Landscape)
                 </button>
                 <button
                   type="button"
                   onClick={() => setOrientation("portrait")}
-                  style={{
-                    padding: "4px 10px",
-                    borderRadius: "8px",
-                    border: orientation === "portrait" ? "2px solid #db2777" : "1px solid #cbd5e1",
-                    background: orientation === "portrait" ? "#db2777" : "#ffffff",
-                    color: orientation === "portrait" ? "#ffffff" : "#475569",
-                    fontSize: "0.76rem",
-                    fontWeight: "800",
-                    cursor: "pointer"
-                  }}
+                  className={`${styles.orientationBtn} ${orientation === "portrait" ? styles.orientationBtnActive : styles.orientationBtnInactive}`}
                 >
                   بالطول (Portrait)
                 </button>
@@ -556,88 +478,39 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
           </div>
 
           {/* Preview Box */}
-          <div style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "16px",
-            background: "#f8fafc",
-            borderRadius: "16px",
-            border: "1px solid #e2e8f0"
-          }}>
-            <span style={{ fontSize: "0.72rem", color: "#64748b", fontWeight: "700", marginBottom: "8px" }}>
+          <div className={styles.previewWrapper}>
+            <span className={styles.previewHeading}>
               معاينة ملصق الاستيكر الفعلي المطبوع ({sizeMap[labelSize]?.label}):
             </span>
 
             {/* PREVIEW CONTAINER (100% BORDERLESS) */}
-            <div 
-              style={{
-                width: labelSize === "60x40" ? "350px" : labelSize === "50x40" ? "330px" : labelSize === "50x30" ? "320px" : labelSize === "50x25" ? "320px" : labelSize === "38x25" ? "270px" : "260px",
-                background: "#ffffff",
-                color: "#000000",
-                borderRadius: "4px",
-                border: "none",
-                padding: "12px 14px",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "4px",
-                textAlign: "center",
-                fontFamily: "Arial, Tahoma, sans-serif",
-                boxShadow: "0 4px 14px rgba(0,0,0,0.06)"
-              }}
-            >
+            <div className={`${styles.previewContainer} ${getContainerSizeClass()}`}>
               {/* Header (Clean Borderless) */}
-              <div style={{ 
-                width: "100%", 
-                display: "flex", 
-                alignItems: "center", 
-                justifyContent: "space-between",
-                paddingBottom: "1px"
-              }}>
-                <span style={{ 
-                  fontSize: labelSize.startsWith("50") || labelSize.startsWith("60") ? "17px" : "13px", 
-                  fontWeight: "900", 
-                  color: "#000000",
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  maxWidth: "75%"
-                }}>
+              <div className={styles.previewHeader}>
+                <span className={`${styles.previewEmpName} ${isLargeLabel ? styles.previewEmpNameLarge : styles.previewEmpNameSmall}`}>
                   {employee.name}
                 </span>
                 {includeStoreName && (
-                  <span style={{ fontSize: labelSize.startsWith("50") || labelSize.startsWith("60") ? "12.5px" : "9.5px", fontWeight: "900", letterSpacing: "1px", color: "#000000" }}>
+                  <span className={`${styles.previewStoreTag} ${isLargeLabel ? styles.previewStoreTagLarge : styles.previewStoreTagSmall}`}>
                     ★ NELLY ★
                   </span>
                 )}
               </div>
 
               {/* Barcode Vector Graphic (Compact & Centered) */}
-              <div style={{ display: "flex", justifyContent: "center", width: "100%", overflow: "hidden", margin: "2px 0" }}>
-                <svg ref={barcodeSvgRef} style={{ maxWidth: "84%", height: labelSize === "60x40" || labelSize === "50x40" ? "50px" : labelSize === "50x30" ? "42px" : "24px" }} />
+              <div className={styles.svgContainer}>
+                <svg 
+                  ref={barcodeSvgRef} 
+                  className={`${styles.barcodeSvg} ${labelSize === "60x40" || labelSize === "50x40" ? styles.barcodeSvgLarge : labelSize === "50x30" ? styles.barcodeSvgMedium : styles.barcodeSvgSmall}`} 
+                />
               </div>
 
               {/* Barcode Numbers & Code (Clean Borderless) */}
-              <div style={{ 
-                width: "100%", 
-                display: "flex", 
-                alignItems: "center", 
-                justifyContent: "space-between",
-                paddingTop: "2px"
-              }}>
-                <span className="num-font" dir="ltr" style={{ 
-                  fontSize: labelSize.startsWith("50") || labelSize.startsWith("60") ? "17px" : "13.5px", 
-                  fontWeight: "900", 
-                  letterSpacing: "2.5px", 
-                  fontFamily: "monospace",
-                  color: "#000000" 
-                }}>
+              <div className={styles.previewFooter}>
+                <span className={`num-font ${styles.barcodeText} ${isLargeLabel ? styles.barcodeTextLarge : styles.barcodeTextSmall}`} dir="ltr">
                   {barcodeValue}
                 </span>
-                <span style={{ fontSize: labelSize.startsWith("50") || labelSize.startsWith("60") ? "16px" : "11px", fontWeight: "900", color: "#000000" }}>
+                <span className={`${styles.roleText} ${isLargeLabel ? styles.roleTextLarge : styles.roleTextSmall}`}>
                   {employee.role || "بائع"}
                 </span>
               </div>
@@ -645,49 +518,25 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
           </div>
 
           {/* Quick Copy */}
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            background: "#fdf2f8",
-            padding: "10px 14px",
-            borderRadius: "12px",
-            border: "1px solid #fbcfe8"
-          }}>
+          <div className={styles.copyBox}>
             <div>
-              <span style={{ fontSize: "0.75rem", color: "#831843", display: "block" }}>كود البصمة المبرمج:</span>
-              <strong className="num-font" style={{ fontSize: "0.95rem", color: "#db2777" }}>{barcodeValue}</strong>
+              <span className={styles.copyLabel}>كود البصمة المبرمج:</span>
+              <strong className={`num-font ${styles.copyValue}`}>{barcodeValue}</strong>
             </div>
 
             <button
               type="button"
               onClick={handleCopyCode}
-              className="btn-secondary"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "5px",
-                padding: "6px 12px",
-                fontSize: "0.8rem",
-                background: "#ffffff"
-              }}
+              className={`btn-secondary ${styles.copyButton}`}
             >
-              {copied ? <Check size={14} color="#059669" /> : <Copy size={14} />}
+              {copied ? <Check size={14} className={styles.checkGreen} /> : <Copy size={14} />}
               <span>{copied ? "تم النسخ!" : "نسخ الكود"}</span>
             </button>
           </div>
         </div>
 
         {/* Fixed Footer */}
-        <div style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "16px 20px",
-          borderTop: "1px solid #f0e1ec",
-          background: "#ffffff",
-          flexShrink: 0
-        }}>
+        <div className={styles.modalFooter}>
           <button
             type="button"
             onClick={onClose}
@@ -696,12 +545,11 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
             إغلاق
           </button>
 
-          <div style={{ display: "flex", gap: "8px" }}>
+          <div className={styles.footerActions}>
             <button
               type="button"
               onClick={handleDownloadImage}
-              className="btn-secondary"
-              style={{ display: "flex", alignItems: "center", gap: "6px", padding: "10px 16px" }}
+              className={`btn-secondary ${styles.downloadBtn}`}
               title="تنزيل ملصق الباركود كصورة عالية الجودة"
             >
               <Download size={16} />
@@ -711,8 +559,7 @@ export default function EmployeeBarcodeModal({ isOpen, onClose, employee }) {
             <button
               type="button"
               onClick={handlePrint}
-              className="btn-primary"
-              style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 22px" }}
+              className={`btn-primary ${styles.printBtn}`}
             >
               <Printer size={18} />
               <span>طباعة الاستيكر الحراري</span>

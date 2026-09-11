@@ -33,9 +33,9 @@ import {
   Printer,
   Layers,
   DollarSign,
-  ArrowLeftRight,
   Store
 } from "lucide-react";
+import styles from "./products.module.css";
 
 export default function ProductsPage() {
   const router = useRouter();
@@ -62,7 +62,6 @@ export default function ProductsPage() {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(""), 3000);
   };
-
 
   // Authentication check
   useEffect(() => {
@@ -149,6 +148,13 @@ export default function ProductsPage() {
     0
   );
 
+  const resetFilters = () => {
+    setSearchQuery("");
+    setSelectedCategory("all");
+    setSelectedStatus("all");
+    setSortBy("newest");
+  };
+
   // Protected Actions
   const handleOpenAddModal = () => {
     if (!isAdmin) {
@@ -195,7 +201,6 @@ export default function ProductsPage() {
   };
 
   const confirmDelete = async () => {
-
     if (!isAdmin || !productToDelete) return;
     await deleteProduct(productToDelete.id);
     setProductToDelete(null);
@@ -245,8 +250,8 @@ export default function ProductsPage() {
 
   if (authLoading || (!user && loading)) {
     return (
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <p style={{ color: "var(--text-secondary)", fontWeight: "700" }}>جاري تحميل سجل بضاعة المخزن...</p>
+      <div className={styles.loadingWrapper}>
+        <p className={styles.loadingText}>جاري تحميل سجل بضاعة المخزن...</p>
       </div>
     );
   }
@@ -266,531 +271,413 @@ export default function ProductsPage() {
         />
 
         <main className="page-wrapper">
-        {/* Page Header */}
-        <div style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          flexWrap: "wrap",
-          gap: "16px",
-          marginBottom: "24px"
-        }}>
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <h2 style={{ fontSize: "1.6rem", fontWeight: "900", color: "#1e1322" }}>المخزن</h2>
-              <span className="badge badge-code" style={{ fontSize: "0.85rem" }}>
-                <span className="num-font" dir="ltr">{formatNumber(products.length)}</span> صنف مسجل
-              </span>
-            </div>
-            <p style={{ color: "#5a4663", fontSize: "0.88rem", marginTop: "4px", fontWeight: "600" }}>
-              إدارة وجرد بضاعة المخزن الرئيسي، وتعديل الأصناف، والتحويل إلى المحل
-            </p>
-          </div>
-
-          {/* Action buttons */}
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-            <button 
-              onClick={() => setIsPrintModalOpen(true)} 
-              className="btn-secondary" 
-              title="معاينة وطباعة كشف جرد المخزن"
-              style={{ background: "#ffffff" }}
-            >
-              <Printer size={16} color="#db2777" />
-              طباعة كشف الجرد
-            </button>
-            <button onClick={exportToCSV} className="btn-secondary" title="تصدير إلى ملف إكسل CSV" style={{ background: "#ffffff" }}>
-              <Download size={16} color="#059669" />
-              تصدير CSV
-            </button>
-            <button 
-              onClick={handleOpenAddModal} 
-              className="btn-primary"
-            >
-              <PackagePlus size={18} />
-              إضافة صنف جديد
-            </button>
-          </div>
-        </div>
-
-        {/* Filter & Search Toolbar */}
-        <div className="glass-panel" style={{ padding: "18px 20px", marginBottom: "24px", background: "#ffffff", border: "1.5px solid #ebdbe6" }}>
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-            gap: "12px",
-            alignItems: "center"
-          }}>
-            {/* Search Input for Barcode or Name */}
-            <div style={{ position: "relative" }}>
-              <input 
-                type="text"
-                className="form-input"
-                placeholder="ابحث بباركود الصنف (Barcode)، اسم الصنف، أو الماركة..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                style={{ paddingRight: "40px", fontWeight: "600" }}
-              />
-              <Search 
-                size={18} 
-                color="#db2777" 
-                style={{ position: "absolute", right: "14px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} 
-              />
-            </div>
-
-            {/* Custom Category Filter */}
+          {/* Page Header */}
+          <div className={styles.headerRow}>
             <div>
-              <CustomSelect 
-                options={categoryOptions}
-                value={selectedCategory}
-                onChange={(cat) => setSelectedCategory(cat)}
-              />
-            </div>
-
-            {/* Custom Stock Status Filter */}
-            <div>
-              <CustomSelect 
-                options={statusOptions}
-                value={selectedStatus}
-                onChange={(stat) => setSelectedStatus(stat)}
-              />
-            </div>
-
-            {/* Custom Sort Filter */}
-            <div>
-              <CustomSelect 
-                options={sortOptions}
-                value={sortBy}
-                onChange={(sb) => setSortBy(sb)}
-              />
-            </div>
-
-            {/* Reset Filters */}
-            {(searchQuery || selectedCategory !== "all" || selectedStatus !== "all" || sortBy !== "newest") && (
-              <button 
-                onClick={resetFilters} 
-                className="btn-secondary"
-                title="إعادة ضبط الفلاتر"
-                style={{ padding: "11px" }}
-              >
-                <RotateCcw size={16} />
-              </button>
-            )}
-          </div>
-
-          {/* 3 Rich Stat Cards for Summary Data */}
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-            gap: "14px",
-            marginTop: "18px",
-            paddingTop: "16px",
-            borderTop: "1px solid #fce7f3"
-          }}>
-            {/* Card 1: معروض */}
-            <div style={{
-              background: "linear-gradient(135deg, #ffffff 0%, #fdf2f8 100%)",
-              border: "1.5px solid #fbcfe8",
-              borderRadius: "14px",
-              padding: "14px 18px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between"
-            }}>
-              <div>
-                <span style={{ fontSize: "0.82rem", color: "var(--text-muted)", fontWeight: "700" }}>الأصناف المعروضة</span>
-                <div style={{ display: "flex", alignItems: "baseline", gap: "4px", marginTop: "2px" }}>
-                  <span className="num-font" dir="ltr" style={{ fontSize: "1.5rem", fontWeight: "900", color: "#1e1322" }}>
-                    {formatNumber(totalFilteredCount)}
-                  </span>
-                  <span style={{ fontSize: "0.8rem", color: "#5a4663", fontWeight: "700" }}>صنف</span>
-                </div>
+              <div className={styles.headerTitleWrapper}>
+                <h2 className={styles.headerTitle}>المخزن</h2>
+                <span className={`badge badge-code ${styles.productsBadge}`}>
+                  <span className="num-font" dir="ltr">{formatNumber(products.length)}</span> صنف مسجل
+                </span>
               </div>
-              <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: "#fce7f3", color: "#db2777", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Boxes size={20} />
-              </div>
-            </div>
-
-            {/* Card 2: إجمالي القطع */}
-            <div style={{
-              background: "linear-gradient(135deg, #ffffff 0%, #fff7ed 100%)",
-              border: "1.5px solid #fed7aa",
-              borderRadius: "14px",
-              padding: "14px 18px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between"
-            }}>
-              <div>
-                <span style={{ fontSize: "0.82rem", color: "var(--text-muted)", fontWeight: "700" }}>إجمالي عدد القطع بالمخزن</span>
-                <div style={{ display: "flex", alignItems: "baseline", gap: "4px", marginTop: "2px" }}>
-                  <span className="num-font" dir="ltr" style={{ fontSize: "1.5rem", fontWeight: "900", color: "#c2410c" }}>
-                    {formatNumber(totalFilteredQty)}
-                  </span>
-                  <span style={{ fontSize: "0.8rem", color: "#c2410c", fontWeight: "700" }}>قطعة</span>
-                </div>
-              </div>
-              <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: "#ffedd5", color: "#ea580c", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Layers size={20} />
-              </div>
-            </div>
-
-            {/* Card 3: القيمة بسعر الجملة */}
-            <div style={{
-              background: "linear-gradient(135deg, #ffffff 0%, #faf5ff 100%)",
-              border: "1.5px solid #e9d5ff",
-              borderRadius: "14px",
-              padding: "14px 18px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between"
-            }}>
-              <div>
-                <span style={{ fontSize: "0.82rem", color: "var(--text-muted)", fontWeight: "700" }}>القيمة بسعر الجملة</span>
-                {isAdmin ? (
-                  <div style={{ display: "flex", alignItems: "baseline", gap: "4px", marginTop: "2px" }}>
-                    <span className="num-font" dir="ltr" style={{ fontSize: "1.5rem", fontWeight: "900", color: "#7e22ce" }}>
-                      {formatNumber(totalFilteredWholesale)}
-                    </span>
-                    <span style={{ fontSize: "0.8rem", color: "#7e22ce", fontWeight: "700" }}>ج.م</span>
-                  </div>
-                ) : (
-                  <div style={{ display: "flex", alignItems: "center", gap: "4px", color: "#6b7280", marginTop: "4px", fontSize: "0.82rem", fontWeight: "700" }}>
-                    <Lock size={13} /> خاص بالمسؤول
-                  </div>
-                )}
-              </div>
-              <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: "#f3e8ff", color: "#9333ea", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <DollarSign size={20} />
-              </div>
-            </div>
-          </div>
-        </div>
-
-
-        {/* Screen Products Table */}
-        <div className="table-container">
-          {filteredProducts.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "60px 20px" }}>
-              <Boxes size={48} color="#db2777" style={{ margin: "0 auto 12px", opacity: 0.8 }} />
-              <h3 style={{ fontSize: "1.2rem", marginBottom: "6px", color: "#1e1322", fontWeight: "800" }}>لم يتم العثور على أي صنف</h3>
-              <p style={{ color: "var(--text-muted)", fontSize: "0.88rem", marginBottom: "18px", fontWeight: "600" }}>
-                {searchQuery ? `لا يوجد صنف يطابق الباركود أو الاسم "${searchQuery}"` : "قم بتسجيل صنف جديد بالمخزن"}
+              <p className={styles.headerSubtitle}>
+                إدارة وجرد بضاعة المخزن الرئيسي، وتعديل الأصناف، والتحويل إلى المحل
               </p>
+            </div>
+
+            {/* Action buttons */}
+            <div className={styles.headerActions}>
               <button 
-                onClick={handleOpenAddModal}
+                onClick={() => setIsPrintModalOpen(true)} 
+                className={`btn-secondary ${styles.whiteBtn}`} 
+                title="معاينة وطباعة كشف جرد المخزن"
+              >
+                <Printer size={16} color="#db2777" />
+                طباعة كشف الجرد
+              </button>
+              <button 
+                onClick={exportToCSV} 
+                className={`btn-secondary ${styles.whiteBtn}`} 
+                title="تصدير إلى ملف إكسل CSV"
+              >
+                <Download size={16} color="#059669" />
+                تصدير CSV
+              </button>
+              <button 
+                onClick={handleOpenAddModal} 
                 className="btn-primary"
               >
-                <Plus size={16} />
+                <PackagePlus size={18} />
                 إضافة صنف جديد
               </button>
             </div>
-          ) : (
-            <table className="custom-table">
-              <thead>
-                <tr>
-                  <th style={{ width: "160px", whiteSpace: "nowrap" }}>الباركود</th>
-                  <th style={{ whiteSpace: "nowrap" }}>اسم الصنف والماركة</th>
-                  <th style={{ whiteSpace: "nowrap" }}>القسم</th>
-                  <th style={{ textAlign: "center", whiteSpace: "nowrap" }}>الكمية بالمخزن</th>
-                  <th style={{ whiteSpace: "nowrap" }}>سعر الجملة</th>
-                  <th style={{ whiteSpace: "nowrap" }}>إجمالي قيمة الصنف</th>
-                  <th style={{ whiteSpace: "nowrap" }}>حالة المخزون</th>
-                  <th style={{ textAlign: "center", whiteSpace: "nowrap" }}>الإجراءات</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredProducts.map((p, idx) => {
-                  const qty = Number(p.quantity) || 0;
-                  const wholesale = Number(p.wholesalePrice) || 0;
-                  const totalVal = qty * wholesale;
-                  const minThresh = Number(p.minThreshold) || 5;
-                  const isLow = qty <= minThresh && qty > 0;
-                  const isOut = qty === 0;
-                  const barcodeVal = p.barcode || p.code || `622100100${idx + 1}`;
+          </div>
 
-                  return (
-                    <tr key={p.id}>
-                      {/* Product Barcode - Prominent and High-Contrast */}
-                      <td>
-                        <span 
-                          className="num-font" 
-                          dir="ltr"
-                          style={{
-                            fontFamily: "monospace",
-                            fontSize: "0.95rem",
-                            fontWeight: "900",
-                            color: "#831843",
-                            background: "#fce7f3",
-                            padding: "5px 12px",
-                            borderRadius: "8px",
-                            border: "1.5px solid #f472b6",
-                            display: "inline-block",
-                            letterSpacing: "0.5px"
-                          }}
-                        >
-                          {barcodeVal}
-                        </span>
-                      </td>
+          {/* Filter & Search Toolbar */}
+          <div className={`glass-panel ${styles.toolbarPanel}`}>
+            <div className={styles.toolbarGrid}>
+              {/* Search Input for Barcode or Name */}
+              <div className={styles.searchWrap}>
+                <input 
+                  type="text"
+                  className={`form-input ${styles.searchInput}`}
+                  placeholder="ابحث بباركود الصنف (Barcode)، اسم الصنف، أو الماركة..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                <Search 
+                  size={18} 
+                  color="#db2777" 
+                  className={styles.searchIcon}
+                />
+              </div>
 
-                      {/* Product Name & Brand */}
-                      <td>
-                        <div style={{ fontWeight: "800", color: "#1e1322", whiteSpace: "nowrap" }}>
-                          {p.name}
-                        </div>
-                        {p.brand && (
-                          <div style={{ fontSize: "0.75rem", color: "#db2777", fontWeight: "700", marginTop: "2px" }}>
-                            {p.brand}
-                          </div>
-                        )}
-                      </td>
+              {/* Custom Category Filter */}
+              <div>
+                <CustomSelect 
+                  options={categoryOptions}
+                  value={selectedCategory}
+                  onChange={(cat) => setSelectedCategory(cat)}
+                />
+              </div>
 
-                      {/* Category */}
-                      <td>
-                        <span className="badge badge-category">
-                          {p.category || "عام"}
-                        </span>
-                      </td>
+              {/* Custom Stock Status Filter */}
+              <div>
+                <CustomSelect 
+                  options={statusOptions}
+                  value={selectedStatus}
+                  onChange={(stat) => setSelectedStatus(stat)}
+                />
+              </div>
 
-                      {/* Quantity Display Only (NO +/- buttons) */}
-                      <td style={{ textAlign: "center" }}>
-                        <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "4px" }}>
-                          <span 
-                            className="num-font" 
-                            dir="ltr"
-                            style={{ 
-                              fontSize: "1.2rem", 
-                              fontWeight: "900", 
-                              color: isOut ? "#dc2626" : isLow ? "#9d174d" : "#1e1322" 
-                            }}
-                          >
-                            {formatNumber(qty)}
-                          </span>
-                          <span style={{ fontSize: "0.82rem", color: "#5a4663", fontWeight: "700" }}>قطعة</span>
-                        </div>
-                      </td>
+              {/* Custom Sort Filter */}
+              <div>
+                <CustomSelect 
+                  options={sortOptions}
+                  value={sortBy}
+                  onChange={(sb) => setSortBy(sb)}
+                />
+              </div>
 
-                      {/* Wholesale Price (Protected for Admin Only) */}
-                      <td>
-                        {isAdmin ? (
-                          <strong style={{ color: "#9d174d", fontSize: "1.02rem" }}>
-                            <span className="num-font" dir="ltr">{formatNumber(wholesale)}</span> ج.م
-                          </strong>
-                        ) : (
-                          <span style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "4px",
-                            fontSize: "0.78rem",
-                            color: "#6b7280",
-                            background: "#f3f4f6",
-                            padding: "4px 8px",
-                            borderRadius: "6px",
-                            border: "1px solid #e5e7eb",
-                            fontWeight: "700"
-                          }}>
-                            <Lock size={12} />
-                            خاص بالمسؤول
-                          </span>
-                        )}
-                      </td>
-
-
-
-                      {/* Total Value (Protected for Admin Only) */}
-                      <td>
-                        {isAdmin ? (
-                          <strong style={{ color: "#047857", fontSize: "1.02rem" }}>
-                            <span className="num-font" dir="ltr">{formatNumber(totalVal)}</span> ج.م
-                          </strong>
-                        ) : (
-                          <span style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "4px",
-                            fontSize: "0.78rem",
-                            color: "#6b7280",
-                            background: "#f3f4f6",
-                            padding: "4px 8px",
-                            borderRadius: "6px",
-                            border: "1px solid #e5e7eb",
-                            fontWeight: "700"
-                          }}>
-                            <Lock size={12} />
-                            خاص بالمسؤول
-                          </span>
-                        )}
-                      </td>
-
-                      {/* Stock Status Badge */}
-                      <td>
-                        {isOut ? (
-                          <span className="badge badge-out-of-stock">نفد تماماً</span>
-                        ) : isLow ? (
-                          <span className="badge badge-low-stock">مخزون قليل (<span className="num-font" dir="ltr">{formatNumber(qty)}</span>)</span>
-                        ) : (
-                          <span className="badge badge-in-stock">متوفر (<span className="num-font" dir="ltr">{formatNumber(qty)}</span>)</span>
-                        )}
-                      </td>
-
-                      {/* Actions */}
-                      <td style={{ textAlign: "center" }}>
-                        <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", flexWrap: "nowrap" }}>
-                          <button 
-                            onClick={() => setProductToTransfer(p)}
-                            className="btn-secondary"
-                            style={{ padding: "6px 10px", fontSize: "0.8rem", color: "#15803d", borderColor: "#86efac", background: "#f0fdf4" }}
-                            title="تحويل كمية من الصنف إلى المحل"
-                          >
-                            <Store size={15} color="#16a34a" />
-                            تحويل للمحل
-                          </button>
-                          <button 
-                            onClick={() => setBarcodeProduct(p)}
-                            className="btn-secondary"
-                            style={{ padding: "6px 10px", fontSize: "0.8rem" }}
-                            title="طباعة باركود"
-                          >
-                            <Barcode size={15} color="#db2777" />
-                            باركود
-                          </button>
-                          <button 
-                            onClick={() => handleOpenEditModal(p)}
-                            className="btn-primary"
-                            style={{ padding: "6px 12px", fontSize: "0.82rem" }}
-                            title="تعديل بيانات وكمية الصنف"
-                          >
-                            <Edit3 size={15} />
-                            تعديل
-                          </button>
-                          <button 
-                            onClick={() => handleOpenDeleteModal(p)}
-                            className="btn-danger"
-                            style={{ padding: "6px 8px" }}
-                            title="حذف الصنف"
-                          >
-                            <Trash2 size={15} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          )}
-        </div>
-      </main>
-
-      {/* Toast Alert */}
-      {toastMessage && (
-        <div style={{
-          position: "fixed",
-          bottom: "24px",
-          left: "24px",
-          background: "#111827",
-          color: "#ffffff",
-          padding: "12px 20px",
-          borderRadius: "14px",
-          boxShadow: "0 10px 30px rgba(0,0,0,0.25)",
-          zIndex: 1000,
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-          fontSize: "0.92rem",
-          fontWeight: "700"
-        }}>
-          <Store size={18} color="#4ade80" />
-          <span>{toastMessage}</span>
-        </div>
-      )}
-
-      {/* Transfer Modal */}
-      <TransferModal 
-        isOpen={!!productToTransfer}
-        onClose={() => setProductToTransfer(null)}
-        product={productToTransfer}
-        onConfirmTransfer={handleConfirmTransfer}
-        direction="warehouse_to_shop"
-      />
-
-      {/* Modals */}
-      <ProductModal 
-        isOpen={isAddModalOpen}
-        onClose={() => { setIsAddModalOpen(false); setEditingProduct(null); }}
-        onSave={handleSaveProduct}
-        productToEdit={editingProduct}
-        hideSellingPrice={true}
-      />
-
-
-      <BarcodeModal 
-        isOpen={!!barcodeProduct}
-        onClose={() => setBarcodeProduct(null)}
-        product={barcodeProduct}
-      />
-
-      {/* Permission Denied Popup */}
-      <PermissionDeniedModal 
-        isOpen={!!permissionDeniedAction}
-        onClose={() => setPermissionDeniedAction(null)}
-        actionName={permissionDeniedAction}
-      />
-
-      {/* Delete Confirmation Modal (Admin only) */}
-      {productToDelete && (
-        <div className="modal-overlay" onClick={() => setProductToDelete(null)}>
-          <div 
-            className="modal-content"
-            onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: "440px", padding: "26px", textAlign: "center", background: "#ffffff" }}
-          >
-            <div style={{
-              width: "50px",
-              height: "50px",
-              borderRadius: "50%",
-              background: "#fee2e2",
-              color: "#dc2626",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              marginBottom: "16px"
-            }}>
-              <Trash2 size={26} />
+              {/* Reset Filters */}
+              {(searchQuery || selectedCategory !== "all" || selectedStatus !== "all" || sortBy !== "newest") && (
+                <button 
+                  onClick={resetFilters} 
+                  className={`btn-secondary ${styles.resetFiltersBtn}`}
+                  title="إعادة ضبط الفلاتر"
+                >
+                  <RotateCcw size={16} />
+                </button>
+              )}
             </div>
 
-            <h3 style={{ fontSize: "1.2rem", marginBottom: "8px", color: "#1e1322", fontWeight: "800" }}>تأكيد حذف الصنف من المخزن</h3>
-            <p style={{ fontSize: "0.9rem", color: "var(--text-secondary)", marginBottom: "20px", fontWeight: "600" }}>
-              هل أنت متأكد من حذف الصنف <strong style={{ color: "#1e1322" }}>"{productToDelete.name}"</strong> (باركود: {productToDelete.barcode})؟ لن تتمكن من التراجع عن هذا الإجراء.
-            </p>
+            {/* 3 Rich Stat Cards for Summary Data */}
+            <div className={styles.summaryStatsGrid}>
+              {/* Card 1: معروض */}
+              <div className={styles.summaryCardCount}>
+                <div>
+                  <span className={styles.statLabel}>الأصناف المعروضة</span>
+                  <div className={styles.statValueRow}>
+                    <span className={`num-font ${styles.statValCount}`} dir="ltr">
+                      {formatNumber(totalFilteredCount)}
+                    </span>
+                    <span className={styles.statUnitText}>صنف</span>
+                  </div>
+                </div>
+                <div className={styles.statIconBoxCount}>
+                  <Boxes size={20} />
+                </div>
+              </div>
 
-            <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
-              <button 
-                onClick={() => setProductToDelete(null)}
-                className="btn-secondary"
-                style={{ padding: "10px 20px" }}
-              >
-                إلغاء
-              </button>
-              <button 
-                onClick={confirmDelete}
-                className="btn-danger"
-                style={{ padding: "10px 20px", background: "#dc2626", color: "#fff", border: "none" }}
-              >
-                نعم، احذف الصنف
-              </button>
+              {/* Card 2: إجمالي القطع */}
+              <div className={styles.summaryCardQty}>
+                <div>
+                  <span className={styles.statLabel}>إجمالي عدد القطع بالمخزن</span>
+                  <div className={styles.statValueRow}>
+                    <span className={`num-font ${styles.statValQty}`} dir="ltr">
+                      {formatNumber(totalFilteredQty)}
+                    </span>
+                    <span className={styles.statUnitQty}>قطعة</span>
+                  </div>
+                </div>
+                <div className={styles.statIconBoxQty}>
+                  <Layers size={20} />
+                </div>
+              </div>
+
+              {/* Card 3: القيمة بسعر الجملة */}
+              <div className={styles.summaryCardWholesale}>
+                <div>
+                  <span className={styles.statLabel}>القيمة بسعر الجملة</span>
+                  {isAdmin ? (
+                    <div className={styles.statValueRow}>
+                      <span className={`num-font ${styles.statValWholesale}`} dir="ltr">
+                        {formatNumber(totalFilteredWholesale)}
+                      </span>
+                      <span className={styles.statUnitWholesale}>ج.م</span>
+                    </div>
+                  ) : (
+                    <div className={styles.adminOnlyTag}>
+                      <Lock size={13} /> خاص بالمسؤول
+                    </div>
+                  )}
+                </div>
+                <div className={styles.statIconBoxWholesale}>
+                  <DollarSign size={20} />
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-      {/* Print Inventory Modal */}
-      <PrintInventoryModal 
-        isOpen={isPrintModalOpen}
-        onClose={() => setIsPrintModalOpen(false)}
-        products={filteredProducts}
-      />
+
+          {/* Screen Products Table */}
+          <div className="table-container">
+            {filteredProducts.length === 0 ? (
+              <div className={styles.emptyContainer}>
+                <Boxes size={48} color="#db2777" className={styles.emptyIcon} />
+                <h3 className={styles.emptyTitle}>لم يتم العثور على أي صنف</h3>
+                <p className={styles.emptyDesc}>
+                  {searchQuery ? `لا يوجد صنف يطابق الباركود أو الاسم "${searchQuery}"` : "قم بتسجيل صنف جديد بالمخزن"}
+                </p>
+                <button 
+                  onClick={handleOpenAddModal}
+                  className="btn-primary"
+                >
+                  <Plus size={16} />
+                  إضافة صنف جديد
+                </button>
+              </div>
+            ) : (
+              <table className="custom-table">
+                <thead>
+                  <tr>
+                    <th className={styles.thBarcode}>الباركود</th>
+                    <th className={styles.thNowrap}>اسم الصنف والماركة</th>
+                    <th className={styles.thNowrap}>القسم</th>
+                    <th className={styles.thCenter}>الكمية بالمخزن</th>
+                    <th className={styles.thNowrap}>سعر الجملة</th>
+                    <th className={styles.thNowrap}>إجمالي قيمة الصنف</th>
+                    <th className={styles.thNowrap}>حالة المخزون</th>
+                    <th className={styles.thCenter}>الإجراءات</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredProducts.map((p, idx) => {
+                    const qty = Number(p.quantity) || 0;
+                    const wholesale = Number(p.wholesalePrice) || 0;
+                    const totalVal = qty * wholesale;
+                    const minThresh = Number(p.minThreshold) || 5;
+                    const isLow = qty <= minThresh && qty > 0;
+                    const isOut = qty === 0;
+                    const barcodeVal = p.barcode || p.code || `622100100${idx + 1}`;
+
+                    return (
+                      <tr key={p.id}>
+                        {/* Product Barcode - Prominent and High-Contrast */}
+                        <td>
+                          <span 
+                            className={`num-font ${styles.barcodeTag}`} 
+                            dir="ltr"
+                          >
+                            {barcodeVal}
+                          </span>
+                        </td>
+
+                        {/* Product Name & Brand */}
+                        <td>
+                          <div className={styles.productNameText}>
+                            {p.name}
+                          </div>
+                          {p.brand && (
+                            <div className={styles.productBrandText}>
+                              {p.brand}
+                            </div>
+                          )}
+                        </td>
+
+                        {/* Category */}
+                        <td>
+                          <span className="badge badge-category">
+                            {p.category || "عام"}
+                          </span>
+                        </td>
+
+                        {/* Quantity Display Only */}
+                        <td className={styles.thCenter}>
+                          <div className={styles.quantityDisplayWrap}>
+                            <span 
+                              className={`num-font ${isOut ? styles.qtyValueOut : isLow ? styles.qtyValueLow : styles.qtyValueNormal}`} 
+                              dir="ltr"
+                            >
+                              {formatNumber(qty)}
+                            </span>
+                            <span className={styles.qtyUnitText}>قطعة</span>
+                          </div>
+                        </td>
+
+                        {/* Wholesale Price (Protected for Admin Only) */}
+                        <td>
+                          {isAdmin ? (
+                            <strong className={styles.wholesaleText}>
+                              <span className="num-font" dir="ltr">{formatNumber(wholesale)}</span> ج.م
+                            </strong>
+                          ) : (
+                            <span className={styles.adminProtectedBadge}>
+                              <Lock size={12} />
+                              خاص بالمسؤول
+                            </span>
+                          )}
+                        </td>
+
+                        {/* Total Value (Protected for Admin Only) */}
+                        <td>
+                          {isAdmin ? (
+                            <strong className={styles.totalValueText}>
+                              <span className="num-font" dir="ltr">{formatNumber(totalVal)}</span> ج.م
+                            </strong>
+                          ) : (
+                            <span className={styles.adminProtectedBadge}>
+                              <Lock size={12} />
+                              خاص بالمسؤول
+                            </span>
+                          )}
+                        </td>
+
+                        {/* Stock Status Badge */}
+                        <td>
+                          {isOut ? (
+                            <span className="badge badge-out-of-stock">نفد تماماً</span>
+                          ) : isLow ? (
+                            <span className="badge badge-low-stock">مخزون قليل (<span className="num-font" dir="ltr">{formatNumber(qty)}</span>)</span>
+                          ) : (
+                            <span className="badge badge-in-stock">متوفر (<span className="num-font" dir="ltr">{formatNumber(qty)}</span>)</span>
+                          )}
+                        </td>
+
+                        {/* Actions */}
+                        <td className={styles.thCenter}>
+                          <div className={styles.actionsGroup}>
+                            <button 
+                              onClick={() => setProductToTransfer(p)}
+                              className={`btn-secondary ${styles.transferBtn}`}
+                              title="تحويل كمية من الصنف إلى المحل"
+                            >
+                              <Store size={15} color="#16a34a" />
+                              تحويل للمحل
+                            </button>
+                            <button 
+                              onClick={() => setBarcodeProduct(p)}
+                              className={`btn-secondary ${styles.barcodeBtn}`}
+                              title="طباعة باركود"
+                            >
+                              <Barcode size={15} color="#db2777" />
+                              باركود
+                            </button>
+                            <button 
+                              onClick={() => handleOpenEditModal(p)}
+                              className={`btn-primary ${styles.editBtn}`}
+                              title="تعديل بيانات وكمية الصنف"
+                            >
+                              <Edit3 size={15} />
+                              تعديل
+                            </button>
+                            <button 
+                              onClick={() => handleOpenDeleteModal(p)}
+                              className={`btn-danger ${styles.deleteBtn}`}
+                              title="حذف الصنف"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </main>
+
+        {/* Toast Alert */}
+        {toastMessage && (
+          <div className={styles.toastWrap}>
+            <Store size={18} color="#4ade80" />
+            <span>{toastMessage}</span>
+          </div>
+        )}
+
+        {/* Transfer Modal */}
+        <TransferModal 
+          isOpen={!!productToTransfer}
+          onClose={() => setProductToTransfer(null)}
+          product={productToTransfer}
+          onConfirmTransfer={handleConfirmTransfer}
+          direction="warehouse_to_shop"
+        />
+
+        {/* Modals */}
+        <ProductModal 
+          isOpen={isAddModalOpen}
+          onClose={() => { setIsAddModalOpen(false); setEditingProduct(null); }}
+          onSave={handleSaveProduct}
+          productToEdit={editingProduct}
+          hideSellingPrice={true}
+        />
+
+        <BarcodeModal 
+          isOpen={!!barcodeProduct}
+          onClose={() => setBarcodeProduct(null)}
+          product={barcodeProduct}
+        />
+
+        {/* Permission Denied Popup */}
+        <PermissionDeniedModal 
+          isOpen={!!permissionDeniedAction}
+          onClose={() => setPermissionDeniedAction(null)}
+          actionName={permissionDeniedAction}
+        />
+
+        {/* Delete Confirmation Modal (Admin only) */}
+        {productToDelete && (
+          <div className="modal-overlay" onClick={() => setProductToDelete(null)}>
+            <div 
+              className={`modal-content ${styles.modalCard}`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className={styles.deleteModalIcon}>
+                <Trash2 size={26} />
+              </div>
+
+              <h3 className={styles.deleteModalTitle}>تأكيد حذف الصنف من المخزن</h3>
+              <p className={styles.deleteModalDesc}>
+                هل أنت متأكد من حذف الصنف <strong className={styles.deleteModalHighlight}>"{productToDelete.name}"</strong> (باركود: {productToDelete.barcode})؟ لن تتمكن من التراجع عن هذا الإجراء.
+              </p>
+
+              <div className={styles.deleteModalActions}>
+                <button 
+                  onClick={() => setProductToDelete(null)}
+                  className={`btn-secondary ${styles.cancelModalBtn}`}
+                >
+                  إلغاء
+                </button>
+                <button 
+                  onClick={confirmDelete}
+                  className={`btn-danger ${styles.confirmDeleteBtn}`}
+                >
+                  نعم، احذف الصنف
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Print Inventory Modal */}
+        <PrintInventoryModal 
+          isOpen={isPrintModalOpen}
+          onClose={() => setIsPrintModalOpen(false)}
+          products={filteredProducts}
+        />
       </div>
     </div>
   );
 }
-
-

@@ -26,44 +26,42 @@ import {
   subscribeToMonthlyExpenses 
 } from "@/lib/expensesService";
 import { 
-  subscribeToSales 
+  subscribeToSales,
+  subscribeToReports
 } from "@/lib/salesService";
-import { formatNumber, roundCurrency } from "@/lib/utils";
+import { formatNumber, roundCurrency, getLocalDateString, getLocalMonthString } from "@/lib/utils";
 import { 
   Boxes, 
-  Layers, 
   DollarSign, 
   AlertTriangle, 
   Plus, 
   Sparkles, 
-  ArrowLeft, 
   Barcode, 
   CheckCircle2, 
-  Edit3, 
-  Lock, 
   Truck, 
   Receipt, 
   TrendingDown, 
   TrendingUp,
   CreditCard, 
   PieChart, 
-  ArrowDownLeft, 
   ChevronLeft,
   ShoppingCart,
-  ShoppingBag
+  ShoppingBag,
+  Edit3
 } from "lucide-react";
+import styles from "./dashboard.module.css";
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { user, role, isAdmin, loading: authLoading } = useAuth();
+  const { user, isAdmin, loading: authLoading } = useAuth();
   
   // Real-time states
   const [products, setProducts] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
   const [sales, setSales] = useState([]);
+  const [reports, setReports] = useState([]);
   const [monthlyExpensesMap, setMonthlyExpensesMap] = useState({});
   const [loading, setLoading] = useState(true);
-
 
   // Modals state
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
@@ -82,13 +80,9 @@ export default function DashboardPage() {
     setTimeout(() => setToastMessage(""), 3500);
   };
 
-  // Month string (YYYY-MM)
-  const currentMonthStr = useMemo(() => {
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = String(now.getMonth() + 1).padStart(2, "0");
-    return `${y}-${m}`;
-  }, []);
+  // Month & Day strings (Local timezone)
+  const currentMonthStr = useMemo(() => getLocalMonthString(), []);
+  const todayStr = useMemo(() => getLocalDateString(), []);
 
   // Redirect to login if user not authenticated
   useEffect(() => {
@@ -104,7 +98,7 @@ export default function DashboardPage() {
     let loadedCount = 0;
     const checkDone = () => {
       loadedCount++;
-      if (loadedCount >= 4) setLoading(false);
+      if (loadedCount >= 5) setLoading(false);
     };
 
     const unsubProducts = subscribeToProducts((data) => {
@@ -122,6 +116,11 @@ export default function DashboardPage() {
       checkDone();
     });
 
+    const unsubReports = subscribeToReports((data) => {
+      setReports(data);
+      checkDone();
+    });
+
     const unsubExpenses = subscribeToMonthlyExpenses(currentMonthStr, (map) => {
       setMonthlyExpensesMap(map);
       checkDone();
@@ -131,28 +130,68 @@ export default function DashboardPage() {
       unsubProducts();
       unsubSuppliers();
       unsubSales();
+      unsubReports();
       unsubExpenses();
     };
   }, [user, currentMonthStr]);
 
   // Calculations for Sales & Profits
   const activeSales = useMemo(() => sales.filter(s => s.status !== "مرتجعة"), [sales]);
-  const totalSalesRevenue = useMemo(() => {
-    return roundCurrency(activeSales.reduce((acc, curr) => acc + (Number(curr.total) || 0), 0));
-  }, [activeSales]);
 
-  const totalSalesProfit = useMemo(() => {
-    return roundCurrency(activeSales.reduce((acc, curr) => acc + (Number(curr.totalProfit) || 0), 0));
-  }, [activeSales]);
+  // Filter closed reports for current month
+  const currentMonthReports = useMemo(() => {
+    return reports.filter(r => {
+      const rDate = r.closedAt || r.date || r.createdAt;
+      if (!rDate) return false;
+      return getLocalDateString(rDate).startsWith(currentMonthStr);
+    });
+  }, [reports, currentMonthStr]);
 
-  const todayStr = useMemo(() => new Date().toISOString().split("T")[0], []);
-  const todaySalesRevenue = useMemo(() => {
-    return roundCurrency(
-      activeSales
-        .filter(s => s.date && s.date.startsWith(todayStr))
-        .reduce((acc, curr) => acc + (Number(curr.total) || 0), 0)
-    );
+  // Filter closed reports for today
+  const todayReports = useMemo(() => {
+    return reports.filter(r => {
+      const rDate = r.closedAt || r.date || r.createdAt;
+      if (!rDate) return false;
+      return getLocalDateString(rDate) === todayStr;
+    });
+  }, [reports, todayStr]);
+
+  // Active open shift sales for today
+  const todayActiveSales = useMemo(() => {
+    return activeSales.filter(s => s.date && getLocalDateString(s.date) === todayStr);
   }, [activeSales, todayStr]);
+
+  // Today's total sales revenue = today's active shift + today's closed shift reports
+  const todaySalesRevenue = useMemo(() => {
+    const fromActive = todayActiveSales.reduce((acc, curr) => acc + (Number(curr.total) || 0), 0);
+    const fromReports = todayReports.reduce((acc, curr) => acc + (Number(curr.totalSales) || 0), 0);
+    return roundCurrency(fromActive + fromReports);
+  }, [todayActiveSales, todayReports]);
+
+  // Current month total sales revenue = current month closed reports + active sales in current month
+  const currentMonthSalesRevenue = useMemo(() => {
+    const fromReports = currentMonthReports.reduce((acc, curr) => acc + (Number(curr.totalSales) || 0), 0);
+    const fromActive = activeSales
+      .filter(s => s.date && getLocalDateString(s.date).startsWith(currentMonthStr))
+      .reduce((acc, curr) => acc + (Number(curr.total) || 0), 0);
+    return roundCurrency(fromReports + fromActive);
+  }, [currentMonthReports, activeSales, currentMonthStr]);
+
+  // Current month gross sales profit
+  const currentMonthGrossProfit = useMemo(() => {
+    const fromReports = currentMonthReports.reduce((acc, curr) => acc + (Number(curr.totalProfit) || 0), 0);
+    const fromActive = activeSales
+      .filter(s => s.date && getLocalDateString(s.date).startsWith(currentMonthStr))
+      .reduce((acc, curr) => acc + (Number(curr.totalProfit) || 0), 0);
+    return roundCurrency(fromReports + fromActive);
+  }, [currentMonthReports, activeSales, currentMonthStr]);
+
+  // Current month total invoices count
+  const currentMonthInvoicesCount = useMemo(() => {
+    const fromReports = currentMonthReports.reduce((acc, curr) => acc + (Number(curr.invoicesCount) || (curr.invoices || []).length), 0);
+    const fromActive = activeSales.filter(s => s.date && getLocalDateString(s.date).startsWith(currentMonthStr)).length;
+    return fromReports + fromActive;
+  }, [currentMonthReports, activeSales, currentMonthStr]);
 
   // Calculations for Products & Stock
   const totalProductTypes = products.length;
@@ -173,6 +212,11 @@ export default function DashboardPage() {
     return roundCurrency(Object.values(monthlyExpensesMap).reduce((sum, e) => sum + (Number(e.amount) || 0), 0));
   }, [monthlyExpensesMap]);
 
+  // Net Profit = Month Gross Profit - Current Month Expenses
+  const currentMonthNetProfit = useMemo(() => {
+    return roundCurrency(currentMonthGrossProfit - currentMonthTotalExpenses);
+  }, [currentMonthGrossProfit, currentMonthTotalExpenses]);
+
   const currentMonthActiveExpensesCount = useMemo(() => {
     return Object.values(monthlyExpensesMap).filter(r => (Number(r.amount) || 0) > 0).length;
   }, [monthlyExpensesMap]);
@@ -184,7 +228,6 @@ export default function DashboardPage() {
       .map(r => [r.itemName, Number(r.amount) || 0])
       .sort((a, b) => b[1] - a[1]);
   }, [monthlyExpensesMap]);
-
 
   // Action handlers
   const handleOpenAddProduct = () => {
@@ -244,23 +287,9 @@ export default function DashboardPage() {
 
   if (authLoading || (!user && loading)) {
     return (
-      <div style={{
-        minHeight: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: "16px"
-      }}>
-        <div style={{
-          width: "50px",
-          height: "50px",
-          borderRadius: "50%",
-          border: "4px solid rgba(236, 72, 153, 0.2)",
-          borderTopColor: "#db2777",
-          animation: "spin 1s linear infinite"
-        }} />
-        <p style={{ color: "var(--text-secondary)", fontSize: "0.95rem", fontWeight: "700" }}>
+      <div className={styles.loadingWrapper}>
+        <div className={styles.loadingSpinner} />
+        <p className={styles.loadingText}>
           جاري تحميل لوحة التحكم الشاملة...
         </p>
       </div>
@@ -284,62 +313,34 @@ export default function DashboardPage() {
         <main className="page-wrapper">
           {/* Toast Alert */}
           {toastMessage && (
-            <div style={{
-              position: "fixed",
-              bottom: "24px",
-              left: "24px",
-              background: "#111827",
-              color: "#ffffff",
-              padding: "14px 20px",
-              borderRadius: "14px",
-              boxShadow: "0 10px 30px rgba(0,0,0,0.25)",
-              zIndex: 1000,
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              fontSize: "0.92rem",
-              fontWeight: "700",
-              animation: "fadeIn 0.3s ease"
-            }}>
+            <div className={styles.toastWrapper}>
               <Sparkles size={18} color="#f472b6" />
               <span>{toastMessage}</span>
             </div>
           )}
 
           {/* Welcome Banner */}
-          <section className="glass-panel" style={{
-            padding: "24px 28px",
-            marginBottom: "24px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
-            gap: "18px",
-            background: "linear-gradient(135deg, #ffffff 0%, #fdf2f8 50%, #fce7f3 100%)",
-            border: "1.5px solid #fbcfe8",
-            boxShadow: "0 4px 20px rgba(219, 39, 119, 0.08)"
-          }}>
+          <section className={`glass-panel ${styles.welcomeBanner}`}>
             <div>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+              <div className={styles.bannerTagRow}>
                 <Sparkles size={20} color="#db2777" />
-                <span style={{ fontSize: "0.85rem", color: "#db2777", fontWeight: "800" }}>
+                <span className={styles.bannerTagText}>
                   مركز الإدارة والتحكم الشامل
                 </span>
               </div>
-              <h2 style={{ fontSize: "1.6rem", fontWeight: "900", color: "#1e1322" }}>
+              <h2 className={styles.bannerTitle}>
                 مرحباً بك في لوحة تحكم مخزن <span className="gradient-text-rose">Nelly</span>
               </h2>
-              <p style={{ color: "#5a4663", fontSize: "0.88rem", marginTop: "4px", fontWeight: "600" }}>
+              <p className={styles.bannerSubtitle}>
                 متابعة شاملة للمخزون والبضاعة، حسابات الموردين، والمصاريف التشغيلية
               </p>
             </div>
 
             {/* Quick Action Hub */}
-            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+            <div className={styles.actionHub}>
               <Link 
                 href="/pos"
-                className="btn-primary"
-                style={{ padding: "10px 20px", fontSize: "0.92rem", textDecoration: "none", boxShadow: "0 6px 20px rgba(219, 39, 119, 0.3)" }}
+                className={`btn-primary ${styles.posBtn}`}
               >
                 <ShoppingCart size={18} />
                 نقطة البيع (الكاشير)
@@ -347,26 +348,23 @@ export default function DashboardPage() {
 
               <button 
                 onClick={handleOpenAddProduct}
-                className="btn-secondary"
-                style={{ padding: "10px 16px", fontSize: "0.88rem", background: "#ffffff" }}
+                className={`btn-secondary ${styles.whiteActionBtn}`}
               >
                 <Plus size={16} />
                 + صنف للمخزن
               </button>
 
               <Link 
-                href="/sales"
-                className="btn-secondary"
-                style={{ padding: "10px 16px", fontSize: "0.88rem", background: "#ffffff", textDecoration: "none" }}
+                href="/pos"
+                className={`btn-secondary ${styles.whiteActionBtn}`}
               >
                 <Receipt size={16} color="#db2777" />
-                فواتير المبيعات
+                فواتير ونقطة البيع
               </Link>
 
               <Link 
                 href="/expenses"
-                className="btn-secondary"
-                style={{ padding: "10px 16px", fontSize: "0.88rem", background: "#ffffff", textDecoration: "none" }}
+                className={`btn-secondary ${styles.whiteActionBtn}`}
               >
                 <TrendingDown size={16} color="#dc2626" />
                 المصاريف
@@ -376,29 +374,29 @@ export default function DashboardPage() {
 
           {/* Executive KPI Cards (Swiper on Mobile, Grid on Desktop) */}
           <section className="mobile-cards-swiper">
-            {/* 1. Today & Total Sales */}
+            {/* 1. Month & Today Sales */}
             <div className="mobile-swiper-card">
               <StatCard 
-                title="إجمالي المبيعات المحققة"
-                value={totalSalesRevenue}
+                title="مبيعات الشهر الحالي"
+                value={currentMonthSalesRevenue}
                 suffix="ج.م"
                 subtitle={`مبيعات اليوم: ${formatNumber(todaySalesRevenue)} ج.م`}
                 icon={ShoppingBag}
                 theme="rose"
-                trendText={`${activeSales.length} فاتورة مسجلة`}
+                trendText={`${currentMonthInvoicesCount} فاتورة هذا الشهر`}
               />
             </div>
 
             {/* 2. Total Net Profit (Admin) */}
             <div className="mobile-swiper-card">
               <StatCard 
-                title="صافي أرباح المبيعات"
-                value={isAdmin ? totalSalesProfit : "🔒"}
+                title="صافي أرباح الشهر (بعد المصاريف)"
+                value={isAdmin ? currentMonthNetProfit : "🔒"}
                 suffix={isAdmin ? "ج.م" : "خاص بالمسؤول"}
-                subtitle="أرباح الفواتير بعد الخصومات والتكلفة"
+                subtitle={`مجمل أرباح المبيعات: ${isAdmin ? `${formatNumber(currentMonthGrossProfit)} ج.م` : "🔒"}`}
                 icon={TrendingUp}
-                theme="emerald"
-                trendText="أرباح المتجر"
+                theme={currentMonthNetProfit >= 0 ? "emerald" : "ruby"}
+                trendText="صافي أرباح المتجر"
               />
             </div>
 
@@ -455,67 +453,56 @@ export default function DashboardPage() {
             </div>
           </section>
 
-
           {/* Mobile Swipe Hint */}
           <div className="swiper-mobile-hint">
             <span>👈 اسحب لمشاهدة باقي الإحصائيات 👉</span>
           </div>
 
           {/* Core Dashboard Insight Grid (2 Columns on Desktop) */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: "20px", marginBottom: "28px" }}>
+          <div className={styles.insightsGrid}>
             
             {/* Section A: Low Stock Alerts */}
-            <section className="glass-panel" style={{ padding: "20px 22px", background: "#ffffff", border: "1.5px solid #fed7aa" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px", paddingBottom: "10px", borderBottom: "1px solid #ffedd5" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <section className={`glass-panel ${styles.lowStockPanel}`}>
+              <div className={styles.lowStockHeader}>
+                <div className={styles.panelTitleGroup}>
                   <AlertTriangle size={20} color="#ea580c" />
-                  <h3 style={{ fontSize: "1.1rem", fontWeight: "900", color: "#1e1322" }}>
+                  <h3 className={styles.panelTitle}>
                     تنبيهات نواقص المخزن ({lowStockItems.length})
                   </h3>
                 </div>
-                <Link href="/products" style={{ color: "#ea580c", fontSize: "0.82rem", fontWeight: "800", textDecoration: "none", display: "flex", alignItems: "center", gap: "4px" }}>
+                <Link href="/products" className={styles.lowStockLink}>
                   عرض الكل <ChevronLeft size={14} />
                 </Link>
               </div>
 
               {lowStockItems.length === 0 ? (
-                <div style={{ textAlign: "center", padding: "30px", color: "var(--text-muted)", fontSize: "0.88rem", fontWeight: "700" }}>
-                  <CheckCircle2 size={32} color="#059669" style={{ margin: "0 auto 8px" }} />
+                <div className={styles.emptyCenteredBox}>
+                  <CheckCircle2 size={32} color="#059669" className={styles.emptyCheckIcon} />
                   جميع أصناف المخزن بكميات كافية وآمنة!
                 </div>
               ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: "10px", maxHeight: "280px", overflowY: "auto" }}>
+                <div className={styles.lowStockList}>
                   {lowStockItems.slice(0, 5).map((item) => (
                     <div 
                       key={item.id}
-                      style={{
-                        background: "#fff7ed",
-                        border: "1px solid #fed7aa",
-                        borderRadius: "12px",
-                        padding: "10px 14px",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        gap: "10px"
-                      }}
+                      className={styles.lowStockItemCard}
                     >
                       <div>
-                        <div style={{ fontWeight: "800", fontSize: "0.9rem", color: "#9a3412" }}>
+                        <div className={styles.lowStockItemName}>
                           {item.name}
                         </div>
-                        <div style={{ fontSize: "0.74rem", color: "#7c2d12", marginTop: "2px", fontWeight: "600" }}>
+                        <div className={styles.lowStockBarcodeRow}>
                           باركود: <span className="num-font" dir="ltr">{item.barcode}</span>
                         </div>
                       </div>
 
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <div className={styles.lowStockActions}>
                         <span className={Number(item.quantity) === 0 ? "badge badge-out-of-stock" : "badge badge-low-stock"}>
                           {Number(item.quantity) === 0 ? "نفد من المخزن" : `متبقي ${item.quantity}`}
                         </span>
                         <button
                           onClick={() => handleOpenEditProduct(item)}
-                          className="btn-secondary"
-                          style={{ padding: "5px 10px", fontSize: "0.76rem" }}
+                          className={`btn-secondary ${styles.editItemBtn}`}
                         >
                           تعديل
                         </button>
@@ -527,33 +514,33 @@ export default function DashboardPage() {
             </section>
 
             {/* Section B: Monthly Expenses Breakdown */}
-            <section className="glass-panel" style={{ padding: "20px 22px", background: "#ffffff", border: "1.5px solid #fbcfe8" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px", paddingBottom: "10px", borderBottom: "1px solid #fdf2f8" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <section className={`glass-panel ${styles.expensesPanel}`}>
+              <div className={styles.expensesHeader}>
+                <div className={styles.panelTitleGroup}>
                   <PieChart size={20} color="#db2777" />
-                  <h3 style={{ fontSize: "1.1rem", fontWeight: "900", color: "#1e1322" }}>
+                  <h3 className={styles.panelTitle}>
                     مصاريف الشهر حسب القسم
                   </h3>
                 </div>
-                <Link href="/expenses" style={{ color: "#db2777", fontSize: "0.82rem", fontWeight: "800", textDecoration: "none", display: "flex", alignItems: "center", gap: "4px" }}>
+                <Link href="/expenses" className={styles.expensesLink}>
                   سجل المصاريف <ChevronLeft size={14} />
                 </Link>
               </div>
 
               {categoryExpensesBreakdown.length === 0 ? (
-                <div style={{ textAlign: "center", padding: "30px", color: "var(--text-muted)", fontSize: "0.88rem", fontWeight: "700" }}>
-                  <Receipt size={32} color="#db2777" style={{ margin: "0 auto 8px", opacity: 0.6 }} />
+                <div className={styles.emptyCenteredBox}>
+                  <Receipt size={32} color="#db2777" className={styles.expensesEmptyIcon} />
                   لم يتم تسجيل أي مصاريف في هذا الشهر بعد.
                 </div>
               ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: "12px", maxHeight: "280px", overflowY: "auto" }}>
+                <div className={styles.expensesList}>
                   {categoryExpensesBreakdown.slice(0, 5).map(([catName, catAmount]) => {
                     const percentage = currentMonthTotalExpenses > 0 ? Math.round((catAmount / currentMonthTotalExpenses) * 100) : 0;
                     return (
                       <div key={catName}>
-                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", marginBottom: "4px" }}>
-                          <strong style={{ color: "#37243b" }}>{catName}</strong>
-                          <span style={{ color: "#be185d", fontWeight: "900" }}>
+                        <div className={styles.expenseItemRow}>
+                          <strong className={styles.expenseItemName}>{catName}</strong>
+                          <span className={styles.expenseItemVal}>
                             {isAdmin ? (
                               <>
                                 <span className="num-font" dir="ltr">{formatNumber(catAmount)}</span> ج.م ({percentage}%)
@@ -561,8 +548,8 @@ export default function DashboardPage() {
                             ) : "🔒"}
                           </span>
                         </div>
-                        <div style={{ width: "100%", height: "8px", background: "#f3e8f1", borderRadius: "4px", overflow: "hidden" }}>
-                          <div style={{ width: `${percentage}%`, height: "100%", background: "linear-gradient(90deg, #ec4899, #db2777)", borderRadius: "4px" }} />
+                        <div className={styles.expenseBarBg}>
+                          <div className={styles.expenseBarFill} style={{ width: `${percentage}%` }} />
                         </div>
                       </div>
                     );
@@ -574,28 +561,28 @@ export default function DashboardPage() {
           </div>
 
           {/* Section: Recent Sales Invoices */}
-          <section className="glass-panel" style={{ padding: "20px 22px", marginBottom: "28px", background: "#ffffff", border: "1.5px solid #fbcfe8" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px", paddingBottom: "10px", borderBottom: "1px solid #fce7f3" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <section className={`glass-panel ${styles.salesPanel}`}>
+            <div className={styles.salesHeader}>
+              <div className={styles.panelTitleGroup}>
                 <Receipt size={20} color="#db2777" />
-                <h3 style={{ fontSize: "1.1rem", fontWeight: "900", color: "#1e1322" }}>
+                <h3 className={styles.panelTitle}>
                   أحدث فواتير المبيعات الصادرة ({activeSales.length})
                 </h3>
               </div>
-              <div style={{ display: "flex", gap: "8px" }}>
-                <Link href="/pos" className="btn-primary" style={{ padding: "6px 14px", fontSize: "0.82rem", textDecoration: "none" }}>
+              <div className={styles.salesHeaderActions}>
+                <Link href="/pos" className={`btn-primary ${styles.salesActionBtn}`}>
                   <Plus size={14} />
                   فاتورة جديدة (POS)
                 </Link>
-                <Link href="/sales" className="btn-secondary" style={{ padding: "6px 14px", fontSize: "0.82rem", textDecoration: "none" }}>
-                  عرض كل الفواتير <ChevronLeft size={14} />
+                <Link href="/pos" className={`btn-secondary ${styles.salesActionBtn}`}>
+                  عرض كل الفواتير (POS) <ChevronLeft size={14} />
                 </Link>
               </div>
             </div>
 
             {activeSales.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "30px", color: "var(--text-muted)", fontSize: "0.88rem", fontWeight: "700" }}>
-                <ShoppingBag size={32} color="#db2777" style={{ margin: "0 auto 8px", opacity: 0.5 }} />
+              <div className={styles.emptyCenteredBox}>
+                <ShoppingBag size={32} color="#db2777" className={styles.salesEmptyIcon} />
                 لا توجد فواتير مبيعات مسجلة حتى الآن. ابدأ البيع من نقطة البيع!
               </div>
             ) : (
@@ -616,37 +603,37 @@ export default function DashboardPage() {
                     {activeSales.slice(0, 5).map((inv) => (
                       <tr key={inv.id}>
                         <td>
-                          <span className="num-font" dir="ltr" style={{ fontWeight: "800", color: "#db2777", background: "#fdf2f8", padding: "3px 8px", borderRadius: "6px", border: "1px solid #fbcfe8", fontSize: "0.82rem" }}>
+                          <span className={`num-font ${styles.invoiceNumberBadge}`} dir="ltr">
                             {inv.invoiceNumber}
                           </span>
                         </td>
                         <td>
-                          <span style={{ fontSize: "0.8rem", color: "#5a4663" }}>
+                          <span className={styles.invoiceDateText}>
                             {inv.date ? new Date(inv.date).toLocaleDateString("ar-EG") : "—"}
                           </span>
                         </td>
                         <td>
-                          <span style={{ fontWeight: "700", color: "#1e1322" }}>
+                          <span className={styles.customerNameText}>
                             {inv.customer?.name || "عميل نقدي"}
                           </span>
                         </td>
                         <td>
-                          <span className="num-font" style={{ fontWeight: "700" }}>
+                          <span className={`num-font ${styles.itemsCountText}`}>
                             {inv.itemsCount || inv.items?.length || 1}
                           </span>
                         </td>
                         <td>
-                          <strong style={{ color: "#1e1322" }}>
+                          <strong className={styles.totalPriceText}>
                             <span className="num-font" dir="ltr">{formatNumber(inv.total)}</span> ج.م
                           </strong>
                         </td>
                         <td>
-                          <span className="badge" style={{ background: "#fdf2f8", color: "#db2777", border: "1px solid #fbcfe8" }}>
+                          <span className={`badge ${styles.paymentMethodBadge}`}>
                             {inv.paymentMethod || "نقدي"}
                           </span>
                         </td>
                         <td>
-                          <span className="badge" style={{ background: "#ecfdf5", color: "#047857", border: "1px solid #a7f3d0" }}>
+                          <span className={`badge ${styles.statusCompletedBadge}`}>
                             ✓ مكتملة
                           </span>
                         </td>
@@ -659,45 +646,36 @@ export default function DashboardPage() {
           </section>
 
           {/* Section C: Pending Suppliers Table */}
-          <section className="glass-panel" style={{ padding: "20px 22px", marginBottom: "28px", background: "#ffffff", border: "1.5px solid #e9d5ff" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px", paddingBottom: "10px", borderBottom: "1px solid #faf5ff" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <section className={`glass-panel ${styles.suppliersPanel}`}>
+            <div className={styles.suppliersHeader}>
+              <div className={styles.panelTitleGroup}>
                 <Truck size={20} color="#7e22ce" />
-                <h3 style={{ fontSize: "1.1rem", fontWeight: "900", color: "#1e1322" }}>
+                <h3 className={styles.panelTitle}>
                   مستحقات الموردين المطلوب سدادها
                 </h3>
               </div>
-              <Link href="/suppliers" style={{ color: "#7e22ce", fontSize: "0.82rem", fontWeight: "800", textDecoration: "none", display: "flex", alignItems: "center", gap: "4px" }}>
+              <Link href="/suppliers" className={styles.suppliersLink}>
                 صفحة الموردين <ChevronLeft size={14} />
               </Link>
             </div>
 
-
             {topCreditorSuppliers.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "30px", color: "var(--text-muted)", fontSize: "0.88rem", fontWeight: "700" }}>
-                <CheckCircle2 size={32} color="#059669" style={{ margin: "0 auto 8px" }} />
+              <div className={styles.emptyCenteredBox}>
+                <CheckCircle2 size={32} color="#059669" className={styles.emptyCheckIcon} />
                 لا توجد مستحقات مالية معلقة لأي مورد حالياً.
               </div>
             ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "12px" }}>
+              <div className={styles.suppliersGrid}>
                 {topCreditorSuppliers.map((sup) => (
                   <div 
                     key={sup.id}
-                    style={{
-                      background: "#faf5ff",
-                      border: "1.5px solid #e9d5ff",
-                      borderRadius: "14px",
-                      padding: "14px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between"
-                    }}
+                    className={styles.supplierCard}
                   >
                     <div>
-                      <div style={{ fontWeight: "800", fontSize: "0.92rem", color: "#1e1322" }}>
+                      <div className={styles.supplierName}>
                         {sup.name}
                       </div>
-                      <div style={{ fontSize: "1.05rem", fontWeight: "900", color: "#7e22ce", marginTop: "2px" }}>
+                      <div className={styles.supplierBal}>
                         {isAdmin ? (
                           <>
                             <span className="num-font" dir="ltr">{formatNumber(sup.balance)}</span> ج.م
@@ -708,13 +686,7 @@ export default function DashboardPage() {
 
                     <button
                       onClick={() => handleOpenPayment(sup)}
-                      className="btn-primary"
-                      style={{
-                        padding: "7px 14px",
-                        fontSize: "0.8rem",
-                        background: "linear-gradient(135deg, #059669 0%, #047857 100%)",
-                        boxShadow: "0 2px 8px rgba(5, 150, 105, 0.2)"
-                      }}
+                      className={`btn-primary ${styles.paySupplierBtn}`}
                     >
                       <CreditCard size={13} />
                       سداد دفعة
@@ -726,15 +698,15 @@ export default function DashboardPage() {
           </section>
 
           {/* Section D: Recent Warehouse Products Table */}
-          <section className="glass-panel" style={{ padding: "20px 22px", background: "#ffffff", border: "1.5px solid #ebdbe6" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px", paddingBottom: "10px", borderBottom: "1px solid #f8eff4" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <section className={`glass-panel ${styles.warehouseProductsPanel}`}>
+            <div className={styles.warehouseHeader}>
+              <div className={styles.panelTitleGroup}>
                 <Boxes size={20} color="#db2777" />
-                <h3 style={{ fontSize: "1.1rem", fontWeight: "900", color: "#1e1322" }}>
+                <h3 className={styles.panelTitle}>
                   أحدث أصناف المخزن المضافة
                 </h3>
               </div>
-              <Link href="/products" className="btn-primary" style={{ padding: "6px 14px", fontSize: "0.82rem" }}>
+              <Link href="/products" className={`btn-primary ${styles.viewAllWarehouseBtn}`}>
                 عرض كامل سجل المخزن ({products.length})
               </Link>
             </div>
@@ -749,7 +721,7 @@ export default function DashboardPage() {
                     <th>الكمية بالمخزن</th>
                     <th>سعر الجملة</th>
                     <th>حالة التوفر</th>
-                    <th style={{ textAlign: "center" }}>الإجراءات</th>
+                    <th className={styles.thCenter}>الإجراءات</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -767,7 +739,7 @@ export default function DashboardPage() {
                           </span>
                         </td>
                         <td>
-                          <strong style={{ color: "#1e1322" }}>{product.name}</strong>
+                          <strong className={styles.productNameStrong}>{product.name}</strong>
                         </td>
                         <td>
                           <span className="badge badge-category">
@@ -775,17 +747,17 @@ export default function DashboardPage() {
                           </span>
                         </td>
                         <td>
-                          <span className="num-font" dir="ltr" style={{ fontWeight: "800", fontSize: "0.95rem" }}>
+                          <span className={`num-font ${styles.qtyValue}`} dir="ltr">
                             {formatNumber(qty)}
                           </span>
                         </td>
                         <td>
                           {isAdmin ? (
-                            <span className="num-font" dir="ltr" style={{ fontWeight: "800", color: "#be185d" }}>
+                            <span className={`num-font ${styles.wholesaleVal}`} dir="ltr">
                               {formatNumber(product.wholesalePrice)} ج.م
                             </span>
                           ) : (
-                            <span style={{ fontSize: "0.75rem", color: "#6b7280", background: "#f3f4f6", padding: "3px 7px", borderRadius: "6px", fontWeight: "700" }}>
+                            <span className={styles.adminLockedTag}>
                               خاص بالمسؤول
                             </span>
                           )}
@@ -799,12 +771,11 @@ export default function DashboardPage() {
                             <span className="badge badge-in-stock">متوفر بالمخزن</span>
                           )}
                         </td>
-                        <td style={{ textAlign: "center" }}>
-                          <div style={{ display: "inline-flex", gap: "6px" }}>
+                        <td className={styles.thCenter}>
+                          <div className={styles.productActionBtns}>
                             <button
                               onClick={() => setBarcodeProduct(product)}
-                              className="btn-secondary"
-                              style={{ padding: "6px 10px", fontSize: "0.78rem" }}
+                              className={`btn-secondary ${styles.productSmallBtn}`}
                               title="طباعة الباركود"
                             >
                               <Barcode size={14} color="#db2777" />
@@ -812,8 +783,7 @@ export default function DashboardPage() {
                             </button>
                             <button
                               onClick={() => handleOpenEditProduct(product)}
-                              className="btn-secondary"
-                              style={{ padding: "6px 10px", fontSize: "0.78rem" }}
+                              className={`btn-secondary ${styles.productSmallBtn}`}
                               title="تعديل الصنف"
                             >
                               <Edit3 size={14} />

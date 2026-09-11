@@ -1,0 +1,950 @@
+/* Employees Page CSS Module */
+.loadingWrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loadingText {
+  color: var(--text-secondary);
+  font-weight: 700;
+}
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.headerTitleWrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.headerIconBox {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+}
+
+.headerTitle {
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: #1e1322;
+  margin: 0;
+}
+
+.headerSubtitle {
+  color: #5a4663;
+  font-size: 0.88rem;
+  margin-top: 4px;
+  font-weight: 600;
+}
+
+.addEmployeeBtn {
+  padding: 10px 20px;
+}
+
+/* Quick Punch & Live Staff Section */
+.topActionGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.punchCard {
+  padding: 22px;
+  border-right: 4px solid #db2777;
+}
+
+.punchHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.punchTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.punchCardTitle {
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: #1e1322;
+}
+
+.todayDateTag {
+  font-size: 0.78rem;
+  font-weight: 800;
+  background: #ecfdf5;
+  color: #059669;
+  padding: 3px 10px;
+  border-radius: 20px;
+  border: 1px solid #a7f3d0;
+}
+
+.punchForm {
+  display: flex;
+  gap: 10px;
+}
+
+.punchInput {
+  font-weight: 800;
+  font-size: 1rem;
+  padding: 12px 14px;
+  text-transform: uppercase;
+}
+
+.punchSubmitBtn {
+  white-space: nowrap;
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.punchFeedbackSuccess {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+
+.punchFeedbackError {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+/* Live Staff Card */
+.liveStaffCard {
+  padding: 22px;
+  border-right: 4px solid #059669;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.liveHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.liveTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.liveDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #10b981;
+  display: inline-block;
+}
+
+.liveTitle {
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: #1e1322;
+}
+
+.liveBadge {
+  font-size: 0.78rem;
+  font-weight: 900;
+  background: #ecfdf5;
+  color: #059669;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+.noStaffText {
+  color: #6b7280;
+  font-size: 0.85rem;
+  margin: 14px 0;
+  font-weight: 600;
+}
+
+.staffList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.staffItemRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #f9fafb;
+  border: 1px solid #f3f4f6;
+  font-size: 0.82rem;
+}
+
+.staffNameText {
+  font-weight: 800;
+  color: #1e1322;
+}
+
+.staffCheckInText {
+  color: #059669;
+  font-weight: 700;
+}
+
+.liveFooterRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin-top: 10px;
+}
+
+.viewAttendanceLink {
+  color: #db2777;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+/* KPI Cards */
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.cardPink {
+  padding: 20px;
+  border-right: 4px solid #db2777;
+}
+
+.cardGreen {
+  padding: 20px;
+  border-right: 4px solid #059669;
+}
+
+.cardBlue {
+  padding: 20px;
+  border-right: 4px solid #2563eb;
+}
+
+.cardRed {
+  padding: 20px;
+  border-right: 4px solid #dc2626;
+}
+
+.kpiLabel {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.kpiValMain {
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: #1e1322;
+  margin-top: 4px;
+}
+
+.kpiValGreen {
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: #059669;
+}
+
+.kpiValBlue {
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: #2563eb;
+}
+
+.kpiValRed {
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: #dc2626;
+}
+
+.kpiUnitGreen {
+  font-size: 0.85rem;
+  color: #059669;
+  font-weight: 800;
+}
+
+.kpiUnitBlue {
+  font-size: 0.85rem;
+  color: #2563eb;
+  font-weight: 800;
+}
+
+.kpiUnitRed {
+  font-size: 0.85rem;
+  color: #dc2626;
+  font-weight: 800;
+}
+
+.valWithUnitRow {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+/* Nav Tabs Bar */
+.tabsPanel {
+  padding: 16px 20px;
+  margin-bottom: 20px;
+}
+
+.tabsContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.tabsGroup {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tabBtnActive {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 800;
+  transition: all 0.2s ease;
+  background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(219, 39, 119, 0.25);
+}
+
+.tabBtnInactive {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 800;
+  transition: all 0.2s ease;
+  background: #f3f4f6;
+  color: #4b5563;
+  box-shadow: none;
+}
+
+.tabFiltersGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.monthSelectWrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  padding: 6px 12px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+}
+
+.monthInput {
+  border: none;
+  outline: none;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #1e1322;
+}
+
+.searchDirectoryWrap {
+  position: relative;
+  min-width: 220px;
+}
+
+.searchInput {
+  padding-right: 34px;
+  padding-left: 10px;
+  height: 38px;
+}
+
+.searchIcon {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Tab 1: Directory */
+.emptyDirectoryCard {
+  padding: 40px;
+  text-align: center;
+}
+
+.emptyDirectoryIcon {
+  margin: 0 auto 12px auto;
+}
+
+.emptyDirectoryTitle {
+  font-weight: 800;
+  color: #4b5563;
+  margin: 0 0 6px 0;
+}
+
+.emptyDirectorySub {
+  font-size: 0.85rem;
+  color: #9ca3af;
+  margin: 0;
+}
+
+.employeeGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.employeeCardWorking {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-top: 3px solid #10b981;
+}
+
+.employeeCardIdle {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-top: 1px solid rgba(255, 255, 255, 0.7);
+}
+
+.empCardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.empNameGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.empNameTitle {
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: #1e1322;
+  margin: 0;
+}
+
+.badgeOnShift {
+  font-size: 0.72rem;
+  font-weight: 800;
+  background: #ecfdf5;
+  color: #059669;
+  padding: 2px 8px;
+  border-radius: 12px;
+  border: 1px solid #a7f3d0;
+}
+
+.badgeOffShift {
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: #f3f4f6;
+  color: #6b7280;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.empCodeText {
+  font-size: 0.82rem;
+  color: #db2777;
+  font-weight: 800;
+  margin-top: 2px;
+  display: block;
+}
+
+.empActionsGroup {
+  display: flex;
+  gap: 4px;
+}
+
+.barcodeSmallBtn {
+  background: #fdf2f8;
+  border: 1px solid #fbcfe8;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #db2777;
+  padding: 5px 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.iconBtnGray {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 4px;
+}
+
+.iconBtnRed {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #dc2626;
+  padding: 4px;
+}
+
+.empInfoGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #fdf2f8;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  margin-bottom: 10px;
+}
+
+.empInfoLabel {
+  color: #6b7280;
+  display: block;
+  font-size: 0.75rem;
+}
+
+.empInfoValue {
+  color: #1e1322;
+}
+
+.empNameBold {
+  font-weight: 800;
+  color: #1e1322;
+}
+
+.commissionValue {
+  color: #2563eb;
+}
+
+.summaryBox {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+  font-size: 0.82rem;
+}
+
+.summaryRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.summaryRowLabel {
+  color: #6b7280;
+  font-size: 0.75rem;
+}
+
+.summaryValCyan {
+  color: #0891b2;
+}
+
+.summaryValBlue {
+  color: #2563eb;
+}
+
+.summaryNetRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 6px;
+  border-top: 1px dashed #cbd5e1;
+}
+
+.summaryNetLabel {
+  font-weight: 900;
+  color: #1e1322;
+}
+
+.summaryNetVal {
+  font-weight: 900;
+  font-size: 1.1rem;
+  color: #db2777;
+}
+
+.empCardFooter {
+  display: flex;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.cardFooterBtn {
+  flex: 1;
+  padding: 8px;
+  font-size: 0.82rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.payslipBtn {
+  flex: 1;
+  padding: 8px;
+  font-size: 0.82rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: #db2777;
+}
+
+/* Tab 2: Attendance */
+.tabSectionPanel {
+  padding: 20px;
+}
+
+.sectionHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.sectionTitle {
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: #1e1322;
+  margin: 0;
+}
+
+.sectionSubCount {
+  font-size: 0.85rem;
+  color: #6b7280;
+  font-weight: 700;
+}
+
+.tableScrollWrap {
+  overflow-x: auto;
+}
+
+.fullDataTable {
+  width: 100%;
+  text-align: right;
+}
+
+.dateCol {
+  color: #4b5563;
+  font-weight: 700;
+}
+
+.empCodePink {
+  font-weight: 900;
+  color: #db2777;
+}
+
+.codeCellGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.barcodeIconBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #db2777;
+  padding: 2px;
+}
+
+.checkInTime {
+  color: #059669;
+  font-weight: 700;
+}
+
+.checkOutTime {
+  color: #d97706;
+  font-weight: 700;
+}
+
+.durationText {
+  font-weight: 800;
+  color: #1e1322;
+}
+
+.badgeCompleted {
+  font-size: 0.75rem;
+  font-weight: 800;
+  background: #ecfdf5;
+  color: #059669;
+  padding: 2px 8px;
+  border-radius: 12px;
+  border: 1px solid #a7f3d0;
+}
+
+.badgeWorking {
+  font-size: 0.75rem;
+  font-weight: 800;
+  background: #fffbeb;
+  color: #d97706;
+  padding: 2px 8px;
+  border-radius: 12px;
+  border: 1px solid #fde68a;
+}
+
+.emptyTableTd {
+  text-align: center;
+  padding: 30px;
+  color: #9ca3af;
+}
+
+/* Tab 3: Payroll */
+.payrollSubDesc {
+  font-size: 0.82rem;
+  color: #6b7280;
+  margin: 2px 0 0 0;
+  font-weight: 600;
+}
+
+.payrollHeaderWrap {
+  margin-bottom: 16px;
+}
+
+.thCenter {
+  text-align: center;
+}
+
+.thCenterBold {
+  text-align: center;
+  font-weight: 800;
+}
+
+.thLeft {
+  text-align: left;
+}
+
+.thLeftMuted {
+  text-align: left;
+  color: #6b7280;
+}
+
+.thEarnedHours {
+  text-align: left;
+  color: #059669;
+}
+
+.thCommission {
+  text-align: left;
+  color: #2563eb;
+}
+
+.thBonus {
+  text-align: left;
+  color: #10b981;
+}
+
+.thPenalty {
+  text-align: left;
+  color: #dc2626;
+}
+
+.thAdvance {
+  text-align: left;
+  color: #d97706;
+}
+
+.thNet {
+  text-align: left;
+  color: #db2777;
+}
+
+.empNameStrong {
+  color: #1e1322;
+  display: block;
+}
+
+.empCodeSub {
+  font-size: 0.78rem;
+  color: #6b7280;
+}
+
+.earnedSalaryVal {
+  text-align: left;
+  font-weight: 900;
+  color: #059669;
+}
+
+.commissionVal {
+  text-align: left;
+  font-weight: 800;
+  color: #2563eb;
+}
+
+.bonusVal {
+  text-align: left;
+  font-weight: 800;
+  color: #10b981;
+}
+
+.penaltyVal {
+  text-align: left;
+  font-weight: 800;
+  color: #dc2626;
+}
+
+.advanceVal {
+  text-align: left;
+  font-weight: 800;
+  color: #d97706;
+}
+
+.netSalaryVal {
+  text-align: left;
+  font-weight: 900;
+  color: #db2777;
+  font-size: 1.08rem;
+}
+
+.payslipIconBtn {
+  padding: 6px 10px;
+  color: #db2777;
+}
+
+/* Tab 4: Transactions */
+.txBadgeBonus {
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 12px;
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.txBadgeCommission {
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 12px;
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.txBadgePenalty {
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 12px;
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.txBadgeAdvance {
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 12px;
+  background: #fffbeb;
+  color: #d97706;
+}
+
+.txBadgeGeneric {
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 12px;
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+.txNotes {
+  color: #374151;
+  font-weight: 600;
+}
+
+.txAmountGreen {
+  text-align: left;
+  font-weight: 900;
+  font-size: 1rem;
+  color: #059669;
+}
+
+.txAmountBlue {
+  text-align: left;
+  font-weight: 900;
+  font-size: 1rem;
+  color: #2563eb;
+}
+
+.txAmountRed {
+  text-align: left;
+  font-weight: 900;
+  font-size: 1rem;
+  color: #dc2626;
+}
+
+.txAmountAmber {
+  text-align: left;
+  font-weight: 900;
+  font-size: 1rem;
+  color: #d97706;
+}
+
+.txAmountGeneric {
+  text-align: left;
+  font-weight: 900;
+  font-size: 1rem;
+  color: #4b5563;
+}

@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
@@ -17,12 +16,13 @@ import {
   User, 
   Sparkles, 
   X,
-  ShieldCheck,
   ChevronLeft,
   RotateCcw,
   CalendarCheck,
-  UserCheck
+  UserCheck,
+  Landmark
 } from "lucide-react";
+import styles from "./Sidebar.module.css";
 
 export default function Sidebar({ isMobileOpen, onCloseMobile }) {
   const pathname = usePathname();
@@ -60,7 +60,7 @@ export default function Sidebar({ isMobileOpen, onCloseMobile }) {
       badge: null
     },
     {
-      label: "المرتجعات",
+      label: "حركة الصنف",
       href: "/returns",
       icon: RotateCcw,
       badge: null
@@ -70,6 +70,12 @@ export default function Sidebar({ isMobileOpen, onCloseMobile }) {
       href: "/reports",
       icon: CalendarCheck,
       badge: null
+    },
+    {
+      label: "الخزنة ورأس المال",
+      href: "/treasury",
+      icon: Landmark,
+      badge: "جديد"
     },
     {
       label: "سجل العملاء والآجل",
@@ -93,7 +99,7 @@ export default function Sidebar({ isMobileOpen, onCloseMobile }) {
       label: "الموظفين والرواتب",
       href: "/employees",
       icon: UserCheck,
-      badge: "جديد"
+      badge: null
     },
     {
       label: "الإعدادات والمستخدمين",
@@ -103,7 +109,6 @@ export default function Sidebar({ isMobileOpen, onCloseMobile }) {
       adminOnly: true
     }
   ];
-
 
   return (
     <>
@@ -119,28 +124,15 @@ export default function Sidebar({ isMobileOpen, onCloseMobile }) {
       <aside className={`app-sidebar ${isMobileOpen ? "mobile-open" : ""}`}>
         {/* Brand Header */}
         <div className="sidebar-brand">
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <div style={{
-              width: "44px",
-              height: "44px",
-              borderRadius: "14px",
-              background: "linear-gradient(135deg, #ec4899 0%, #db2777 60%, #be185d 100%)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "0 6px 18px rgba(219, 39, 119, 0.3)",
-              color: "#ffffff",
-              fontSize: "1.4rem",
-              fontWeight: "900",
-              flexShrink: 0
-            }}>
+          <div className={styles.brandInfo}>
+            <div className={styles.brandLogo}>
               N
             </div>
             <div>
-              <h2 style={{ fontSize: "1.2rem", fontWeight: "900", color: "#1e1322", letterSpacing: "-0.01em" }}>
+              <h2 className={styles.brandTitle}>
                 مخزن <span className="gradient-text-rose">Nelly</span>
               </h2>
-              <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", fontWeight: "700" }}>
+              <span className={styles.brandSubtitle}>
                 مستحضرات التجميل والميكاب
               </span>
             </div>
@@ -156,22 +148,10 @@ export default function Sidebar({ isMobileOpen, onCloseMobile }) {
         </div>
 
         {/* User Role Pill */}
-        <div style={{ padding: "0 18px", marginBottom: "16px" }}>
-          <div style={{
-            background: isAdmin ? "#fdf2f8" : "#faf5ff",
-            border: `1px solid ${isAdmin ? "#fbcfe8" : "#e9d5ff"}`,
-            borderRadius: "12px",
-            padding: "8px 12px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between"
-          }}>
-            <span style={{ fontSize: "0.78rem", color: "#5a4663", fontWeight: "700" }}>الصلاحية:</span>
-            <span style={{
-              fontSize: "0.75rem",
-              fontWeight: "900",
-              color: isAdmin ? "#db2777" : "#7e22ce"
-            }}>
+        <div className={styles.roleWrapper}>
+          <div className={`${styles.roleCard} ${isAdmin ? styles.roleAdmin : styles.roleUser}`}>
+            <span className={styles.roleLabel}>الصلاحية:</span>
+            <span className={isAdmin ? styles.roleValueAdmin : styles.roleValueUser}>
               {isAdmin ? "👑 مسؤول (Admin)" : "👤 مستخدم (User)"}
             </span>
           </div>
@@ -179,7 +159,7 @@ export default function Sidebar({ isMobileOpen, onCloseMobile }) {
 
         {/* Navigation Links */}
         <nav className="sidebar-nav">
-          <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: "800", padding: "0 18px 8px" }}>
+          <div className={styles.navSectionTitle}>
             القائمة الرئيسية
           </div>
 
@@ -194,26 +174,18 @@ export default function Sidebar({ isMobileOpen, onCloseMobile }) {
                 onClick={() => onCloseMobile && onCloseMobile()}
                 className={`sidebar-link ${isActive ? "active" : ""}`}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <div className={styles.linkContent}>
                   <div className="sidebar-link-icon">
                     <Icon size={20} />
                   </div>
-                  <span style={{ fontWeight: isActive ? "800" : "700", fontSize: "0.94rem" }}>
+                  <span className={isActive ? styles.linkLabelActive : styles.linkLabel}>
                     {item.label}
                   </span>
                 </div>
 
-                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <div className={styles.linkMeta}>
                   {item.badge && (
-                    <span style={{
-                      fontSize: "0.68rem",
-                      background: "#fdf2f8",
-                      color: "#db2777",
-                      border: "1px solid #fbcfe8",
-                      padding: "2px 7px",
-                      borderRadius: "8px",
-                      fontWeight: "900"
-                    }}>
+                    <span className={styles.navBadge}>
                       {item.badge}
                     </span>
                   )}
@@ -227,43 +199,24 @@ export default function Sidebar({ isMobileOpen, onCloseMobile }) {
         {/* User Footer Profile & Logout */}
         <div className="sidebar-footer">
           {user && (
-            <div style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: "10px",
-              background: "#ffffff",
-              padding: "10px 12px",
-              borderRadius: "14px",
-              border: "1px solid #ebdbe6"
-            }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
+            <div className={styles.userCard}>
+              <div className={styles.userInfo}>
                 {user.photoURL ? (
                   <img 
                     src={user.photoURL} 
                     alt="User" 
-                    style={{ width: "34px", height: "34px", borderRadius: "50%", border: "2px solid #db2777" }}
+                    className={styles.userAvatar}
                   />
                 ) : (
-                  <div style={{
-                    width: "34px",
-                    height: "34px",
-                    borderRadius: "50%",
-                    background: isAdmin ? "#fce7f3" : "#f3e8ff",
-                    color: isAdmin ? "#db2777" : "#7e22ce",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontWeight: "bold"
-                  }}>
+                  <div className={`${styles.userAvatarPlaceholder} ${isAdmin ? styles.avatarAdmin : styles.avatarUser}`}>
                     <User size={18} />
                   </div>
                 )}
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: "0.85rem", fontWeight: "800", color: "#1e1322", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                <div className={styles.userText}>
+                  <div className={styles.userName}>
                     {user.displayName || (isAdmin ? "مسؤول المخزن" : "مستخدم")}
                   </div>
-                  <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  <div className={styles.userEmail}>
                     {user.email || "حساب نشط"}
                   </div>
                 </div>
@@ -272,20 +225,7 @@ export default function Sidebar({ isMobileOpen, onCloseMobile }) {
               <button
                 onClick={logout}
                 title="تسجيل الخروج"
-                style={{
-                  background: "#fee2e2",
-                  border: "1px solid #fca5a5",
-                  color: "#dc2626",
-                  width: "32px",
-                  height: "32px",
-                  borderRadius: "8px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  cursor: "pointer",
-                  flexShrink: 0,
-                  transition: "all 0.2s"
-                }}
+                className={styles.logoutBtn}
               >
                 <LogOut size={16} />
               </button>

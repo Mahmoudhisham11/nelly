@@ -14,27 +14,25 @@ import confetti from "canvas-confetti";
 import { 
   RotateCcw, 
   Search, 
-  ShoppingCart, 
   CheckCircle2, 
   AlertCircle, 
   X, 
   Sparkles, 
   PackageOpen,
   Boxes,
-  Tag,
   ChevronDown,
   ChevronUp,
   Receipt,
-  ArrowRight,
   TrendingDown,
-  TrendingUp,
   Plus,
   Minus
 } from "lucide-react";
+import styles from "./returns.module.css";
 
 export default function ReturnsPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
+  const [mounted, setMounted] = useState(false);
 
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
@@ -55,12 +53,17 @@ export default function ReturnsPage() {
   const [toastMessage, setToastMessage] = useState("");
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
+  // Hydration safety
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // Auth protection
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (mounted && !authLoading && !user) {
       router.push("/login");
     }
-  }, [user, authLoading, router]);
+  }, [user, authLoading, mounted, router]);
 
   const showToast = (msg) => {
     setToastMessage(msg);
@@ -193,10 +196,10 @@ export default function ReturnsPage() {
     }));
   };
 
-  if (authLoading || !user) {
+  if (!mounted || authLoading || !user) {
     return (
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <p style={{ color: "var(--text-secondary)", fontWeight: "700" }}>جاري تحميل قسم المرتجعات...</p>
+      <div className={styles.loadingWrapper} suppressHydrationWarning>
+        <p className={styles.loadingText}>جاري تحميل قسم حركة الصنف...</p>
       </div>
     );
   }
@@ -218,40 +221,22 @@ export default function ReturnsPage() {
       <div className="main-content">
         <Navbar 
           onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)}
-          title="إدارة المرتجعات"
+          title="حركة الصنف"
         />
 
         <main className="page-wrapper">
           {/* Page Header */}
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
-            gap: "16px",
-            marginBottom: "24px"
-          }}>
+          <div className={styles.headerRow}>
             <div>
-              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                <div style={{
-                  width: "46px",
-                  height: "46px",
-                  borderRadius: "14px",
-                  background: "linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%)",
-                  color: "#e11d48",
-                  border: "1px solid #fecdd3",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  boxShadow: "0 4px 12px rgba(225, 29, 72, 0.15)"
-                }}>
+              <div className={styles.headerTitleWrapper}>
+                <div className={styles.headerIconBox}>
                   <RotateCcw size={24} />
                 </div>
                 <div>
-                  <h2 style={{ fontSize: "1.6rem", fontWeight: "900", color: "#1e1322", margin: 0 }}>
-                    استرجاع الأصناف والمنتجات المباعة
+                  <h2 className={styles.headerTitle}>
+                    حركة الصنف واسترجاع المنتجات المباعة
                   </h2>
-                  <p style={{ color: "#5a4663", fontSize: "0.88rem", marginTop: "4px", fontWeight: "600" }}>
+                  <p className={styles.headerSubtitle}>
                     ابحث عن أي صنف بكوده أو اسمه، وحدد الكمية المُراد إرجاعها لتُخصم فوراً من تقارير المبيعات وتُضاف لرصيد المحل
                   </p>
                 </div>
@@ -260,31 +245,21 @@ export default function ReturnsPage() {
           </div>
 
           {/* Search Box Panel */}
-          <div 
-            className="glass-panel" 
-            style={{ 
-              padding: "24px", 
-              marginBottom: "28px", 
-              background: "#ffffff", 
-              border: "1.5px solid #ebdbe6",
-              borderRadius: "18px",
-              boxShadow: "0 4px 20px rgba(0,0,0,0.03)"
-            }}
-          >
-            <div style={{ marginBottom: "16px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+          <div className={`glass-panel ${styles.searchPanel}`}>
+            <div className={styles.searchHeader}>
+              <div className={styles.searchHeaderTitleRow}>
                 <Search size={20} color="#db2777" />
-                <h3 style={{ fontSize: "1.1rem", fontWeight: "900", color: "#1e1322", margin: 0 }}>
+                <h3 className={styles.searchHeaderTitle}>
                   البحث عن المنتج في المبيعات
                 </h3>
               </div>
-              <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: "600", margin: 0 }}>
+              <p className={styles.searchHeaderDesc}>
                 اكتب اسم المنتج أو امسح الباركود / الكود للبحث في كافة مبيعات التقارير السابقة
               </p>
             </div>
 
-            <form onSubmit={handleSearch} style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
-              <div style={{ position: "relative", flex: "1", minWidth: "280px" }}>
+            <form onSubmit={handleSearch} className={styles.searchForm}>
+              <div className={styles.searchFieldWrap}>
                 <input 
                   type="text"
                   required
@@ -295,20 +270,12 @@ export default function ReturnsPage() {
                     setSearchQuery(e.target.value);
                     setSearchError("");
                   }}
-                  className="form-input num-font"
-                  style={{
-                    paddingRight: "46px",
-                    fontWeight: "800",
-                    fontSize: "1.05rem",
-                    border: "2px solid #f472b6",
-                    height: "50px",
-                    borderRadius: "12px"
-                  }}
+                  className={`form-input num-font ${styles.searchInput}`}
                 />
                 <Search 
                   size={22} 
                   color="#db2777" 
-                  style={{ position: "absolute", right: "14px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} 
+                  className={styles.searchFieldIcon} 
                 />
                 {searchQuery && (
                   <button
@@ -319,22 +286,7 @@ export default function ReturnsPage() {
                       setSearchError("");
                       setHasSearched(false);
                     }}
-                    style={{
-                      position: "absolute",
-                      left: "14px",
-                      top: "50%",
-                      transform: "translateY(-50%)",
-                      background: "#f3f4f6",
-                      border: "none",
-                      borderRadius: "50%",
-                      width: "26px",
-                      height: "26px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: "#6b7280",
-                      cursor: "pointer"
-                    }}
+                    className={styles.clearSearchBtn}
                   >
                     <X size={16} />
                   </button>
@@ -344,17 +296,7 @@ export default function ReturnsPage() {
               <button 
                 type="submit"
                 disabled={searching}
-                className="btn-primary"
-                style={{ 
-                  padding: "0 32px", 
-                  fontSize: "1rem", 
-                  height: "50px",
-                  borderRadius: "12px",
-                  fontWeight: "800",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px"
-                }}
+                className={`btn-primary ${styles.searchSubmitBtn}`}
               >
                 {searching ? (
                   <span>جاري البحث في التقارير...</span>
@@ -369,20 +311,8 @@ export default function ReturnsPage() {
 
             {/* Error Message */}
             {searchError && (
-              <div style={{
-                marginTop: "16px",
-                padding: "14px 18px",
-                background: "#fef2f2",
-                border: "1px solid #fecaca",
-                borderRadius: "12px",
-                color: "#dc2626",
-                fontSize: "0.9rem",
-                fontWeight: "700",
-                display: "flex",
-                alignItems: "center",
-                gap: "10px"
-              }}>
-                <AlertCircle size={20} style={{ flexShrink: 0 }} />
+              <div className={styles.errorBox}>
+                <AlertCircle size={20} className={styles.errorIcon} />
                 <span>{searchError}</span>
               </div>
             )}
@@ -390,32 +320,14 @@ export default function ReturnsPage() {
 
           {/* Initial State / Prompt when not searched yet */}
           {!hasSearched && (
-            <div 
-              style={{ 
-                padding: "60px 20px", 
-                textAlign: "center", 
-                background: "#ffffff", 
-                borderRadius: "18px", 
-                border: "1.5px dashed #ebdbe6" 
-              }}
-            >
-              <div style={{
-                width: "70px",
-                height: "70px",
-                borderRadius: "20px",
-                background: "#fdf2f8",
-                color: "#db2777",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                margin: "0 auto 16px auto"
-              }}>
+            <div className={styles.initialPromptBox}>
+              <div className={styles.initialPromptIconBox}>
                 <Search size={34} />
               </div>
-              <h3 style={{ fontSize: "1.25rem", fontWeight: "900", color: "#1e1322", marginBottom: "8px" }}>
+              <h3 className={styles.initialPromptTitle}>
                 ابحث عن المنتج للبدء بعملية الإرجاع
               </h3>
-              <p style={{ color: "#705377", fontSize: "0.92rem", maxWidth: "520px", margin: "0 auto", fontWeight: "600" }}>
+              <p className={styles.initialPromptDesc}>
                 قم بمسح باركود المنتج أو كتابة اسمه أو كوده أعلاه لعرض الكمية المباعة المسجلة في تقارير المبيعات واسترجاع أي كمية مطلوبة لرصيد المحل فوراً.
               </p>
             </div>
@@ -424,26 +336,19 @@ export default function ReturnsPage() {
           {/* Search Results Display */}
           {hasSearched && searchResults && searchResults.length > 0 && (
             <div>
-              <div style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                flexWrap: "wrap",
-                gap: "10px",
-                marginBottom: "18px"
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <div className={styles.resultsHeader}>
+                <div className={styles.resultsHeaderTitleRow}>
                   <PackageOpen size={22} color="#db2777" />
-                  <h3 style={{ fontSize: "1.2rem", fontWeight: "900", color: "#1e1322", margin: 0 }}>
+                  <h3 className={styles.resultsHeaderTitle}>
                     نتائج البحث ({searchResults.length} منتج مطابق)
                   </h3>
                 </div>
-                <span style={{ fontSize: "0.85rem", color: "#705377", fontWeight: "700" }}>
+                <span className={styles.resultsHeaderHint}>
                   حدد الكمية المراد إرجاعها ثم اضغط على زر إرجاع الكمية
                 </span>
               </div>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+              <div className={styles.resultsList}>
                 {searchResults.map((prod) => {
                   const currentSelectedQty = returnQuantities[prod.groupKey] || 1;
                   const isProcessingThis = processingKey === prod.groupKey;
@@ -452,143 +357,87 @@ export default function ReturnsPage() {
                   return (
                     <div 
                       key={prod.groupKey}
-                      className="glass-card"
-                      style={{
-                        padding: "24px",
-                        background: "#ffffff",
-                        border: "1.5px solid #ebdbe6",
-                        borderRadius: "18px",
-                        boxShadow: "0 6px 24px rgba(0,0,0,0.04)"
-                      }}
+                      className={`glass-card ${styles.resultCard}`}
                     >
                       {/* Top Details & Badges */}
-                      <div style={{
-                        display: "flex",
-                        alignItems: "flex-start",
-                        justifyContent: "space-between",
-                        flexWrap: "wrap",
-                        gap: "16px",
-                        paddingBottom: "18px",
-                        borderBottom: "1px solid #f3e8ff"
-                      }}>
+                      <div className={styles.resultCardTop}>
                         <div>
-                          <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-                            <h4 style={{ fontSize: "1.35rem", fontWeight: "900", color: "#1e1322", margin: 0 }}>
+                          <div className={styles.productTitleRow}>
+                            <h4 className={styles.productTitle}>
                               {prod.name}
                             </h4>
-                            <span className="badge" style={{ background: "#f3e8ff", color: "#7e22ce", fontWeight: "800" }}>
+                            <span className={`badge ${styles.categoryBadge}`}>
                               {prod.category || "عام"}
                             </span>
                           </div>
 
-                          <div style={{ display: "flex", alignItems: "center", gap: "14px", marginTop: "8px", flexWrap: "wrap" }}>
+                          <div className={styles.productMetaRow}>
                             {prod.barcode && (
-                              <span style={{ fontSize: "0.85rem", color: "#5a4663", fontWeight: "700" }}>
-                                🏷️ الباركود: <strong className="num-font" dir="ltr" style={{ color: "#7e22ce", fontFamily: "monospace" }}>{prod.barcode}</strong>
+                              <span className={styles.metaItem}>
+                                🏷️ الباركود: <strong className={`num-font ${styles.metaBarcodeVal}`} dir="ltr">{prod.barcode}</strong>
                               </span>
                             )}
                             {prod.code && (
-                              <span style={{ fontSize: "0.85rem", color: "#5a4663", fontWeight: "700" }}>
-                                🔢 الكود: <strong className="num-font" dir="ltr">{prod.code}</strong>
+                              <span className={styles.metaItem}>
+                                🔢 الكود: <strong className={`num-font ${styles.metaCodeVal}`} dir="ltr">{prod.code}</strong>
                               </span>
                             )}
                             {prod.sellingPrice > 0 && (
-                              <span style={{ fontSize: "0.85rem", color: "#5a4663", fontWeight: "700" }}>
-                                💰 سعر البيع: <strong className="num-font" dir="ltr" style={{ color: "#db2777" }}>{formatNumber(prod.sellingPrice)}</strong> ج.م
+                              <span className={styles.metaItem}>
+                                💰 سعر البيع: <strong className={`num-font ${styles.metaPriceVal}`} dir="ltr">{formatNumber(prod.sellingPrice)}</strong> ج.م
                               </span>
                             )}
                           </div>
                         </div>
 
                         {/* Stock & Sold Counter Badges */}
-                        <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+                        <div className={styles.statsGroup}>
                           {/* Current Shop Stock */}
-                          <div style={{
-                            padding: "10px 18px",
-                            background: "#ecfdf5",
-                            border: "1.5px solid #a7f3d0",
-                            borderRadius: "14px",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "10px"
-                          }}>
+                          <div className={styles.shopStockCard}>
                             <Boxes size={22} color="#059669" />
                             <div>
-                              <div style={{ fontSize: "0.75rem", color: "#065f46", fontWeight: "800" }}>
+                              <div className={styles.stockCardLabel}>
                                 رصيد المحل الحالي
                               </div>
-                              <div style={{ fontSize: "1.2rem", fontWeight: "900", color: "#047857" }}>
+                              <div className={styles.stockCardVal}>
                                 <span className="num-font" dir="ltr">{formatNumber(prod.currentShopStock)}</span> قطعة
                               </div>
                             </div>
                           </div>
 
-                          {/* Total Sold in Reports */}
-                          <div style={{
-                            padding: "10px 18px",
-                            background: "#fff1f2",
-                            border: "1.5px solid #fecdd3",
-                            borderRadius: "14px",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "10px"
-                          }}>
+                          {/* Total Sold (Reports + Active Shift) */}
+                          <div className={styles.soldReportsCard}>
                             <TrendingDown size={22} color="#e11d48" />
                             <div>
-                              <div style={{ fontSize: "0.75rem", color: "#9f1239", fontWeight: "800" }}>
-                                المباع في التقارير
+                              <div className={styles.soldCardLabel}>
+                                إجمالي الكمية المباعة
                               </div>
-                              <div style={{ fontSize: "1.2rem", fontWeight: "900", color: "#be185d" }}>
-                                <span className="num-font" dir="ltr">{formatNumber(prod.totalSoldQuantityInReports)}</span> قطعة
+                              <div className={styles.soldCardVal}>
+                                <span className="num-font" dir="ltr">{formatNumber(prod.totalSoldQuantity || prod.totalSoldQuantityInReports)}</span> قطعة
                               </div>
+                              {prod.totalSoldQuantityInActiveShift > 0 && (
+                                <div className="text-[10px] text-rose-600 font-bold mt-0.5">
+                                  ({prod.totalSoldQuantityInReports} مؤرشفة + {prod.totalSoldQuantityInActiveShift} وردية حالية)
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
                       </div>
 
                       {/* Action Bar: Quantity to return & Confirm Button */}
-                      <div style={{
-                        marginTop: "18px",
-                        padding: "16px 20px",
-                        background: "#faf5ff",
-                        borderRadius: "14px",
-                        border: "1px solid #e9d5ff",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        flexWrap: "wrap",
-                        gap: "16px"
-                      }}>
+                      <div className={styles.actionBar}>
                         {/* Quantity Controls */}
-                        <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
-                          <span style={{ fontWeight: "800", color: "#581c87", fontSize: "0.95rem" }}>
+                        <div className={styles.qtyControlGroup}>
+                          <span className={styles.qtyControlLabel}>
                             الكمية المراد إرجاعها:
                           </span>
-                          <div style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            background: "#ffffff",
-                            borderRadius: "10px",
-                            border: "1.5px solid #d8b4fe",
-                            padding: "3px"
-                          }}>
+                          <div className={styles.qtyControlBox}>
                             <button
                               type="button"
-                              onClick={() => handleQtyChange(prod.groupKey, prod.totalSoldQuantityInReports, -1)}
+                              onClick={() => handleQtyChange(prod.groupKey, (prod.totalSoldQuantity || prod.totalSoldQuantityInReports), -1)}
                               disabled={currentSelectedQty <= 1 || isProcessingThis}
-                              style={{
-                                width: "34px",
-                                height: "34px",
-                                borderRadius: "8px",
-                                border: "none",
-                                background: "#f3e8ff",
-                                color: "#7e22ce",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                cursor: currentSelectedQty <= 1 ? "not-allowed" : "pointer",
-                                opacity: currentSelectedQty <= 1 ? 0.4 : 1
-                              }}
+                              className={`${styles.qtyBtn} ${currentSelectedQty <= 1 ? styles.btnDisabled : styles.btnActive}`}
                             >
                               <Minus size={16} />
                             </button>
@@ -596,45 +445,24 @@ export default function ReturnsPage() {
                             <input 
                               type="number"
                               min="1"
-                              max={prod.totalSoldQuantityInReports}
+                              max={prod.totalSoldQuantity || prod.totalSoldQuantityInReports}
                               value={currentSelectedQty}
-                              onChange={(e) => handleQtyInput(prod.groupKey, prod.totalSoldQuantityInReports, e.target.value)}
+                              onChange={(e) => handleQtyInput(prod.groupKey, (prod.totalSoldQuantity || prod.totalSoldQuantityInReports), e.target.value)}
                               disabled={isProcessingThis}
-                              className="num-font"
-                              style={{
-                                width: "65px",
-                                textAlign: "center",
-                                border: "none",
-                                outline: "none",
-                                fontWeight: "900",
-                                fontSize: "1.15rem",
-                                color: "#1e1322"
-                              }}
+                              className={`num-font ${styles.qtyInput}`}
                             />
 
                             <button
                               type="button"
-                              onClick={() => handleQtyChange(prod.groupKey, prod.totalSoldQuantityInReports, 1)}
-                              disabled={currentSelectedQty >= prod.totalSoldQuantityInReports || isProcessingThis}
-                              style={{
-                                width: "34px",
-                                height: "34px",
-                                borderRadius: "8px",
-                                border: "none",
-                                background: "#f3e8ff",
-                                color: "#7e22ce",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                cursor: currentSelectedQty >= prod.totalSoldQuantityInReports ? "not-allowed" : "pointer",
-                                opacity: currentSelectedQty >= prod.totalSoldQuantityInReports ? 0.4 : 1
-                              }}
+                              onClick={() => handleQtyChange(prod.groupKey, (prod.totalSoldQuantity || prod.totalSoldQuantityInReports), 1)}
+                              disabled={currentSelectedQty >= (prod.totalSoldQuantity || prod.totalSoldQuantityInReports) || isProcessingThis}
+                              className={`${styles.qtyBtn} ${currentSelectedQty >= (prod.totalSoldQuantity || prod.totalSoldQuantityInReports) ? styles.btnDisabled : styles.btnActive}`}
                             >
                               <Plus size={16} />
                             </button>
                           </div>
-                          <span style={{ fontSize: "0.82rem", color: "#7e22ce", fontWeight: "700" }}>
-                            (الحد الأقصى المتاح للإرجاع: {prod.totalSoldQuantityInReports} قطعة)
+                          <span className={styles.maxQtyHint}>
+                            (الحد الأقصى المتاح للإرجاع: {prod.totalSoldQuantity || prod.totalSoldQuantityInReports} قطعة)
                           </span>
                         </div>
 
@@ -642,19 +470,8 @@ export default function ReturnsPage() {
                         <button
                           type="button"
                           onClick={() => openConfirmModal(prod)}
-                          disabled={isProcessingThis || prod.totalSoldQuantityInReports <= 0}
-                          className="btn-primary"
-                          style={{
-                            padding: "12px 26px",
-                            fontSize: "0.95rem",
-                            fontWeight: "800",
-                            background: "linear-gradient(135deg, #d97706 0%, #b45309 100%)",
-                            boxShadow: "0 4px 14px rgba(217, 119, 6, 0.25)",
-                            borderRadius: "10px",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px"
-                          }}
+                          disabled={isProcessingThis || (prod.totalSoldQuantity || prod.totalSoldQuantityInReports) <= 0}
+                          className={`btn-primary ${styles.returnSubmitBtn}`}
                         >
                           <RotateCcw size={18} />
                           <span>إرجاع {currentSelectedQty} قطعة لرصيد المحل</span>
@@ -663,70 +480,59 @@ export default function ReturnsPage() {
 
                       {/* Invoices Breakdown Toggle */}
                       {prod.invoices && prod.invoices.length > 0 && (
-                        <div style={{ marginTop: "14px" }}>
+                        <div className={styles.invoicesSection}>
                           <button
                             type="button"
                             onClick={() => toggleExpandInvoices(prod.groupKey)}
-                            style={{
-                              background: "none",
-                              border: "none",
-                              color: "#db2777",
-                              fontSize: "0.85rem",
-                              fontWeight: "800",
-                              cursor: "pointer",
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "6px",
-                              padding: "4px 0"
-                            }}
+                            className={styles.toggleInvoicesBtn}
                           >
                             <Receipt size={16} />
                             <span>
                               {isExpanded 
-                                ? "إخفاء تفاصيل فواتير التقارير المسجل بها هذا الصنف" 
+                                ? "إخفاء تفاصيل فواتير المبيعات المسجل بها هذا الصنف" 
                                 : `عرض تفاصيل الفواتير المسجل بها هذا الصنف (عدد ${prod.invoices.length} فاتورة)`}
                             </span>
                             {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                           </button>
 
                           {isExpanded && (
-                            <div style={{ marginTop: "10px", overflowX: "auto" }}>
-                              <table className="custom-table" style={{ fontSize: "0.85rem" }}>
+                            <div className={styles.invoicesTableWrapper}>
+                              <table className={`custom-table ${styles.invoicesTable}`}>
                                 <thead>
                                   <tr>
                                     <th>رقم الفاتورة</th>
-                                    <th>تقرير الوردية</th>
-                                    <th>تاريخ الإغلاق</th>
+                                    <th>المصدر / التقرير</th>
+                                    <th>تاريخ العملية</th>
                                     <th>العميل</th>
-                                    <th style={{ textAlign: "center" }}>الكمية المباعة</th>
-                                    <th style={{ textAlign: "center" }}>سعر البيع</th>
-                                    <th style={{ textAlign: "center" }}>الإجمالي</th>
+                                    <th className={styles.thCenter}>الكمية المباعة</th>
+                                    <th className={styles.thCenter}>سعر البيع</th>
+                                    <th className={styles.thCenter}>الإجمالي</th>
                                   </tr>
                                 </thead>
                                 <tbody>
                                   {prod.invoices.map((invItem, idx) => (
                                     <tr key={idx}>
                                       <td>
-                                        <span className="num-font font-bold" dir="ltr" style={{ color: "#1e1322" }}>
+                                        <span className={`num-font font-bold ${styles.invoiceNumTag}`} dir="ltr">
                                           {invItem.invoiceNumber}
                                         </span>
                                       </td>
                                       <td>
-                                        <span className="badge" style={{ background: "#f3e8ff", color: "#7e22ce" }}>
-                                          {invItem.reportNumber || "تقرير وردية"}
+                                        <span className={`badge ${invItem.isCurrentShift ? styles.activeShiftBadge : styles.reportBadge}`}>
+                                          {invItem.source || invItem.reportNumber || "تقرير وردية"}
                                         </span>
                                       </td>
-                                      <td>
+                                      <td suppressHydrationWarning>
                                         {invItem.closedAt ? new Date(invItem.closedAt).toLocaleDateString("ar-EG") : "—"}
                                       </td>
                                       <td>{invItem.customerName || "عميل نقدي"}</td>
-                                      <td style={{ textAlign: "center", fontWeight: "900", color: "#db2777" }}>
-                                        <span className="num-font" dir="ltr">{invItem.soldQty}</span> قطعة
+                                      <td className={styles.soldQtyCol}>
+                                        <span className="num-font font-bold" dir="ltr">{invItem.soldQty}</span> قطعة
                                       </td>
-                                      <td style={{ textAlign: "center" }}>
+                                      <td className={styles.thCenter}>
                                         <span className="num-font" dir="ltr">{formatNumber(invItem.sellingPrice)}</span> ج.م
                                       </td>
-                                      <td style={{ textAlign: "center", fontWeight: "800", color: "#059669" }}>
+                                      <td className={styles.subtotalCol}>
                                         <span className="num-font" dir="ltr">{formatNumber(invItem.subtotal)}</span> ج.م
                                       </td>
                                     </tr>
@@ -748,104 +554,57 @@ export default function ReturnsPage() {
 
       {/* Confirmation Modal */}
       {pendingReturn && (
-        <div className="modal-overlay" style={{ zIndex: 9999 }}>
-          <div 
-            className="modal-container"
-            style={{
-              maxWidth: "480px",
-              background: "#ffffff",
-              borderRadius: "20px",
-              padding: "26px",
-              boxShadow: "0 20px 50px rgba(0,0,0,0.2)"
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <div style={{
-                  width: "40px",
-                  height: "40px",
-                  borderRadius: "12px",
-                  background: "#fef3c7",
-                  color: "#d97706",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center"
-                }}>
+        <div className={`modal-overlay ${styles.modalOverlay}`}>
+          <div className={`modal-container ${styles.modalContainer}`}>
+            <div className={styles.modalHeader}>
+              <div className={styles.modalHeaderTitleGroup}>
+                <div className={styles.modalHeaderIcon}>
                   <RotateCcw size={22} />
                 </div>
-                <h3 style={{ fontSize: "1.2rem", fontWeight: "900", color: "#1e1322", margin: 0 }}>
+                <h3 className={styles.modalTitle}>
                   تأكيد إرجاع الصنف
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setPendingReturn(null)}
-                style={{
-                  background: "#f3f4f6",
-                  border: "none",
-                  borderRadius: "50%",
-                  width: "32px",
-                  height: "32px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  cursor: "pointer"
-                }}
+                className={styles.modalCloseBtn}
               >
                 <X size={18} />
               </button>
             </div>
 
-            <div style={{
-              background: "#fdf2f8",
-              padding: "16px",
-              borderRadius: "14px",
-              border: "1px solid #fbcfe8",
-              marginBottom: "18px"
-            }}>
-              <div style={{ fontSize: "0.85rem", color: "#9f1239", fontWeight: "700", marginBottom: "6px" }}>
+            <div className={styles.modalProductInfo}>
+              <div className={styles.modalProductLabel}>
                 الصنف المحدد للإرجاع:
               </div>
-              <div style={{ fontSize: "1.1rem", fontWeight: "900", color: "#831843", marginBottom: "6px" }}>
+              <div className={styles.modalProductName}>
                 {pendingReturn.product.name}
               </div>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "10px", fontSize: "0.9rem" }}>
-                <span style={{ color: "#705377", fontWeight: "700" }}>الكمية المرتجعة:</span>
-                <span style={{ fontWeight: "900", color: "#be185d", fontSize: "1.1rem" }}>
+              <div className={styles.modalQtyRow}>
+                <span className={styles.modalQtyLabel}>الكمية المرتجعة:</span>
+                <span className={styles.modalQtyVal}>
                   <span className="num-font" dir="ltr">{pendingReturn.quantity}</span> قطعة
                 </span>
               </div>
             </div>
 
-            <div style={{
-              padding: "14px",
-              background: "#f0fdf4",
-              border: "1px solid #bbf7d0",
-              borderRadius: "12px",
-              color: "#166534",
-              fontSize: "0.85rem",
-              fontWeight: "700",
-              marginBottom: "22px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "6px"
-            }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <div className={styles.modalImpactList}>
+              <div className={styles.modalImpactItem}>
                 <CheckCircle2 size={16} />
                 <span>سيتم زيادة رصيد المحل بمقدار ({pendingReturn.quantity}) قطعة فوراً.</span>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <div className={styles.modalImpactItem}>
                 <CheckCircle2 size={16} />
                 <span>سيتم خصم هذه الكمية وتعديل إجماليات فواتير تقارير المبيعات.</span>
               </div>
             </div>
 
-            <div style={{ display: "flex", gap: "10px" }}>
+            <div className={styles.modalActions}>
               <button
                 type="button"
                 onClick={() => setPendingReturn(null)}
-                className="btn-secondary"
-                style={{ flex: 1, padding: "12px", fontSize: "0.95rem" }}
+                className={`btn-secondary ${styles.modalCancelBtn}`}
               >
                 إلغاء
               </button>
@@ -853,14 +612,7 @@ export default function ReturnsPage() {
                 type="button"
                 onClick={handleExecuteReturn}
                 disabled={processingKey !== null}
-                className="btn-primary"
-                style={{
-                  flex: 1.5,
-                  padding: "12px",
-                  fontSize: "0.95rem",
-                  fontWeight: "800",
-                  background: "linear-gradient(135deg, #d97706 0%, #b45309 100%)"
-                }}
+                className={`btn-primary ${styles.modalConfirmBtn}`}
               >
                 {processingKey !== null ? "جاري الإرجاع..." : "تأكيد واسترجاع"}
               </button>

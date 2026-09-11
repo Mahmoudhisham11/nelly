@@ -8,7 +8,6 @@ const PRECACHE_ASSETS = [
   "/settings",
   "/login",
   "/manifest.json",
-  "/site.webmanifest",
   "/favicon.ico",
   "/favicon.svg",
   "/favicon-96x96.png",

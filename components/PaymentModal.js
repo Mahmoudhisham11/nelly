@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { X, CreditCard, DollarSign, ArrowDownLeft, ArrowUpRight, CheckCircle2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { X, CreditCard, DollarSign, ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { formatNumber, roundCurrency } from "@/lib/utils";
+import styles from "./PaymentModal.module.css";
 
 export default function PaymentModal({ isOpen, onClose, supplier, onMakePayment }) {
   const [operationType, setOperationType] = useState("payment"); // "payment" (سداد دفعة) or "charge" (إضافة مستحقات / بضاعة)
@@ -58,86 +59,61 @@ export default function PaymentModal({ isOpen, onClose, supplier, onMakePayment 
     }
   };
 
+  const isPayment = operationType === "payment";
+
+  let balanceCardTheme = styles.balanceZero;
+  let balanceValueTheme = styles.balanceValueZero;
+  if (currentBal > 0) {
+    balanceCardTheme = styles.balancePositive;
+    balanceValueTheme = styles.balanceValuePositive;
+  } else if (currentBal < 0) {
+    balanceCardTheme = styles.balanceNegative;
+    balanceValueTheme = styles.balanceValueNegative;
+  }
+
+  let simulatedValueTheme = styles.balanceValueZero;
+  if (simulatedNewBalance > 0) {
+    simulatedValueTheme = styles.balanceValuePositive;
+  } else if (simulatedNewBalance < 0) {
+    simulatedValueTheme = styles.balanceValueNegative;
+  }
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div 
-        className="modal-content"
+        className={`modal-content ${styles.modalContainer}`}
         onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: "500px", padding: "26px" }}
       >
         {/* Header */}
-        <div style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: "18px",
-          paddingBottom: "12px",
-          borderBottom: "1px solid #f0e1ec"
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div style={{
-              width: "40px",
-              height: "40px",
-              borderRadius: "12px",
-              background: operationType === "payment" 
-                ? "linear-gradient(135deg, #059669 0%, #047857 100%)" 
-                : "linear-gradient(135deg, #db2777 0%, #be185d 100%)",
-              color: "#ffffff",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "0 4px 14px rgba(0, 0, 0, 0.15)",
-              transition: "all 0.2s ease"
-            }}>
+        <div className={styles.modalHeader}>
+          <div className={styles.headerBrand}>
+            <div className={`${styles.headerIcon} ${isPayment ? styles.iconPayment : styles.iconCharge}`}>
               <CreditCard size={22} />
             </div>
             <div>
-              <h3 style={{ fontSize: "1.2rem", fontWeight: "900", color: "#1e1322" }}>
-                {operationType === "payment" ? "سداد دفعة حساب للمورد" : "إضافة مستحقات / فاتورة بضاعة"}
+              <h3 className={styles.headerTitle}>
+                {isPayment ? "سداد دفعة حساب للمورد" : "إضافة مستحقات / فاتورة بضاعة"}
               </h3>
-              <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", fontWeight: "600" }}>
-                المورد: <strong style={{ color: "#1e1322" }}>{supplier.name}</strong>
+              <p className={styles.headerSubtitle}>
+                المورد: <strong className={styles.supplierNameHighlight}>{supplier.name}</strong>
               </p>
             </div>
           </div>
 
-          <button 
-            onClick={onClose}
-            style={{
-              background: "#fdf2f8",
-              border: "1px solid #fbcfe8",
-              color: "#db2777",
-              width: "30px",
-              height: "30px",
-              borderRadius: "8px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer"
-            }}
-          >
+          <button onClick={onClose} className={styles.closeBtn}>
             <X size={16} />
           </button>
         </div>
 
         {/* Current Balance Card */}
-        <div style={{
-          background: currentBal > 0 ? "#fdf2f8" : currentBal < 0 ? "#faf5ff" : "#ecfdf5",
-          border: `1.5px solid ${currentBal > 0 ? "#fbcfe8" : currentBal < 0 ? "#e9d5ff" : "#a7f3d0"}`,
-          borderRadius: "14px",
-          padding: "14px 16px",
-          marginBottom: "18px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between"
-        }}>
+        <div className={`${styles.balanceCard} ${balanceCardTheme}`}>
           <div>
-            <div style={{ fontSize: "0.8rem", color: "#5a4663", fontWeight: "700" }}>
+            <div className={styles.balanceLabel}>
               الرصيد المالي الحالي للمورد:
             </div>
-            <div style={{ fontSize: "1.25rem", fontWeight: "900", marginTop: "2px", color: currentBal > 0 ? "#be185d" : currentBal < 0 ? "#7e22ce" : "#047857" }}>
+            <div className={`${styles.balanceValue} ${balanceValueTheme}`}>
               <span className="num-font" dir="ltr">{formatNumber(Math.abs(currentBal))}</span> ج.م
-              <span style={{ fontSize: "0.78rem", marginRight: "6px", fontWeight: "800" }}>
+              <span className={styles.balanceStatusHint}>
                 {currentBal > 0 ? "(له مستحقات علينا)" : currentBal < 0 ? "(عليه مبالغ لنا)" : "(خالص تماماً)"}
               </span>
             </div>
@@ -147,8 +123,7 @@ export default function PaymentModal({ isOpen, onClose, supplier, onMakePayment 
             <button
               type="button"
               onClick={handlePayFull}
-              className="btn-secondary"
-              style={{ padding: "6px 12px", fontSize: "0.78rem", background: "#ffffff", fontWeight: "800" }}
+              className={`btn-secondary ${styles.settleFullBtn}`}
             >
               تسوية كامل المبلغ
             </button>
@@ -156,34 +131,11 @@ export default function PaymentModal({ isOpen, onClose, supplier, onMakePayment 
         </div>
 
         {/* Operation Type Switcher */}
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: "8px",
-          background: "#fdf2f8",
-          padding: "5px",
-          borderRadius: "12px",
-          marginBottom: "16px",
-          border: "1px solid #fce7f3"
-        }}>
+        <div className={styles.opSwitcher}>
           <button
             type="button"
             onClick={() => setOperationType("payment")}
-            style={{
-              padding: "9px 12px",
-              borderRadius: "9px",
-              border: "none",
-              background: operationType === "payment" ? "#059669" : "transparent",
-              color: operationType === "payment" ? "#ffffff" : "#4b5563",
-              fontWeight: "800",
-              fontSize: "0.85rem",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "6px",
-              transition: "all 0.2s ease"
-            }}
+            className={`${styles.opBtn} ${isPayment ? styles.opBtnPaymentActive : ""}`}
           >
             <ArrowDownLeft size={16} />
             سداد دفعة (يخصم من الدين)
@@ -192,21 +144,7 @@ export default function PaymentModal({ isOpen, onClose, supplier, onMakePayment 
           <button
             type="button"
             onClick={() => setOperationType("charge")}
-            style={{
-              padding: "9px 12px",
-              borderRadius: "9px",
-              border: "none",
-              background: operationType === "charge" ? "#db2777" : "transparent",
-              color: operationType === "charge" ? "#ffffff" : "#4b5563",
-              fontWeight: "800",
-              fontSize: "0.85rem",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "6px",
-              transition: "all 0.2s ease"
-            }}
+            className={`${styles.opBtn} {!isPayment ? styles.opBtnChargeActive : ""}`}
           >
             <ArrowUpRight size={16} />
             فاتورة جديدة (يزيد المستحق)
@@ -218,52 +156,40 @@ export default function PaymentModal({ isOpen, onClose, supplier, onMakePayment 
           {/* Payment Amount */}
           <div className="form-group">
             <label className="form-label">
-              {operationType === "payment" ? "مبلغ الدفعة المسددة (ج.م)" : "مبلغ الفاتورة / المستحقات (ج.م)"} <span style={{ color: "#db2777" }}>*</span>
+              {isPayment ? "مبلغ الدفعة المسددة (ج.م)" : "مبلغ الفاتورة / المستحقات (ج.م)"} <span className={styles.requiredStar}>*</span>
             </label>
-            <div style={{ position: "relative" }}>
+            <div className={styles.amountInputWrapper}>
               <input 
                 type="number"
                 step="any"
                 min="0.01"
-                className="form-input num-font"
+                className={`form-input num-font ${styles.amountInput}`}
                 dir="ltr"
                 placeholder="أدخل المبلغ (مثال: 5000)..."
                 value={amount}
                 onChange={(e) => {
                   const val = e.target.value;
-                  // Only allow positive numbers
                   if (val === "" || parseFloat(val) >= 0) {
                     setAmount(val);
                   }
                 }}
-                style={{ paddingRight: "40px", textAlign: "right", fontSize: "1.15rem", fontWeight: "800" }}
                 required
                 autoFocus
               />
-              <DollarSign size={20} color={operationType === "payment" ? "#059669" : "#db2777"} style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)" }} />
+              <DollarSign 
+                size={20} 
+                className={`${styles.dollarIcon} ${isPayment ? styles.iconColorPayment : styles.iconColorCharge}`} 
+              />
             </div>
           </div>
 
           {/* New Balance Preview */}
           {amount && payAmount > 0 && (
-            <div style={{
-              background: "#f9fafb",
-              border: "1px solid #e5e7eb",
-              borderRadius: "10px",
-              padding: "10px 14px",
-              marginBottom: "14px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              fontSize: "0.85rem"
-            }}>
-              <span style={{ color: "#4b5563", fontWeight: "700" }}>الرصيد المتوقع بعد العملية:</span>
-              <strong style={{
-                color: simulatedNewBalance > 0 ? "#be185d" : simulatedNewBalance < 0 ? "#7e22ce" : "#047857",
-                fontSize: "1.05rem"
-              }}>
+            <div className={styles.simulatedBalanceBox}>
+              <span className={styles.simulatedLabel}>الرصيد المتوقع بعد العملية:</span>
+              <strong className={`${styles.simulatedValue} ${simulatedValueTheme}`}>
                 <span className="num-font" dir="ltr">{formatNumber(Math.abs(simulatedNewBalance))}</span> ج.م
-                <span style={{ fontSize: "0.75rem", marginRight: "4px" }}>
+                <span className={styles.simulatedHint}>
                   {simulatedNewBalance > 0 ? "(له مستحقات)" : simulatedNewBalance < 0 ? "(عليه مبالغ)" : "(خالص تماماً)"}
                 </span>
               </strong>
@@ -273,32 +199,22 @@ export default function PaymentModal({ isOpen, onClose, supplier, onMakePayment 
           {/* Payment Method */}
           <div className="form-group">
             <label className="form-label">طريقة السداد / الدفع</label>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "6px" }}>
-              {["نقدي", "تحويل بنكي", "فودافون كاش", "شيك"].map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => setPaymentMethod(m)}
-                  style={{
-                    padding: "7px 4px",
-                    borderRadius: "8px",
-                    border: paymentMethod === m 
-                      ? (operationType === "payment" ? "1.5px solid #059669" : "1.5px solid #db2777")
-                      : "1px solid #e5e7eb",
-                    background: paymentMethod === m 
-                      ? (operationType === "payment" ? "#ecfdf5" : "#fdf2f8")
-                      : "#ffffff",
-                    color: paymentMethod === m 
-                      ? (operationType === "payment" ? "#047857" : "#be185d")
-                      : "#4b5563",
-                    fontWeight: "800",
-                    fontSize: "0.78rem",
-                    cursor: "pointer"
-                  }}
-                >
-                  {m}
-                </button>
-              ))}
+            <div className={styles.methodsGrid}>
+              {["نقدي", "تحويل بنكي", "فودافون كاش", "شيك"].map((m) => {
+                const isSelected = paymentMethod === m;
+                const activeMethodClass = isPayment ? styles.methodBtnPaymentActive : styles.methodBtnChargeActive;
+
+                return (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setPaymentMethod(m)}
+                    className={`${styles.methodBtn} ${isSelected ? activeMethodClass : ""}`}
+                  >
+                    {m}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -308,32 +224,25 @@ export default function PaymentModal({ isOpen, onClose, supplier, onMakePayment 
             <input 
               type="text"
               className="form-input"
-              placeholder={operationType === "payment" ? "مثال: دفعة كاش تحت حساب بضاعة..." : "مثال: فاتورة توريد شحنة رقم 102..."}
+              placeholder={isPayment ? "مثال: دفعة كاش تحت حساب بضاعة..." : "مثال: فاتورة توريد شحنة رقم 102..."}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
             />
           </div>
 
           {/* Action Buttons */}
-          <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "18px" }}>
+          <div className={styles.actionRow}>
             <button 
               type="button" 
               onClick={onClose}
-              className="btn-secondary"
-              style={{ padding: "9px 18px" }}
+              className={`btn-secondary ${styles.cancelBtn}`}
             >
               إلغاء
             </button>
             <button 
               type="submit" 
               disabled={isSubmitting || !amount || payAmount <= 0}
-              className="btn-primary"
-              style={{ 
-                padding: "9px 24px", 
-                background: operationType === "payment" 
-                  ? "linear-gradient(135deg, #059669 0%, #047857 100%)" 
-                  : "linear-gradient(135deg, #db2777 0%, #be185d 100%)" 
-              }}
+              className={`btn-primary ${styles.submitBtn} ${isPayment ? styles.submitBtnPayment : styles.submitBtnCharge}`}
             >
               {isSubmitting ? "جاري الحفظ..." : "تأكيد العملية وتحديث الحساب"}
             </button>

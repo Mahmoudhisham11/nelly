@@ -30,8 +30,6 @@ import {
   History, 
   Edit3, 
   Trash2, 
-  CheckCircle2, 
-  AlertTriangle, 
   RotateCcw,
   Sparkles,
   ArrowDownLeft,
@@ -39,6 +37,7 @@ import {
   Lock,
   Filter
 } from "lucide-react";
+import styles from "./suppliers.module.css";
 
 export default function SuppliersPage() {
   const router = useRouter();
@@ -176,8 +175,8 @@ export default function SuppliersPage() {
 
   if (authLoading || (!user && loading)) {
     return (
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <p style={{ color: "var(--text-secondary)", fontWeight: "700" }}>جاري تحميل حسابات الموردين...</p>
+      <div className={styles.loadingWrapper}>
+        <p className={styles.loadingText}>جاري تحميل حسابات الموردين...</p>
       </div>
     );
   }
@@ -199,65 +198,31 @@ export default function SuppliersPage() {
         <main className="page-wrapper">
           {/* Toast Notification */}
           {toastMessage && (
-            <div style={{
-              position: "fixed",
-              bottom: "24px",
-              left: "24px",
-              background: "#111827",
-              color: "#ffffff",
-              padding: "14px 20px",
-              borderRadius: "14px",
-              boxShadow: "0 10px 30px rgba(0,0,0,0.25)",
-              zIndex: 1000,
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              fontSize: "0.92rem",
-              fontWeight: "700",
-              animation: "fadeIn 0.3s ease"
-            }}>
+            <div className={styles.toastWrapper}>
               <Sparkles size={18} color="#f472b6" />
               <span>{toastMessage}</span>
             </div>
           )}
 
           {/* Page Header */}
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
-            gap: "16px",
-            marginBottom: "24px"
-          }}>
+          <div className={styles.pageHeader}>
             <div>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <div style={{
-                  width: "42px",
-                  height: "42px",
-                  borderRadius: "12px",
-                  background: "linear-gradient(135deg, #ec4899 0%, #db2777 100%)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "#ffffff",
-                  boxShadow: "0 4px 14px rgba(219, 39, 119, 0.25)"
-                }}>
+              <div className={styles.headerTitleGroup}>
+                <div className={styles.headerIconBox}>
                   <Truck size={22} />
                 </div>
-                <h2 style={{ fontSize: "1.6rem", fontWeight: "900", color: "#1e1322" }}>
+                <h2 className={styles.headerMainTitle}>
                   إدارة الموردين والحسابات المالية
                 </h2>
               </div>
-              <p style={{ color: "#5a4663", fontSize: "0.88rem", marginTop: "6px", fontWeight: "600" }}>
+              <p className={styles.headerSubtitle}>
                 متابعة أرصدة الموردين، تسجيل المدفوعات والسداد الفوري، وكشوفات الحسابات
               </p>
             </div>
 
             <button
               onClick={handleOpenAdd}
-              className="btn-primary"
-              style={{ padding: "10px 20px", fontSize: "0.95rem" }}
+              className={`btn-primary ${styles.addBtn}`}
             >
               <Plus size={18} />
               إضافة مورد جديد
@@ -321,30 +286,23 @@ export default function SuppliersPage() {
           </div>
 
           {/* Search & Filter Toolbar */}
-          <div className="glass-panel" style={{ padding: "18px 20px", marginBottom: "24px", background: "#ffffff", border: "1.5px solid #ebdbe6" }}>
-            <div style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              flexWrap: "wrap",
-              gap: "14px"
-            }}>
+          <div className={`glass-panel ${styles.filterPanel}`}>
+            <div className={styles.filterPanelContent}>
               {/* Search Bar */}
-              <div style={{ position: "relative", flex: 1, minWidth: "260px", maxWidth: "420px" }}>
+              <div className={styles.searchWrap}>
                 <input 
                   type="text"
-                  className="form-input"
+                  className={`form-input ${styles.searchInput}`}
                   placeholder="ابحث باسم المورد أو رقم الهاتف..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  style={{ paddingRight: "40px", fontWeight: "600" }}
                 />
-                <Search size={18} color="#db2777" style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)" }} />
+                <Search size={18} color="#db2777" className={styles.searchIcon} />
               </div>
 
               {/* CustomSelect Status Filter */}
-              <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
-                <div style={{ minWidth: "220px" }}>
+              <div className={styles.filterActions}>
+                <div className={styles.selectWrap}>
                   <CustomSelect
                     options={[
                       { value: "all", label: `جميع الموردين (${totalSuppliersCount})` },
@@ -361,9 +319,8 @@ export default function SuppliersPage() {
                 {(searchQuery || selectedStatusFilter !== "all") && (
                   <button 
                     onClick={() => { setSearchQuery(""); setSelectedStatusFilter("all"); }}
-                    className="btn-secondary"
+                    className={`btn-secondary ${styles.resetFilterBtn}`}
                     title="إعادة ضبط الفلترة"
-                    style={{ padding: "10px 14px" }}
                   >
                     <RotateCcw size={15} />
                     إعادة ضبط
@@ -376,12 +333,12 @@ export default function SuppliersPage() {
           {/* Suppliers Table */}
           <div className="table-container">
             {filteredSuppliers.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "60px 20px" }}>
-                <Truck size={48} color="#db2777" style={{ margin: "0 auto 12px", opacity: 0.8 }} />
-                <h3 style={{ fontSize: "1.2rem", marginBottom: "6px", color: "#1e1322", fontWeight: "800" }}>
+              <div className={styles.emptyPlaceholder}>
+                <Truck size={48} color="#db2777" className={styles.emptyIcon} />
+                <h3 className={styles.emptyTitle}>
                   {searchQuery ? `لا يوجد مورد يطابق "${searchQuery}"` : "لم يتم تسجيل أي موردين بعد"}
                 </h3>
-                <p style={{ color: "var(--text-muted)", fontSize: "0.88rem", marginBottom: "18px", fontWeight: "600" }}>
+                <p className={styles.emptySubtitle}>
                   ابدأ بإضافة بيانات الموردين لتسجيل حساباتهم وفواتيرهم
                 </p>
                 <button onClick={handleOpenAdd} className="btn-primary">
@@ -398,8 +355,8 @@ export default function SuppliersPage() {
                     <th>الرصيد المالي الحالي</th>
                     <th>حالة الحساب</th>
                     <th>ملاحظات</th>
-                    <th style={{ textAlign: "center" }}>سداد دفعة</th>
-                    <th style={{ textAlign: "center" }}>الإجراءات</th>
+                    <th className={styles.thCenter}>سداد دفعة</th>
+                    <th className={styles.thCenter}>الإجراءات</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -407,28 +364,19 @@ export default function SuppliersPage() {
                     const bal = Number(sup.balance) || 0;
                     const isPayable = bal > 0;
                     const isReceivable = bal < 0;
-                    const isZero = bal === 0;
+
+                    const iconBgClass = isPayable ? styles.badgePayableBg : isReceivable ? styles.badgeReceivableBg : styles.badgeZeroBg;
+                    const balanceClass = isPayable ? styles.balancePayable : isReceivable ? styles.balanceReceivable : styles.balanceZero;
 
                     return (
                       <tr key={sup.id}>
                         {/* Name */}
                         <td>
-                          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                            <div style={{
-                              width: "36px",
-                              height: "36px",
-                              borderRadius: "10px",
-                              background: isPayable ? "#fdf2f8" : isReceivable ? "#faf5ff" : "#ecfdf5",
-                              color: isPayable ? "#db2777" : isReceivable ? "#9333ea" : "#059669",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              fontWeight: "900",
-                              fontSize: "0.9rem"
-                            }}>
+                          <div className={styles.nameColWrapper}>
+                            <div className={`${styles.supplierIconBadge} ${iconBgClass}`}>
                               <Truck size={18} />
                             </div>
-                            <span style={{ fontWeight: "800", color: "#1e1322", fontSize: "0.95rem" }}>
+                            <span className={styles.supplierNameText}>
                               {sup.name}
                             </span>
                           </div>
@@ -439,46 +387,24 @@ export default function SuppliersPage() {
                           {sup.phone ? (
                             <a 
                               href={`tel:${sup.phone}`} 
-                              style={{ 
-                                display: "inline-flex", 
-                                alignItems: "center", 
-                                gap: "6px", 
-                                color: "#db2777", 
-                                textDecoration: "none", 
-                                fontWeight: "700" 
-                              }}
+                              className={styles.phoneLink}
                             >
                               <Phone size={14} />
                               <span className="num-font" dir="ltr">{sup.phone}</span>
                             </a>
                           ) : (
-                            <span style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>—</span>
+                            <span className={styles.emptyDash}>—</span>
                           )}
                         </td>
 
                         {/* Balance */}
                         <td>
                           {isAdmin ? (
-                            <div style={{
-                              fontSize: "1.05rem",
-                              fontWeight: "900",
-                              color: isPayable ? "#be185d" : isReceivable ? "#7e22ce" : "#047857"
-                            }}>
+                            <div className={`${styles.balanceVal} ${balanceClass}`}>
                               <span className="num-font" dir="ltr">{formatNumber(Math.abs(bal))}</span> ج.م
                             </div>
                           ) : (
-                            <span style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "4px",
-                              fontSize: "0.78rem",
-                              color: "#6b7280",
-                              background: "#f3f4f6",
-                              padding: "4px 8px",
-                              borderRadius: "6px",
-                              border: "1px solid #e5e7eb",
-                              fontWeight: "700"
-                            }}>
+                            <span className={styles.adminLockTag}>
                               <Lock size={12} />
                               خاص بالمسؤول
                             </span>
@@ -488,11 +414,11 @@ export default function SuppliersPage() {
                         {/* Status badge */}
                         <td>
                           {isPayable ? (
-                            <span className="badge" style={{ background: "#fdf2f8", color: "#be185d", border: "1px solid #fbcfe8" }}>
+                            <span className={`badge ${styles.badgePayable}`}>
                               له مستحقات (+)
                             </span>
                           ) : isReceivable ? (
-                            <span className="badge" style={{ background: "#faf5ff", color: "#7e22ce", border: "1px solid #e9d5ff" }}>
+                            <span className={`badge ${styles.badgeReceivable}`}>
                               عليه مبالغ (-)
                             </span>
                           ) : (
@@ -504,22 +430,16 @@ export default function SuppliersPage() {
 
                         {/* Notes */}
                         <td>
-                          <span style={{ fontSize: "0.84rem", color: "#5a4663", fontWeight: "600" }}>
+                          <span className={styles.notesText}>
                             {sup.notes || "—"}
                           </span>
                         </td>
 
                         {/* Quick Payment Button */}
-                        <td style={{ textAlign: "center" }}>
+                        <td className={styles.thCenter}>
                           <button
                             onClick={() => handleOpenPayment(sup)}
-                            className="btn-primary"
-                            style={{
-                              padding: "6px 14px",
-                              fontSize: "0.82rem",
-                              background: "linear-gradient(135deg, #059669 0%, #047857 100%)",
-                              boxShadow: "0 2px 8px rgba(5, 150, 105, 0.2)"
-                            }}
+                            className={`btn-primary ${styles.quickPayBtn}`}
                           >
                             <CreditCard size={14} />
                             سداد دفعة
@@ -527,12 +447,11 @@ export default function SuppliersPage() {
                         </td>
 
                         {/* Actions */}
-                        <td style={{ textAlign: "center" }}>
-                          <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                        <td className={styles.thCenter}>
+                          <div className={styles.actionsGroup}>
                             <button
                               onClick={() => setHistorySupplier(sup)}
-                              className="btn-secondary"
-                              style={{ padding: "6px 10px", fontSize: "0.8rem" }}
+                              className={`btn-secondary ${styles.historyBtn}`}
                               title="عرض كشف حساب وسجل المدفوعات"
                             >
                               <History size={15} color="#9333ea" />
@@ -541,8 +460,7 @@ export default function SuppliersPage() {
 
                             <button
                               onClick={() => handleOpenEdit(sup)}
-                              className="btn-secondary"
-                              style={{ padding: "6px 10px", fontSize: "0.8rem" }}
+                              className={`btn-secondary ${styles.editBtn}`}
                               title="تعديل بيانات المورد"
                             >
                               <Edit3 size={15} color="#db2777" />
@@ -551,8 +469,7 @@ export default function SuppliersPage() {
 
                             <button
                               onClick={() => handleOpenDelete(sup)}
-                              className="btn-danger"
-                              style={{ padding: "6px 8px" }}
+                              className={`btn-danger ${styles.deleteBtn}`}
                               title="حذف المورد"
                             >
                               <Trash2 size={15} />
@@ -601,43 +518,30 @@ export default function SuppliersPage() {
       {supplierToDelete && (
         <div className="modal-overlay" onClick={() => setSupplierToDelete(null)}>
           <div 
-            className="modal-content"
+            className={`modal-content ${styles.deleteModalContainer}`}
             onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: "440px", padding: "26px", textAlign: "center", background: "#ffffff" }}
           >
-            <div style={{
-              width: "50px",
-              height: "50px",
-              borderRadius: "50%",
-              background: "#fee2e2",
-              color: "#dc2626",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              marginBottom: "16px"
-            }}>
+            <div className={styles.deleteIconBox}>
               <Trash2 size={26} />
             </div>
 
-            <h3 style={{ fontSize: "1.2rem", marginBottom: "8px", color: "#1e1322", fontWeight: "800" }}>
+            <h3 className={styles.deleteModalTitle}>
               تأكيد حذف المورد
             </h3>
-            <p style={{ fontSize: "0.9rem", color: "var(--text-secondary)", marginBottom: "20px", fontWeight: "600", lineHeight: "1.6" }}>
-              هل أنت متأكد من حذف المورد <strong style={{ color: "#1e1322" }}>"{supplierToDelete.name}"</strong> من النظام؟
+            <p className={styles.deleteModalText}>
+              هل أنت متأكد من حذف المورد <strong className={styles.deleteTargetName}>"{supplierToDelete.name}"</strong> من النظام؟
             </p>
 
-            <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
+            <div className={styles.deleteActionsRow}>
               <button 
                 onClick={() => setSupplierToDelete(null)}
-                className="btn-secondary"
-                style={{ padding: "10px 20px" }}
+                className={`btn-secondary ${styles.cancelModalBtn}`}
               >
                 إلغاء
               </button>
               <button 
                 onClick={handleConfirmDelete}
-                className="btn-danger"
-                style={{ padding: "10px 20px", background: "#dc2626", color: "#fff", border: "none" }}
+                className={`btn-danger ${styles.confirmDeleteBtn}`}
               >
                 نعم، احذف المورد
               </button>

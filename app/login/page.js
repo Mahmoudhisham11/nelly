@@ -12,6 +12,7 @@ import {
   LogIn,
   UserPlus
 } from "lucide-react";
+import styles from "./login.module.css";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -85,105 +86,31 @@ export default function LoginPage() {
   };
 
   return (
-    <div style={{
-      minHeight: "100vh",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      padding: "24px",
-      position: "relative",
-      overflow: "hidden",
-      backgroundColor: "var(--bg-main)"
-    }}>
+    <div className={styles.loginPageWrapper}>
       {/* Ambient background glows */}
-      <div style={{
-        position: "absolute",
-        top: "6%",
-        left: "10%",
-        width: "420px",
-        height: "420px",
-        background: "radial-gradient(circle, rgba(244, 114, 182, 0.2) 0%, transparent 70%)",
-        filter: "blur(60px)",
-        pointerEvents: "none"
-      }} />
-      <div style={{
-        position: "absolute",
-        bottom: "6%",
-        right: "10%",
-        width: "450px",
-        height: "450px",
-        background: "radial-gradient(circle, rgba(192, 132, 252, 0.16) 0%, transparent 70%)",
-        filter: "blur(70px)",
-        pointerEvents: "none"
-      }} />
+      <div className={styles.ambientGlowTop} />
+      <div className={styles.ambientGlowBottom} />
 
-      <div className="glass-panel" style={{
-        width: "100%",
-        maxWidth: "480px",
-        padding: "36px 32px",
-        position: "relative",
-        zIndex: 10,
-        backgroundColor: "#ffffff",
-        boxShadow: "0 25px 60px rgba(219, 39, 119, 0.12), 0 4px 16px rgba(0, 0, 0, 0.04)",
-        border: "1.5px solid #fbcfe8",
-        borderRadius: "24px"
-      }}>
+      <div className={`glass-panel ${styles.loginCard}`}>
         {/* Brand Header */}
-        <div style={{ textAlign: "center", marginBottom: "24px" }}>
-          <div style={{
-            width: "65px",
-            height: "65px",
-            borderRadius: "20px",
-            background: "linear-gradient(135deg, #ec4899 0%, #db2777 60%, #be185d 100%)",
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            boxShadow: "0 8px 25px rgba(219, 39, 119, 0.35)",
-            color: "#ffffff",
-            fontSize: "2rem",
-            fontWeight: "900",
-            marginBottom: "12px"
-          }}>
+        <div className={styles.brandHeader}>
+          <div className={styles.brandLogoBox}>
             N
           </div>
-          <h1 style={{ fontSize: "1.65rem", fontWeight: "900", marginBottom: "4px", color: "#1e1322" }}>
+          <h1 className={styles.brandTitle}>
             مخزن <span className="gradient-text-rose">Nelly</span> للميكاب
           </h1>
-          <p style={{ fontSize: "0.88rem", color: "var(--text-secondary)", fontWeight: "600" }}>
+          <p className={styles.brandSubtitle}>
             نظام إدارة وجرد المخزون وتحديد الصلاحيات
           </p>
         </div>
 
         {/* Tab Selector: Sign In vs Register */}
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: "6px",
-          background: "#fdf2f8",
-          padding: "5px",
-          borderRadius: "14px",
-          marginBottom: "20px",
-          border: "1px solid #fce7f3"
-        }}>
+        <div className={styles.tabSelector}>
           <button
             type="button"
             onClick={() => { setActiveTab("signin"); setErrorMsg(""); setSuccessMsg(""); }}
-            style={{
-              padding: "10px",
-              borderRadius: "10px",
-              border: "none",
-              background: activeTab === "signin" ? "#ffffff" : "transparent",
-              color: activeTab === "signin" ? "#db2777" : "#5a4663",
-              fontWeight: "800",
-              fontSize: "0.92rem",
-              cursor: "pointer",
-              boxShadow: activeTab === "signin" ? "0 2px 8px rgba(219, 39, 119, 0.12)" : "none",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "6px",
-              transition: "all 0.2s ease"
-            }}
+            className={`${styles.tabButton} ${activeTab === "signin" ? styles.tabActive : styles.tabInactive}`}
           >
             <LogIn size={16} />
             تسجيل الدخول
@@ -192,22 +119,7 @@ export default function LoginPage() {
           <button
             type="button"
             onClick={() => { setActiveTab("register"); setErrorMsg(""); setSuccessMsg(""); }}
-            style={{
-              padding: "10px",
-              borderRadius: "10px",
-              border: "none",
-              background: activeTab === "register" ? "#ffffff" : "transparent",
-              color: activeTab === "register" ? "#db2777" : "#5a4663",
-              fontWeight: "800",
-              fontSize: "0.92rem",
-              cursor: "pointer",
-              boxShadow: activeTab === "register" ? "0 2px 8px rgba(219, 39, 119, 0.12)" : "none",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "6px",
-              transition: "all 0.2s ease"
-            }}
+            className={`${styles.tabButton} ${activeTab === "register" ? styles.tabActive : styles.tabInactive}`}
           >
             <UserPlus size={16} />
             إنشاء حساب جديد
@@ -216,40 +128,16 @@ export default function LoginPage() {
 
         {/* Error Alert */}
         {errorMsg && (
-          <div style={{
-            background: "#fef2f2",
-            border: "1px solid #fecaca",
-            borderRadius: "12px",
-            padding: "11px 14px",
-            marginBottom: "16px",
-            display: "flex",
-            alignItems: "flex-start",
-            gap: "8px",
-            color: "#b91c1c",
-            fontSize: "0.85rem",
-            fontWeight: "600"
-          }}>
-            <AlertCircle size={17} style={{ flexShrink: 0, marginTop: "2px" }} />
+          <div className={styles.alertError}>
+            <AlertCircle size={17} className={styles.alertIcon} />
             <span>{errorMsg}</span>
           </div>
         )}
 
         {/* Success Alert */}
         {successMsg && (
-          <div style={{
-            background: "#ecfdf5",
-            border: "1px solid #a7f3d0",
-            borderRadius: "12px",
-            padding: "11px 14px",
-            marginBottom: "16px",
-            display: "flex",
-            alignItems: "flex-start",
-            gap: "8px",
-            color: "#047857",
-            fontSize: "0.85rem",
-            fontWeight: "600"
-          }}>
-            <CheckCircle2 size={17} style={{ flexShrink: 0, marginTop: "2px" }} />
+          <div className={styles.alertSuccess}>
+            <CheckCircle2 size={17} className={styles.alertIcon} />
             <span>{successMsg}</span>
           </div>
         )}
@@ -258,71 +146,67 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit}>
           {activeTab === "register" && (
             <div className="form-group">
-              <label className="form-label">الاسم الكامل <span style={{ color: "#db2777" }}>*</span></label>
-              <div style={{ position: "relative" }}>
+              <label className="form-label">الاسم الكامل <span className={styles.requiredAsterisk}>*</span></label>
+              <div className={styles.inputWrapper}>
                 <input 
                   type="text"
-                  className="form-input"
+                  className={`form-input ${styles.inputWithIcon}`}
                   placeholder="مثال: أحمد محمد"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  style={{ paddingRight: "40px" }}
                   required
                 />
-                <User size={18} color="#db2777" style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)" }} />
+                <User size={18} className={styles.inputIcon} />
               </div>
             </div>
           )}
 
           <div className="form-group">
-            <label className="form-label">البريد الإلكتروني <span style={{ color: "#db2777" }}>*</span></label>
-            <div style={{ position: "relative" }}>
+            <label className="form-label">البريد الإلكتروني <span className={styles.requiredAsterisk}>*</span></label>
+            <div className={styles.inputWrapper}>
               <input 
                 type="email"
-                className="form-input num-font"
+                className={`form-input num-font ${styles.inputWithIconRtl}`}
                 dir="ltr"
                 placeholder="name@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                style={{ paddingRight: "40px", textAlign: "right" }}
                 required
               />
-              <Mail size={18} color="#db2777" style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)" }} />
+              <Mail size={18} className={styles.inputIcon} />
             </div>
           </div>
 
           <div className="form-group">
-            <label className="form-label">كلمة المرور <span style={{ color: "#db2777" }}>*</span></label>
-            <div style={{ position: "relative" }}>
+            <label className="form-label">كلمة المرور <span className={styles.requiredAsterisk}>*</span></label>
+            <div className={styles.inputWrapper}>
               <input 
                 type="password"
-                className="form-input num-font"
+                className={`form-input num-font ${styles.inputWithIconRtl}`}
                 dir="ltr"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                style={{ paddingRight: "40px", textAlign: "right" }}
                 required
               />
-              <Lock size={18} color="#db2777" style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)" }} />
+              <Lock size={18} className={styles.inputIcon} />
             </div>
           </div>
 
           {activeTab === "register" && (
             <div className="form-group">
-              <label className="form-label">تأكيد كلمة المرور <span style={{ color: "#db2777" }}>*</span></label>
-              <div style={{ position: "relative" }}>
+              <label className="form-label">تأكيد كلمة المرور <span className={styles.requiredAsterisk}>*</span></label>
+              <div className={styles.inputWrapper}>
                 <input 
                   type="password"
-                  className="form-input num-font"
+                  className={`form-input num-font ${styles.inputWithIconRtl}`}
                   dir="ltr"
                   placeholder="••••••••"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  style={{ paddingRight: "40px", textAlign: "right" }}
                   required
                 />
-                <Lock size={18} color="#db2777" style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)" }} />
+                <Lock size={18} className={styles.inputIcon} />
               </div>
             </div>
           )}
@@ -330,21 +214,14 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="btn-primary"
-            style={{ width: "100%", padding: "12px", fontSize: "1rem", marginTop: "10px" }}
+            className={`btn-primary ${styles.submitBtn}`}
           >
             {isSubmitting ? "جاري المعالجة..." : (activeTab === "register" ? "إنشاء الحساب والتسجيل" : "تسجيل الدخول")}
           </button>
         </form>
 
         {/* Footer info */}
-        <div style={{
-          marginTop: "24px",
-          textAlign: "center",
-          fontSize: "0.78rem",
-          color: "var(--text-muted)",
-          fontWeight: "600"
-        }}>
+        <div className={styles.footerCopyright}>
           جميع الحقوق محفوظة © متجر ومخزن Nelly للميكاب
         </div>
       </div>

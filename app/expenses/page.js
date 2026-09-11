@@ -26,7 +26,6 @@ import {
   Plus, 
   Search, 
   Calendar, 
-  DollarSign, 
   TrendingDown, 
   PieChart, 
   Trash2, 
@@ -37,11 +36,10 @@ import {
   ChevronLeft, 
   History, 
   PlusCircle, 
-  CheckCircle2, 
   Layers,
-  Lock,
-  Filter
+  Lock
 } from "lucide-react";
+import styles from "./expenses.module.css";
 
 export default function ExpensesPage() {
   const router = useRouter();
@@ -168,19 +166,6 @@ export default function ExpensesPage() {
     setSelectedMonth(`${newY}-${newM}`);
   };
 
-  // Generate a list of recent 12 months for quick dropdown jump
-  const dropdownMonths = useMemo(() => {
-    const list = [];
-    const now = new Date();
-    for (let i = -6; i <= 6; i++) {
-      const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, "0");
-      list.push(`${y}-${m}`);
-    }
-    return list.reverse();
-  }, []);
-
   // Filtered Expense Items
   const filteredItems = useMemo(() => {
     return expenseItems.filter((item) => {
@@ -271,8 +256,8 @@ export default function ExpensesPage() {
 
   if (authLoading || (!user && loadingItems)) {
     return (
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <p style={{ color: "var(--text-secondary)", fontWeight: "700" }}>جاري تحميل سجل بنود المصاريف...</p>
+      <div className={styles.loadingWrapper}>
+        <p className={styles.loadingText}>جاري تحميل سجل بنود المصاريف...</p>
       </div>
     );
   }
@@ -294,65 +279,31 @@ export default function ExpensesPage() {
         <main className="page-wrapper">
           {/* Toast Notification */}
           {toastMessage && (
-            <div style={{
-              position: "fixed",
-              bottom: "24px",
-              left: "24px",
-              background: "#111827",
-              color: "#ffffff",
-              padding: "14px 20px",
-              borderRadius: "14px",
-              boxShadow: "0 10px 30px rgba(0,0,0,0.25)",
-              zIndex: 1000,
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              fontSize: "0.92rem",
-              fontWeight: "700",
-              animation: "fadeIn 0.3s ease"
-            }}>
+            <div className={styles.toastWrapper}>
               <Sparkles size={18} color="#f472b6" />
               <span>{toastMessage}</span>
             </div>
           )}
 
           {/* Page Header */}
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
-            gap: "16px",
-            marginBottom: "22px"
-          }}>
+          <div className={styles.pageHeader}>
             <div>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <div style={{
-                  width: "42px",
-                  height: "42px",
-                  borderRadius: "12px",
-                  background: "linear-gradient(135deg, #ec4899 0%, #db2777 100%)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "#ffffff",
-                  boxShadow: "0 4px 14px rgba(219, 39, 119, 0.25)"
-                }}>
+              <div className={styles.headerTitleGroup}>
+                <div className={styles.headerIconBox}>
                   <Receipt size={22} />
                 </div>
-                <h2 style={{ fontSize: "1.6rem", fontWeight: "900", color: "#1e1322" }}>
+                <h2 className={styles.headerMainTitle}>
                   سجل بنود المصاريف الشهرية
                 </h2>
               </div>
-              <p style={{ color: "#5a4663", fontSize: "0.88rem", marginTop: "6px", fontWeight: "600" }}>
+              <p className={styles.headerSubtitle}>
                 تتصفر بنود المصاريف تلقائياً (0 ج.م) مع بداية كل شهر جديد، مع إمكانية الزيادة والأرشفة
               </p>
             </div>
 
             <button
               onClick={handleOpenAddItem}
-              className="btn-primary"
-              style={{ padding: "10px 20px", fontSize: "0.95rem" }}
+              className={`btn-primary ${styles.addItemBtn}`}
             >
               <Plus size={18} />
               + إضافة بند مصروف جديد
@@ -360,36 +311,25 @@ export default function ExpensesPage() {
           </div>
 
           {/* Month Selector & History Navigator */}
-          <section className="glass-panel" style={{
-            padding: "16px 20px",
-            marginBottom: "24px",
-            background: "#ffffff",
-            border: "1.5px solid #f0e1ec"
-          }}>
-            <div style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              flexWrap: "wrap",
-              gap: "14px"
-            }}>
+          <section className={`glass-panel ${styles.monthNavPanel}`}>
+            <div className={styles.monthNavContent}>
               {/* Active Month Title */}
-              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <div className={styles.activeMonthTitleWrap}>
                 <Calendar size={22} color="#db2777" />
                 <div>
-                  <span style={{ fontSize: "0.78rem", color: "var(--text-muted)", fontWeight: "700", display: "block" }}>
+                  <span className={styles.monthSubtitle}>
                     أنت تتصفح مصاريف شهر:
                   </span>
-                  <strong style={{ fontSize: "1.2rem", fontWeight: "900", color: "#1e1322" }}>
+                  <strong className={styles.monthTitleStrong}>
                     {formatMonthLabel(selectedMonth)}
                   </strong>
                 </div>
               </div>
 
               {/* Month & Year Selectors with CustomSelect */}
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+              <div className={styles.monthNavActions}>
                 {/* Year Select */}
-                <div style={{ minWidth: "135px" }}>
+                <div className={styles.yearSelectWrap}>
                   <CustomSelect
                     options={yearOptions}
                     value={selectedYear}
@@ -399,7 +339,7 @@ export default function ExpensesPage() {
                 </div>
 
                 {/* Month Select */}
-                <div style={{ minWidth: "155px" }}>
+                <div className={styles.monthSelectWrap}>
                   <CustomSelect
                     options={monthOptions}
                     value={selectedMonthNum}
@@ -411,8 +351,7 @@ export default function ExpensesPage() {
                 {/* Prev Month Button */}
                 <button
                   onClick={handlePrevMonth}
-                  className="btn-secondary"
-                  style={{ padding: "10px 14px", fontSize: "0.84rem" }}
+                  className={`btn-secondary ${styles.navStepBtn}`}
                   title="الشهر السابق"
                 >
                   <ChevronRight size={16} />
@@ -423,8 +362,7 @@ export default function ExpensesPage() {
                 {selectedMonth !== currentActualMonth && (
                   <button
                     onClick={() => setSelectedMonth(currentActualMonth)}
-                    className="btn-primary"
-                    style={{ padding: "10px 14px", fontSize: "0.84rem" }}
+                    className={`btn-primary ${styles.currentMonthBtn}`}
                     title="الرجوع للشهر الحالي"
                   >
                     الشهر الحالي
@@ -434,8 +372,7 @@ export default function ExpensesPage() {
                 {/* Next Month Button */}
                 <button
                   onClick={handleNextMonth}
-                  className="btn-secondary"
-                  style={{ padding: "10px 14px", fontSize: "0.84rem" }}
+                  className={`btn-secondary ${styles.navStepBtn}`}
                   title="الشهر التالي"
                 >
                   التالي
@@ -502,25 +439,23 @@ export default function ExpensesPage() {
           </div>
 
           {/* Search Bar */}
-          <div className="glass-panel" style={{ padding: "16px 20px", marginBottom: "24px", background: "#ffffff", border: "1.5px solid #ebdbe6" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px" }}>
-              <div style={{ position: "relative", flex: 1, minWidth: "260px", maxWidth: "420px" }}>
+          <div className={`glass-panel ${styles.searchPanel}`}>
+            <div className={styles.searchPanelContent}>
+              <div className={styles.searchWrap}>
                 <input 
                   type="text"
-                  className="form-input"
+                  className={`form-input ${styles.searchInput}`}
                   placeholder="ابحث باسم بند المصروف..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  style={{ paddingRight: "40px", fontWeight: "600" }}
                 />
-                <Search size={18} color="#db2777" style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)" }} />
+                <Search size={18} color="#db2777" className={styles.searchIcon} />
               </div>
 
               {searchQuery && (
                 <button 
                   onClick={() => setSearchQuery("")}
-                  className="btn-secondary"
-                  style={{ padding: "8px 12px" }}
+                  className={`btn-secondary ${styles.resetSearchBtn}`}
                 >
                   <RotateCcw size={15} />
                   مسح البحث
@@ -532,12 +467,12 @@ export default function ExpensesPage() {
           {/* Master Expense Items Table */}
           <div className="table-container">
             {filteredItems.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "60px 20px" }}>
-                <Receipt size={48} color="#db2777" style={{ margin: "0 auto 12px", opacity: 0.8 }} />
-                <h3 style={{ fontSize: "1.2rem", marginBottom: "6px", color: "#1e1322", fontWeight: "800" }}>
+              <div className={styles.emptyPlaceholder}>
+                <Receipt size={48} color="#db2777" className={styles.emptyIcon} />
+                <h3 className={styles.emptyTitle}>
                   {searchQuery ? `لا يوجد بند يطابق "${searchQuery}"` : "لم يتم تسجيل أي بنود مصاريف بعد"}
                 </h3>
-                <p style={{ color: "var(--text-muted)", fontSize: "0.88rem", marginBottom: "18px", fontWeight: "600" }}>
+                <p className={styles.emptySubtitle}>
                   أضف بنودك الثابتة (مثل: إيجار، رواتب، كهرباء، شحن) وستتجدد كل شهر بقيمة 0 ج.م تلقائياً
                 </p>
                 <button onClick={handleOpenAddItem} className="btn-primary">
@@ -553,8 +488,8 @@ export default function ExpensesPage() {
                     <th>المصروف في ({formatMonthLabel(selectedMonth)})</th>
                     <th>حالة الصرف للشهر</th>
                     <th>وصف / ملاحظات البند</th>
-                    <th style={{ textAlign: "center" }}>إضافة / زيادة مبلغ</th>
-                    <th style={{ textAlign: "center" }}>الإجراءات</th>
+                    <th className={styles.thCenter}>إضافة / زيادة مبلغ</th>
+                    <th className={styles.thCenter}>الإجراءات</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -567,22 +502,12 @@ export default function ExpensesPage() {
                       <tr key={item.id}>
                         {/* Item Name */}
                         <td>
-                          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                            <div style={{
-                              width: "36px",
-                              height: "36px",
-                              borderRadius: "10px",
-                              background: spentAmount > 0 ? "#fdf2f8" : "#ecfdf5",
-                              color: spentAmount > 0 ? "#db2777" : "#059669",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              fontWeight: "900"
-                            }}>
+                          <div className={styles.nameColWrapper}>
+                            <div className={`${styles.itemIconBadge} ${spentAmount > 0 ? styles.badgeSpentBg : styles.badgeZeroBg}`}>
                               <Receipt size={17} />
                             </div>
                             <div>
-                              <span style={{ fontWeight: "800", color: "#1e1322", fontSize: "0.96rem", display: "block" }}>
+                              <span className={styles.itemNameText}>
                                 {item.name}
                               </span>
                             </div>
@@ -592,26 +517,11 @@ export default function ExpensesPage() {
                         {/* Amount in Selected Month */}
                         <td>
                           {isAdmin ? (
-                            <div style={{
-                              fontSize: "1.1rem",
-                              fontWeight: "900",
-                              color: spentAmount > 0 ? "#be185d" : "#059669"
-                            }}>
+                            <div className={`${styles.spentAmountVal} ${spentAmount > 0 ? styles.spentAmountSpent : styles.spentAmountZero}`}>
                               <span className="num-font" dir="ltr">{formatNumber(spentAmount)}</span> ج.م
                             </div>
                           ) : (
-                            <span style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "4px",
-                              fontSize: "0.78rem",
-                              color: "#6b7280",
-                              background: "#f3f4f6",
-                              padding: "4px 8px",
-                              borderRadius: "6px",
-                              border: "1px solid #e5e7eb",
-                              fontWeight: "700"
-                            }}>
+                            <span className={styles.adminLockTag}>
                               <Lock size={12} />
                               خاص بالمسؤول
                             </span>
@@ -621,7 +531,7 @@ export default function ExpensesPage() {
                         {/* Status Badge */}
                         <td>
                           {spentAmount > 0 ? (
-                            <span className="badge" style={{ background: "#fdf2f8", color: "#be185d", border: "1px solid #fbcfe8" }}>
+                            <span className={`badge ${styles.badgeSpent}`}>
                               تم صرف {txCount} {txCount === 1 ? "دفعة" : "دفعات"}
                             </span>
                           ) : (
@@ -633,22 +543,16 @@ export default function ExpensesPage() {
 
                         {/* Notes */}
                         <td>
-                          <span style={{ fontSize: "0.84rem", color: "#5a4663", fontWeight: "600" }}>
+                          <span className={styles.notesText}>
                             {item.notes || "—"}
                           </span>
                         </td>
 
                         {/* Add Amount Action */}
-                        <td style={{ textAlign: "center" }}>
+                        <td className={styles.thCenter}>
                           <button
                             onClick={() => handleOpenAddAmount(item)}
-                            className="btn-primary"
-                            style={{
-                              padding: "7px 16px",
-                              fontSize: "0.84rem",
-                              background: "linear-gradient(135deg, #059669 0%, #047857 100%)",
-                              boxShadow: "0 2px 8px rgba(5, 150, 105, 0.2)"
-                            }}
+                            className={`btn-primary ${styles.addAmountBtn}`}
                           >
                             <PlusCircle size={15} />
                             + زيادة مبلغ
@@ -656,12 +560,11 @@ export default function ExpensesPage() {
                         </td>
 
                         {/* Actions */}
-                        <td style={{ textAlign: "center" }}>
-                          <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                        <td className={styles.thCenter}>
+                          <div className={styles.actionsGroup}>
                             <button
                               onClick={() => setHistoryItem(item)}
-                              className="btn-secondary"
-                              style={{ padding: "6px 10px", fontSize: "0.8rem" }}
+                              className={`btn-secondary ${styles.historyBtn}`}
                               title="عرض سجل دفعات هذا البند للشهر المحدد"
                             >
                               <History size={14} color="#9333ea" />
@@ -670,8 +573,7 @@ export default function ExpensesPage() {
 
                             <button
                               onClick={() => handleOpenEditItem(item)}
-                              className="btn-secondary"
-                              style={{ padding: "6px 8px" }}
+                              className={`btn-secondary ${styles.editBtn}`}
                               title="تعديل اسم البند"
                             >
                               <Edit3 size={14} color="#db2777" />
@@ -679,8 +581,7 @@ export default function ExpensesPage() {
 
                             <button
                               onClick={() => handleOpenDelete(item)}
-                              className="btn-danger"
-                              style={{ padding: "6px 8px" }}
+                              className={`btn-danger ${styles.deleteBtn}`}
                               title="حذف هذا البند نهائياً"
                             >
                               <Trash2 size={14} />
@@ -734,43 +635,30 @@ export default function ExpensesPage() {
       {itemToDelete && (
         <div className="modal-overlay" onClick={() => setItemToDelete(null)}>
           <div 
-            className="modal-content"
+            className={`modal-content ${styles.deleteModalContainer}`}
             onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: "440px", padding: "26px", textAlign: "center", background: "#ffffff" }}
           >
-            <div style={{
-              width: "50px",
-              height: "50px",
-              borderRadius: "50%",
-              background: "#fee2e2",
-              color: "#dc2626",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              marginBottom: "16px"
-            }}>
+            <div className={styles.deleteIconBox}>
               <Trash2 size={26} />
             </div>
 
-            <h3 style={{ fontSize: "1.2rem", marginBottom: "8px", color: "#1e1322", fontWeight: "800" }}>
+            <h3 className={styles.deleteModalTitle}>
               تأكيد حذف بند المصروف
             </h3>
-            <p style={{ fontSize: "0.9rem", color: "var(--text-secondary)", marginBottom: "20px", fontWeight: "600", lineHeight: "1.6" }}>
-              هل أنت متأكد من حذف البند <strong style={{ color: "#1e1322" }}>"{itemToDelete.name}"</strong> نهائياً من قائمة المصاريف؟
+            <p className={styles.deleteModalText}>
+              هل أنت متأكد من حذف البند <strong className={styles.deleteTargetName}>"{itemToDelete.name}"</strong> نهائياً من قائمة المصاريف؟
             </p>
 
-            <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
+            <div className={styles.deleteActionsRow}>
               <button 
                 onClick={() => setItemToDelete(null)}
-                className="btn-secondary"
-                style={{ padding: "10px 20px" }}
+                className={`btn-secondary ${styles.cancelModalBtn}`}
               >
                 إلغاء
               </button>
               <button 
                 onClick={handleConfirmDelete}
-                className="btn-danger"
-                style={{ padding: "10px 20px", background: "#dc2626", color: "#fff", border: "none" }}
+                className={`btn-danger ${styles.confirmDeleteBtn}`}
               >
                 نعم، احذف البند
               </button>

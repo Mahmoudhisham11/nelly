@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { X, Receipt, Tag, FileText } from "lucide-react";
+import { useState, useEffect } from "react";
+import { X, Receipt } from "lucide-react";
+import styles from "./ExpenseItemModal.module.css";
 
 export default function ExpenseItemModal({ isOpen, onClose, onSave, itemToEdit }) {
   const [name, setName] = useState("");
@@ -38,58 +39,26 @@ export default function ExpenseItemModal({ isOpen, onClose, onSave, itemToEdit }
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div 
-        className="modal-content"
+        className={`modal-content ${styles.modalContainer}`}
         onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: "480px", padding: "26px" }}
       >
         {/* Header */}
-        <div style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: "20px",
-          paddingBottom: "12px",
-          borderBottom: "1px solid #f0e1ec"
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div style={{
-              width: "40px",
-              height: "40px",
-              borderRadius: "12px",
-              background: "linear-gradient(135deg, #ec4899 0%, #db2777 100%)",
-              color: "#ffffff",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "0 4px 14px rgba(219, 39, 119, 0.25)"
-            }}>
+        <div className={styles.modalHeader}>
+          <div className={styles.headerBrand}>
+            <div className={styles.headerIcon}>
               <Receipt size={22} />
             </div>
             <div>
-              <h3 style={{ fontSize: "1.2rem", fontWeight: "900", color: "#1e1322" }}>
+              <h3 className={styles.headerTitle}>
                 {itemToEdit ? "تعديل بند المصروف" : "إضافة بند مصروف جديد"}
               </h3>
-              <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", fontWeight: "600" }}>
+              <p className={styles.headerSubtitle}>
                 تثبيت بند المصروف ليظهر تلقائياً كل شهر بقيمة 0 ج.م
               </p>
             </div>
           </div>
 
-          <button 
-            onClick={onClose}
-            style={{
-              background: "#fdf2f8",
-              border: "1px solid #fbcfe8",
-              color: "#db2777",
-              width: "30px",
-              height: "30px",
-              borderRadius: "8px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer"
-            }}
-          >
+          <button onClick={onClose} className={styles.closeBtn}>
             <X size={16} />
           </button>
         </div>
@@ -98,7 +67,7 @@ export default function ExpenseItemModal({ isOpen, onClose, onSave, itemToEdit }
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label className="form-label">
-              اسم البند / القسم <span style={{ color: "#db2777" }}>*</span>
+              اسم البند / القسم <span className={styles.requiredStar}>*</span>
             </label>
             <input 
               type="text"
@@ -122,20 +91,18 @@ export default function ExpenseItemModal({ isOpen, onClose, onSave, itemToEdit }
             />
           </div>
 
-          <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "22px" }}>
+          <div className={styles.actionRow}>
             <button 
               type="button" 
               onClick={onClose}
-              className="btn-secondary"
-              style={{ padding: "9px 18px" }}
+              className={`btn-secondary ${styles.cancelBtn}`}
             >
               إلغاء
             </button>
             <button 
               type="submit" 
               disabled={isSubmitting || !name.trim()}
-              className="btn-primary"
-              style={{ padding: "9px 24px" }}
+              className={`btn-primary ${styles.submitBtn}`}
             >
               {isSubmitting ? "جاري الحفظ..." : (itemToEdit ? "حفظ التعديل" : "إضافة البند")}
             </button>

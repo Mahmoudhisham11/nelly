@@ -1,0 +1,253 @@
+.topActionsWrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.toggleInvoicesBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 1.25rem;
+  border-radius: 14px;
+  font-weight: 800;
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toggleInvoicesBtnActive {
+  background: linear-gradient(135deg, #db2777, #be185d);
+  color: #ffffff;
+  border: 1.5px solid #be185d;
+  box-shadow: 0 4px 14px rgba(219, 39, 119, 0.3);
+}
+
+.toggleInvoicesBtnInactive {
+  background: #ffffff;
+  color: #be185d;
+  border: 1.5px solid #fbcfe8;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.scannerLabel {
+  font-size: 0.9rem;
+}
+
+.scannerInput {
+  height: 48px;
+  font-size: 0.95rem;
+}
+
+.outOfStockItem {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background: #fef2f2;
+}
+
+.outOfStockText {
+  color: #991b1b;
+}
+
+.outOfStockBadge {
+  font-size: 0.72rem;
+  color: #dc2626;
+  font-weight: bold;
+  margin-right: 4px;
+}
+
+.outOfStockStock {
+  color: #dc2626;
+}
+
+.registerGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  gap: 20px;
+  align-items: start;
+  margin-top: 4px;
+}
+
+.cartColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cartTitleText {
+  font-size: 1rem;
+}
+
+.heldInvoicesBtn {
+  gap: 6px;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.cartItemsWrapper {
+  max-height: 360px;
+  min-height: 160px;
+}
+
+.cartEmptyPlaceholder {
+  height: 160px;
+}
+
+.cartEmptyIcon {
+  opacity: 0.35;
+}
+
+.cartEmptyTitle {
+  font-size: 0.95rem;
+}
+
+.cartSingleRow {
+  padding: 0.85rem 1rem;
+  align-items: center;
+}
+
+.itemHeaderGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.itemTitle {
+  font-size: 0.95rem;
+  font-weight: 900;
+}
+
+.stockPillLow {
+  font-size: 0.74rem;
+  font-weight: 800;
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  padding: 2px 8px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.stockPillNormal {
+  font-size: 0.74rem;
+  font-weight: 800;
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+  padding: 2px 8px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.itemSubtext {
+  font-size: 0.82rem;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.itemPriceTotal {
+  color: var(--rose-700);
+  font-weight: 900;
+}
+
+.remainingShopStock {
+  color: #7c3aed;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.qtyBtn {
+  width: 30px;
+  height: 30px;
+}
+
+.qtyDisplay {
+  font-size: 1rem;
+  width: 26px;
+}
+
+.deleteItemBtn {
+  padding: 5px;
+  margin-left: 4px;
+}
+
+.selectInput {
+  padding: 0.6rem 0.85rem;
+  font-size: 0.88rem;
+}
+
+.paymentColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.discountInput {
+  padding: 0.6rem 0.85rem;
+  font-size: 0.9rem;
+}
+
+.methodBtn {
+  padding: 0.65rem 0.4rem;
+  font-size: 0.82rem;
+}
+
+.receivedInput {
+  padding: 0.6rem 0.85rem;
+}
+
+.receivedFeedbackRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.feedbackLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 800;
+}
+
+.feedbackValue {
+  font-family: var(--font-numbers);
+  font-weight: 900;
+  font-size: 1.1rem;
+}
+
+.feedbackExactValue {
+  font-family: var(--font-numbers);
+  font-weight: 800;
+  font-size: 0.85rem;
+}
+
+.netSummaryPanel {
+  padding: 1.1rem;
+}
+
+.subtotalVal {
+  font-size: 0.95rem;
+}
+
+.discountVal {
+  font-size: 0.95rem;
+}
+
+.grandTotalVal {
+  font-size: 1.45rem;
+}
+
+.submitSaleBtn {
+  padding: 1.1rem;
+  font-size: 1.05rem;
+}

@@ -1,0 +1,463 @@
+.modalContainer {
+  max-width: 860px !important;
+}
+
+.headerBrand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.headerIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(147, 51, 234, 0.1);
+  color: #9333ea;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.titleWrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.headerTitle {
+  font-size: 1.15rem;
+}
+
+.cashierBadge {
+  font-size: 0.75rem !important;
+}
+
+.headerSubtitle {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.printBtn {
+  padding: 6px 14px !important;
+  font-size: 0.82rem !important;
+  font-weight: 700 !important;
+}
+
+.modalBody {
+  padding: 20px;
+  overflow-y: auto;
+  max-height: calc(90vh - 120px);
+}
+
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.kpiCardSales {
+  background: #fdf2f8;
+  border: 1px solid #fbcfe8;
+  border-radius: 14px;
+  padding: 12px 16px;
+}
+
+.kpiLabelSales {
+  font-size: 0.78rem;
+  color: #9d174d;
+  font-weight: 700;
+}
+
+.kpiValueSales {
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: #db2777;
+  margin-top: 2px;
+}
+
+.kpiCardProfit {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 14px;
+  padding: 12px 16px;
+}
+
+.kpiLabelProfit {
+  font-size: 0.78rem;
+  color: #065f46;
+  font-weight: 700;
+}
+
+.kpiValueProfit {
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: #059669;
+  margin-top: 2px;
+}
+
+.kpiCardCash {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 14px;
+  padding: 12px 16px;
+}
+
+.kpiLabelCash {
+  font-size: 0.78rem;
+  color: #92400e;
+  font-weight: 700;
+}
+
+.kpiValueCash {
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: #d97706;
+  margin-top: 2px;
+}
+
+.kpiCardInvoices {
+  background: #faf5ff;
+  border: 1px solid #e9d5ff;
+  border-radius: 14px;
+  padding: 12px 16px;
+}
+
+.kpiLabelInvoices {
+  font-size: 0.78rem;
+  color: #6b21a8;
+  font-weight: 700;
+}
+
+.kpiValueInvoices {
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: #9333ea;
+  margin-top: 2px;
+}
+
+.notesBanner {
+  background: #faf5ff;
+  border: 1px solid #e9d5ff;
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  font-size: 0.85rem;
+  color: #6b21a8;
+}
+
+.tabsNav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  border-bottom: 1.5px solid #f0e1ec;
+  padding-bottom: 10px;
+}
+
+.tabBtn {
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 800;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: #5a4663;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.tabBtnActive {
+  background: #9333ea !important;
+  color: #ffffff !important;
+}
+
+.invoicesList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.invoiceCard {
+  border: 1px solid #ebdbe6;
+  border-radius: 14px;
+  background: #ffffff;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.invoiceCardExpanded {
+  border: 1.5px solid #9333ea;
+  border-radius: 14px;
+  background: #ffffff;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.invoiceSummaryBar {
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  cursor: pointer;
+  background: #ffffff;
+}
+
+.invoiceSummaryBarActive {
+  background: #faf5ff;
+}
+
+.invLeftGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.invIndexBadge {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: #f3e8ff;
+  color: #7e22ce;
+  font-size: 0.82rem;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.invNumberGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.invNumber {
+  font-weight: 900;
+  color: #db2777;
+  font-size: 0.95rem;
+}
+
+.invPaymentMethod {
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: #ecfdf5;
+  color: #065f46;
+  font-weight: 700;
+}
+
+.invCustomer {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.invRightGroup {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.invItemsCount {
+  font-size: 0.8rem;
+  background: #f8eff4;
+  border: 1px solid #f0e1ec;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-weight: 700;
+}
+
+.invTotal {
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: #1e1322;
+}
+
+.invChevron {
+  color: #9333ea;
+  display: flex;
+  align-items: center;
+}
+
+.expandedContainer {
+  border-top: 1px solid #ebdbe6;
+  padding: 12px;
+  background: #fdfafc;
+}
+
+.customTableSmall {
+  font-size: 0.82rem !important;
+}
+
+.thCenter {
+  text-align: center;
+}
+
+.tdName {
+  font-weight: 700;
+}
+
+.tdBarcode {
+  text-align: center;
+  font-family: monospace;
+  font-size: 0.78rem;
+}
+
+.tdSubtotal {
+  text-align: center;
+  font-weight: 800;
+  color: #db2777;
+}
+
+.tdProfit {
+  text-align: center;
+  font-weight: 800;
+  color: #059669;
+}
+
+.consolidatedName {
+  font-weight: 800;
+  color: #1e1322;
+}
+
+.consolidatedBarcode {
+  font-family: monospace;
+  font-size: 0.82rem;
+  background: #f3e8ff;
+  color: #7e22ce;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.consolidatedSales {
+  font-weight: 900;
+  color: #db2777;
+}
+
+.consolidatedProfit {
+  font-weight: 900;
+  color: #059669;
+}
+
+.paymentsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+.paymentCardCash {
+  background: #ecfdf5;
+  border: 1.5px solid #a7f3d0;
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.paymentHeadCash {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #065f46;
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+
+.paymentValCash {
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: #059669;
+  margin-top: 10px;
+}
+
+.paymentCardVisa {
+  background: #faf5ff;
+  border: 1.5px solid #e9d5ff;
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.paymentHeadVisa {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #6b21a8;
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+
+.paymentValVisa {
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: #9333ea;
+  margin-top: 10px;
+}
+
+.paymentCardTransfer {
+  background: #eff6ff;
+  border: 1.5px solid #bfdbfe;
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.paymentHeadTransfer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #1e40af;
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+
+.paymentValTransfer {
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: #2563eb;
+  margin-top: 10px;
+}
+
+.paymentCardCredit {
+  background: #fffbeb;
+  border: 1.5px solid #fde68a;
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.paymentHeadCredit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #92400e;
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+
+.paymentValCredit {
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: #d97706;
+  margin-top: 10px;
+}
+
+.modalFooter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+  padding-top: 14px;
+  border-top: 1px solid #f0e1ec;
+}

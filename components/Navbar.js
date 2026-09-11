@@ -2,18 +2,14 @@
 
 import React, { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { useAuth } from "@/context/AuthContext";
 import { 
   Menu, 
   Clock, 
-  PlusCircle, 
-  User, 
-  LogOut,
-  Sparkles
+  PlusCircle
 } from "lucide-react";
+import styles from "./Navbar.module.css";
 
 export default function Navbar({ onOpenAddModal, onOpenMobileSidebar }) {
-  const { user, isAdmin, logout } = useAuth();
   const pathname = usePathname();
   const [timeStr, setTimeStr] = useState("");
 
@@ -23,13 +19,15 @@ export default function Navbar({ onOpenAddModal, onOpenMobileSidebar }) {
     "/shop": "المحل وبضاعة المعرض",
     "/products": "المخزن الرئيسي",
     "/sales": "سجل فواتير المبيعات والمرتجعات",
+    "/returns": "حركة الصنف وسجل المرتجعات",
+    "/reports": "تقفيلة الأيام والورديات المؤرشفة",
+    "/treasury": "الخزنة والسيولة ورأس مال المشروع",
     "/customers": "دليل العملاء والحسابات والديون",
     "/suppliers": "إدارة الموردين والحسابات المالية",
     "/expenses": "سجل المصاريف والنفقات التشغيلية",
+    "/employees": "شؤون الموظفين والرواتب والحضور",
     "/settings": "إعدادات النظام وإدارة المستخدمين"
   };
-
-
 
   useEffect(() => {
     const updateTime = () => {
@@ -55,7 +53,7 @@ export default function Navbar({ onOpenAddModal, onOpenMobileSidebar }) {
   return (
     <header className="navbar-header glass-panel">
       {/* Right Side: Mobile Menu Button & Page Title */}
-      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+      <div className={styles.brandSection}>
         {onOpenMobileSidebar && (
           <button 
             onClick={onOpenMobileSidebar}
@@ -67,10 +65,10 @@ export default function Navbar({ onOpenAddModal, onOpenMobileSidebar }) {
         )}
 
         <div>
-          <h1 style={{ fontSize: "1.2rem", fontWeight: "900", color: "#1e1322", letterSpacing: "-0.01em" }}>
+          <h1 className={styles.title}>
             {pageTitles[pathname] || "مخزن Nelly للميكاب"}
           </h1>
-          <p style={{ fontSize: "0.76rem", color: "var(--text-muted)", fontWeight: "600", marginTop: "1px" }}>
+          <p className={styles.subtitle}>
             مستحضرات التجميل وجرد المخزون
           </p>
         </div>
@@ -80,19 +78,7 @@ export default function Navbar({ onOpenAddModal, onOpenMobileSidebar }) {
       <div className="navbar-user-actions">
         {/* Live Clock */}
         {timeStr && (
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "6px",
-            fontSize: "0.82rem",
-            color: "var(--text-secondary)",
-            background: "#fbf6f9",
-            padding: "6px 12px",
-            borderRadius: "10px",
-            border: "1px solid #ebdbe6",
-            fontWeight: "600",
-            whiteSpace: "nowrap"
-          }}>
+          <div className={styles.clockBadge}>
             <Clock size={14} color="#db2777" />
             <span className="num-font" dir="ltr">{timeStr}</span>
           </div>
@@ -102,8 +88,7 @@ export default function Navbar({ onOpenAddModal, onOpenMobileSidebar }) {
         {onOpenAddModal && (
           <button 
             onClick={onOpenAddModal}
-            className="btn-primary"
-            style={{ padding: "8px 18px", fontSize: "0.88rem" }}
+            className={`btn-primary ${styles.quickAddBtn}`}
           >
             <PlusCircle size={17} />
             إضافة صنف جديد

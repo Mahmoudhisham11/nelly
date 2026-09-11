@@ -29,6 +29,7 @@ import {
   Square, 
   Trash2 
 } from "lucide-react";
+import styles from "./ai.module.css";
 
 export default function AIAssistantPage() {
   const router = useRouter();
@@ -335,15 +336,7 @@ export default function AIAssistantPage() {
   };
 
   return (
-    <div style={{
-      display: "flex",
-      width: "100vw",
-      height: "100vh",
-      height: "100dvh",
-      overflow: "hidden",
-      background: "#fbf8fa",
-      direction: "rtl"
-    }}>
+    <div className={styles.pageWrapper}>
       {toastMessage && (
         <div className="fixed-toast-notification">
           <Sparkles className="toast-icon" />
@@ -358,126 +351,47 @@ export default function AIAssistantPage() {
       />
 
       {/* Main Full-Height Responsive Chat Viewport */}
-      <div style={{
-        flex: "1",
-        display: "flex",
-        flexDirection: "column",
-        height: "100vh",
-        height: "100dvh",
-        minWidth: "0",
-        background: "#ffffff",
-        position: "relative"
-      }}>
+      <div className={styles.chatViewport}>
         {/* Top Responsive Chat Header */}
-        <div style={{
-          height: "60px",
-          borderBottom: "1px solid #ebdbe6",
-          padding: "0 14px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          background: "#ffffff",
-          flexShrink: "0",
-          zIndex: "10"
-        }}>
+        <div className={styles.chatHeader}>
           {/* Left Title & Mobile Menu */}
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: "0" }}>
+          <div className={styles.headerLeft}>
             {/* Mobile Hamburger Button */}
             <button
               type="button"
               onClick={() => setIsMobileSidebarOpen(true)}
-              className="lg:hidden"
+              className={`lg:hidden ${styles.mobileMenuBtn}`}
               aria-label="Open sidebar menu"
-              style={{
-                background: "#faf5f8",
-                border: "1px solid #ebdbe6",
-                borderRadius: "10px",
-                padding: "7px",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: "0"
-              }}
             >
               <Menu size={18} color="#1e1322" />
             </button>
 
-            <div style={{
-              width: "36px",
-              height: "36px",
-              borderRadius: "10px",
-              background: "linear-gradient(135deg, #ec4899 0%, #9333ea 100%)",
-              color: "#ffffff",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: "0",
-              boxShadow: "0 2px 8px rgba(236, 72, 153, 0.25)"
-            }}>
+            <div className={styles.headerIconBox}>
               <Sparkles size={18} />
             </div>
 
-            <div style={{ minWidth: "0", overflow: "hidden" }}>
-              <h1 style={{
-                fontSize: "1rem",
-                fontWeight: "800",
-                color: "#1e1322",
-                margin: "0",
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis"
-              }}>
+            <div className={styles.headerTitleWrapper}>
+              <h1 className={styles.headerTitle}>
                 مستشار نيللي AI
               </h1>
-              <p className="hidden sm:block" style={{ fontSize: "0.74rem", color: "#715b7b", fontWeight: "600", margin: "0", whiteSpace: "nowrap" }}>
+              <p className={`hidden sm:block ${styles.headerSubtitle}`}>
                 متصل لحظياً بالمخزن والمحل والأرباح
               </p>
             </div>
           </div>
 
           {/* Right Controls & Status */}
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: "0" }}>
-            <div style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "5px",
-              background: "#fdf8fb",
-              border: "1px solid #ebdbe6",
-              padding: "4px 8px",
-              borderRadius: "9999px",
-              fontSize: "0.72rem",
-              fontWeight: "700",
-              color: "#1e1322"
-            }}>
-              <span style={{
-                width: "6px",
-                height: "6px",
-                borderRadius: "50%",
-                background: "#10b981",
-                display: "inline-block"
-              }}></span>
-              <span className="num-font" style={{ color: "#db2777" }}>{totalProducts}</span>
+          <div className={styles.headerRight}>
+            <div className={styles.statusPill}>
+              <span className={styles.statusDot}></span>
+              <span className={`num-font ${styles.statusCount}`}>{totalProducts}</span>
               <span className="hidden sm:inline">صنف</span>
             </div>
 
             <button
               type="button"
               onClick={() => setMessages([])}
-              style={{
-                background: "#faf5f8",
-                border: "1px solid #ebdbe6",
-                borderRadius: "10px",
-                padding: "6px 10px",
-                fontSize: "0.75rem",
-                fontWeight: "700",
-                color: "#1e1322",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "4px",
-                transition: "all 0.15s ease"
-              }}
+              className={styles.newChatBtn}
               title="محادثة جديدة"
             >
               <RotateCcw size={12} />
@@ -487,113 +401,36 @@ export default function AIAssistantPage() {
         </div>
 
         {/* Chat Feed */}
-        <div style={{
-          flex: "1",
-          overflowY: "auto",
-          padding: "16px 12px 16px 12px",
-          display: "flex",
-          flexDirection: "column",
-          gap: "16px",
-          background: "#faf8fa"
-        }}>
-          <div style={{
-            maxWidth: "860px",
-            width: "100%",
-            margin: "0 auto",
-            display: "flex",
-            flexDirection: "column",
-            gap: "16px"
-          }}>
+        <div className={styles.chatFeed}>
+          <div className={styles.chatFeedInner}>
             {messages.map((msg, idx) => {
               const isUser = msg.role === "user";
               return (
                 <div
                   key={idx}
-                  style={{
-                    display: "flex",
-                    gap: "8px",
-                    flexDirection: isUser ? "row-reverse" : "row",
-                    alignItems: "flex-start",
-                    width: "100%"
-                  }}
+                  className={`${styles.messageRow} ${isUser ? styles.messageRowUser : styles.messageRowAssistant}`}
                 >
                   {/* Avatar */}
-                  <div style={{
-                    width: "32px",
-                    height: "32px",
-                    borderRadius: "10px",
-                    background: isUser ? "#1e1322" : "linear-gradient(135deg, #ec4899 0%, #9333ea 100%)",
-                    color: "#ffffff",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: "0",
-                    boxShadow: isUser ? "0 2px 6px rgba(30,19,34,0.15)" : "0 2px 8px rgba(236,72,153,0.25)"
-                  }}>
+                  <div className={isUser ? styles.userAvatar : styles.assistantAvatar}>
                     {isUser ? <User size={16} /> : <Bot size={17} />}
                   </div>
 
                   {/* Message Bubble Container */}
-                  <div style={{
-                    maxWidth: "88%",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: isUser ? "flex-end" : "flex-start",
-                    minWidth: "0"
-                  }}>
+                  <div className={`${styles.bubbleContainer} ${isUser ? styles.bubbleContainerUser : styles.bubbleContainerAssistant}`}>
                     {isUser ? (
-                      <div style={{
-                        background: "#1e1322",
-                        color: "#ffffff",
-                        padding: "10px 14px",
-                        borderRadius: "16px 4px 16px 16px",
-                        fontSize: "0.9rem",
-                        lineHeight: "1.55",
-                        fontWeight: "600",
-                        boxShadow: "0 2px 8px rgba(30,19,34,0.1)",
-                        whiteSpace: "pre-wrap",
-                        wordBreak: "break-word"
-                      }}>
+                      <div className={styles.userBubble}>
                         {msg.content}
                       </div>
                     ) : (
-                      <div style={{
-                        background: "#ffffff",
-                        border: "1px solid #ebdbe6",
-                        borderRadius: "4px 16px 16px 16px",
-                        padding: "14px 16px",
-                        color: "#1e1322",
-                        boxShadow: "0 2px 10px rgba(0,0,0,0.02)",
-                        width: "100%",
-                        overflowX: "auto"
-                      }}>
+                      <div className={styles.assistantBubble}>
                         <AiMarkdownRenderer content={msg.content} />
 
                         {/* Message Actions */}
-                        <div style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "6px",
-                          marginTop: "10px",
-                          paddingTop: "8px",
-                          borderTop: "1px solid #f2e8ef"
-                        }}>
+                        <div className={styles.messageActions}>
                           <button
                             type="button"
                             onClick={() => handleCopyMessage(msg.content, idx)}
-                            style={{
-                              background: "transparent",
-                              border: "none",
-                              color: copiedIndex === idx ? "#059669" : "#715b7b",
-                              fontSize: "0.72rem",
-                              fontWeight: "700",
-                              cursor: "pointer",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "4px",
-                              padding: "2px 6px",
-                              borderRadius: "6px"
-                            }}
+                            className={`${styles.copyActionBtn} ${copiedIndex === idx ? styles.copyActionSuccess : styles.copyActionDefault}`}
                           >
                             {copiedIndex === idx ? <Check size={12} color="#059669" /> : <Copy size={12} />}
                             <span>{copiedIndex === idx ? "تم النسخ" : "نسخ الإجابة"}</span>
@@ -608,40 +445,12 @@ export default function AIAssistantPage() {
 
             {/* Generating Loading State */}
             {isGenerating && (
-              <div style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
-                <div style={{
-                  width: "32px",
-                  height: "32px",
-                  borderRadius: "10px",
-                  background: "linear-gradient(135deg, #ec4899 0%, #9333ea 100%)",
-                  color: "#ffffff",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: "0"
-                }}>
+              <div className={styles.generatingRow}>
+                <div className={styles.assistantAvatar}>
                   <Bot size={17} />
                 </div>
-                <div style={{
-                  background: "#ffffff",
-                  border: "1px solid #ebdbe6",
-                  borderRadius: "4px 16px 16px 16px",
-                  padding: "12px 16px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  color: "#7e22ce",
-                  fontWeight: "700",
-                  fontSize: "0.84rem",
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.02)"
-                }}>
-                  <div className="animate-spin" style={{
-                    width: "14px",
-                    height: "14px",
-                    borderRadius: "50%",
-                    border: "2px solid #9333ea",
-                    borderTopColor: "transparent"
-                  }}></div>
+                <div className={styles.generatingBox}>
+                  <div className={`animate-spin ${styles.spinner}`}></div>
                   <span>مستشار نيللي يقوم بتحليل الأرقام وصياغة الإجابة...</span>
                 </div>
               </div>
@@ -652,52 +461,17 @@ export default function AIAssistantPage() {
         </div>
 
         {/* Bottom Responsive Input Area */}
-        <div style={{
-          background: "#ffffff",
-          borderTop: "1px solid #ebdbe6",
-          padding: "10px 12px 12px 12px",
-          flexShrink: "0"
-        }}>
-          <div style={{ maxWidth: "860px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "8px" }}>
+        <div className={styles.inputArea}>
+          <div className={styles.inputAreaInner}>
             {/* Quick Suggestions Chips */}
-            <div style={{
-              display: "flex",
-              gap: "6px",
-              overflowX: "auto",
-              paddingBottom: "2px",
-              scrollbarWidth: "none",
-              WebkitOverflowScrolling: "touch"
-            }}>
+            <div className={styles.suggestionsScroll}>
               {quickSuggestions.map((item, idx) => (
                 <button
                   key={idx}
                   type="button"
                   onClick={() => handleSendMessage(item.query)}
                   disabled={isGenerating || isRecording}
-                  style={{
-                    background: "#fdf8fb",
-                    border: "1px solid #ebdbe6",
-                    borderRadius: "9999px",
-                    padding: "5px 12px",
-                    fontSize: "0.74rem",
-                    fontWeight: "700",
-                    color: "#1e1322",
-                    whiteSpace: "nowrap",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "4px",
-                    flexShrink: "0",
-                    transition: "all 0.15s ease"
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = "#db2777";
-                    e.currentTarget.style.background = "#ffffff";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = "#ebdbe6";
-                    e.currentTarget.style.background = "#fdf8fb";
-                  }}
+                  className={styles.suggestionChip}
                 >
                   <Zap size={11} color="#ec4899" />
                   <span>{item.label}</span>
@@ -707,52 +481,24 @@ export default function AIAssistantPage() {
 
             {/* Voice Active Recording Banner */}
             {isRecording && (
-              <div style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                background: "linear-gradient(135deg, #fff1f2 0%, #fdf2f8 100%)",
-                border: "1.5px solid #fecdd3",
-                borderRadius: "14px",
-                padding: "8px 12px",
-                flexWrap: "wrap",
-                gap: "8px"
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <div style={{
-                    width: "8px",
-                    height: "8px",
-                    borderRadius: "50%",
-                    background: "#e11d48",
-                    boxShadow: "0 0 0 4px rgba(225, 29, 72, 0.2)"
-                  }} />
-                  <span style={{ fontWeight: "800", color: "#9f1239", fontSize: "0.82rem" }}>
+              <div className={styles.recordingBanner}>
+                <div className={styles.recordingStatus}>
+                  <div className={styles.recordingPulse} />
+                  <span className={styles.recordingLabel}>
                     جاري التسجيل...
                   </span>
-                  <span className="num-font" style={{ fontWeight: "800", color: "#e11d48", background: "#ffffff", padding: "1px 6px", borderRadius: "5px", fontSize: "0.78rem" }}>
+                  <span className={`num-font ${styles.recordingTime}`}>
                     {formatTime(recordingSeconds)}
                   </span>
                 </div>
 
-                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <div className={styles.recordingActions}>
                   {/* Cancel Recording */}
                   <button
                     type="button"
                     onClick={cancelVoiceRecording}
                     title="إلغاء التسجيل"
-                    style={{
-                      background: "#ffffff",
-                      border: "1px solid #fecdd3",
-                      borderRadius: "8px",
-                      padding: "5px 8px",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "3px",
-                      fontSize: "0.74rem",
-                      fontWeight: "700",
-                      color: "#e11d48"
-                    }}
+                    className={styles.cancelRecordBtn}
                   >
                     <Trash2 size={13} />
                     <span>إلغاء</span>
@@ -763,20 +509,7 @@ export default function AIAssistantPage() {
                     type="button"
                     onClick={() => stopVoiceRecording(true)}
                     title="إيقاف وإرسال فوراً"
-                    style={{
-                      background: "linear-gradient(135deg, #ec4899 0%, #9333ea 100%)",
-                      color: "#ffffff",
-                      border: "none",
-                      borderRadius: "8px",
-                      padding: "5px 12px",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "4px",
-                      fontSize: "0.76rem",
-                      fontWeight: "800",
-                      boxShadow: "0 2px 6px rgba(236,72,153,0.3)"
-                    }}
+                    className={styles.stopRecordBtn}
                   >
                     <Square size={12} fill="#ffffff" />
                     <span>إيقاف وإرسال</span>
@@ -791,16 +524,7 @@ export default function AIAssistantPage() {
                 e.preventDefault();
                 handleSendMessage();
               }}
-              style={{
-                display: "flex",
-                alignItems: "flex-end",
-                gap: "6px",
-                background: "#faf5f8",
-                border: "1.5px solid #ebdbe6",
-                borderRadius: "14px",
-                padding: "6px 8px 6px 12px",
-                transition: "border-color 0.2s ease"
-              }}
+              className={styles.inputForm}
             >
               {/* Text Area */}
               <textarea
@@ -816,21 +540,7 @@ export default function AIAssistantPage() {
                 }}
                 disabled={isGenerating}
                 placeholder={isRecording ? "جاري تحويل صوتك لنص..." : "اكتب استفسارك، أو سجل صوتك بالميكروفون..."}
-                style={{
-                  flex: "1",
-                  border: "none",
-                  background: "transparent",
-                  outline: "none",
-                  resize: "none",
-                  fontFamily: "inherit",
-                  fontSize: "0.9rem",
-                  fontWeight: "600",
-                  color: "#1e1322",
-                  lineHeight: "1.45",
-                  maxHeight: "110px",
-                  minHeight: "22px",
-                  padding: "5px 0"
-                }}
+                className={styles.promptTextarea}
               />
 
               {/* Voice Record / Stop Button */}
@@ -839,21 +549,7 @@ export default function AIAssistantPage() {
                 onClick={isRecording ? () => stopVoiceRecording(true) : startVoiceRecording}
                 disabled={isGenerating}
                 title={isRecording ? "إيقاف التسجيل والإرسال فوراً" : "تسجيل ريكورد صوتي"}
-                style={{
-                  width: "36px",
-                  height: "36px",
-                  borderRadius: "10px",
-                  background: isRecording ? "#ffe4e6" : "#ffffff",
-                  color: isRecording ? "#e11d48" : "#715b7b",
-                  border: isRecording ? "1.5px solid #fda4af" : "1px solid #ebdbe6",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: "0",
-                  transition: "all 0.15s ease",
-                  boxShadow: isRecording ? "0 0 8px rgba(225, 29, 72, 0.25)" : "none"
-                }}
+                className={`${styles.voiceBtn} ${isRecording ? styles.voiceBtnActive : styles.voiceBtnInactive}`}
               >
                 {isRecording ? <Square size={15} fill="#e11d48" /> : <Mic size={17} />}
               </button>
@@ -862,25 +558,7 @@ export default function AIAssistantPage() {
               <button
                 type="submit"
                 disabled={!inputPrompt.trim() || isGenerating}
-                style={{
-                  width: "36px",
-                  height: "36px",
-                  borderRadius: "10px",
-                  background: (!inputPrompt.trim() || isGenerating)
-                    ? "#e2d6df"
-                    : "linear-gradient(135deg, #ec4899 0%, #9333ea 100%)",
-                  color: "#ffffff",
-                  border: "none",
-                  cursor: (!inputPrompt.trim() || isGenerating) ? "not-allowed" : "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: "0",
-                  boxShadow: (!inputPrompt.trim() || isGenerating)
-                    ? "none"
-                    : "0 2px 10px rgba(236,72,153,0.3)",
-                  transition: "all 0.15s ease"
-                }}
+                className={`${styles.sendBtn} ${(!inputPrompt.trim() || isGenerating) ? styles.sendBtnDisabled : styles.sendBtnActive}`}
                 title="إرسال (Enter)"
               >
                 <Send size={15} />

@@ -1,7 +1,6 @@
 "use client";
 
-import React from "react";
-import { Sparkles, CheckCircle2, TrendingUp, AlertTriangle, Lightbulb } from "lucide-react";
+import { Sparkles } from "lucide-react";
 
 /**
  * Rich Markdown Renderer designed for World-Class AI Responses in Arabic (RTL)

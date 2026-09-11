@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
-import { X, History, ArrowDownLeft, Trash2, Calendar, AlertCircle } from "lucide-react";
+import { useState } from "react";
+import { X, History, ArrowDownLeft, Trash2, AlertCircle } from "lucide-react";
 import { formatNumber } from "@/lib/utils";
+import styles from "./ExpenseItemHistoryModal.module.css";
 
 export default function ExpenseItemHistoryModal({ 
   isOpen, 
@@ -33,115 +34,63 @@ export default function ExpenseItemHistoryModal({
     }
   };
 
+  const isTotalActive = totalAmount > 0;
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div 
-        className="modal-content"
+        className={`modal-content ${styles.modalContainer}`}
         onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: "580px", padding: "26px" }}
       >
         {/* Header */}
-        <div style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: "18px",
-          paddingBottom: "12px",
-          borderBottom: "1px solid #f0e1ec"
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div style={{
-              width: "40px",
-              height: "40px",
-              borderRadius: "12px",
-              background: "linear-gradient(135deg, #9333ea 0%, #7e22ce 100%)",
-              color: "#ffffff",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "0 4px 14px rgba(147, 51, 234, 0.25)"
-            }}>
+        <div className={styles.modalHeader}>
+          <div className={styles.headerBrand}>
+            <div className={styles.headerIcon}>
               <History size={22} />
             </div>
             <div>
-              <h3 style={{ fontSize: "1.2rem", fontWeight: "900", color: "#1e1322" }}>
+              <h3 className={styles.headerTitle}>
                 سجل حركات المصروف
               </h3>
-              <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", fontWeight: "600" }}>
-                البند: <strong style={{ color: "#1e1322" }}>{item.name}</strong> • شهر: <strong style={{ color: "#db2777" }}>{monthLabel}</strong>
+              <p className={styles.headerSubtitle}>
+                البند: <strong className={styles.itemNameHighlight}>{item.name}</strong> • شهر: <strong className={styles.monthHighlight}>{monthLabel}</strong>
               </p>
             </div>
           </div>
 
-          <button 
-            onClick={onClose}
-            style={{
-              background: "#fdf2f8",
-              border: "1px solid #fbcfe8",
-              color: "#db2777",
-              width: "30px",
-              height: "30px",
-              borderRadius: "8px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer"
-            }}
-          >
+          <button onClick={onClose} className={styles.closeBtn}>
             <X size={16} />
           </button>
         </div>
 
         {/* Current Total Ribbon */}
-        <div style={{
-          background: totalAmount > 0 ? "#fdf2f8" : "#ecfdf5",
-          border: `1px solid ${totalAmount > 0 ? "#fbcfe8" : "#a7f3d0"}`,
-          borderRadius: "12px",
-          padding: "12px 16px",
-          marginBottom: "18px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between"
-        }}>
-          <span style={{ fontSize: "0.88rem", fontWeight: "700", color: "#4a3650" }}>
+        <div className={`${styles.totalRibbon} ${isTotalActive ? styles.totalRibbonActive : styles.totalRibbonZero}`}>
+          <span className={styles.ribbonLabel}>
             إجمالي المصروف في هذا الشهر:
           </span>
-          <strong style={{ fontSize: "1.15rem", color: totalAmount > 0 ? "#be185d" : "#047857" }}>
+          <strong className={`${styles.ribbonValue} ${isTotalActive ? styles.ribbonValueActive : styles.ribbonValueZero}`}>
             <span className="num-font" dir="ltr">{formatNumber(totalAmount)}</span> ج.م
           </strong>
         </div>
 
         {/* Confirmation Inline Alert */}
         {confirmTx && (
-          <div style={{
-            background: "#fef2f2",
-            border: "1.5px solid #fecaca",
-            borderRadius: "12px",
-            padding: "12px 16px",
-            marginBottom: "16px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: "12px",
-            animation: "fadeIn 0.2s ease"
-          }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#991b1b", fontSize: "0.85rem", fontWeight: "700" }}>
+          <div className={styles.confirmBox}>
+            <div className={styles.confirmTextWrapper}>
               <AlertCircle size={18} color="#dc2626" />
               <span>هل تريد حذف هذه الدفعة بمبلغ <span className="num-font" dir="ltr">{formatNumber(confirmTx.amount)}</span> ج.م وخصمها من الإجمالي؟</span>
             </div>
-            <div style={{ display: "flex", gap: "8px", flexShrink: 0 }}>
+            <div className={styles.confirmBtnGroup}>
               <button
                 onClick={() => setConfirmTx(null)}
-                className="btn-secondary"
-                style={{ padding: "5px 12px", fontSize: "0.78rem" }}
+                className={`btn-secondary ${styles.confirmCancelBtn}`}
               >
                 إلغاء
               </button>
               <button
                 onClick={handleConfirmDelete}
                 disabled={isDeleting}
-                className="btn-danger"
-                style={{ padding: "5px 14px", fontSize: "0.78rem" }}
+                className={`btn-danger ${styles.confirmDeleteBtn}`}
               >
                 {isDeleting ? "جاري الحذف..." : "نعم، احذف"}
               </button>
@@ -150,55 +99,35 @@ export default function ExpenseItemHistoryModal({
         )}
 
         {/* Transactions List */}
-        <div style={{ maxHeight: "340px", overflowY: "auto", paddingRight: "4px" }}>
+        <div className={styles.listScrollWrap}>
           {transactions.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "30px", color: "var(--text-muted)", fontSize: "0.88rem", fontWeight: "600" }}>
+            <div className={styles.emptyMsg}>
               لم يتم صرف أي مبالغ على هذا البند في شهر {monthLabel}.
             </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            <div className={styles.txList}>
               {[...transactions].reverse().map((tx, idx) => (
                 <div
                   key={tx.id || idx}
-                  style={{
-                    background: "#ffffff",
-                    border: "1px solid #f0e1ec",
-                    borderRadius: "12px",
-                    padding: "12px 14px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: "12px",
-                    boxShadow: "0 1px 3px rgba(0,0,0,0.02)"
-                  }}
+                  className={styles.txCard}
                 >
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                    <div style={{
-                      width: "34px",
-                      height: "34px",
-                      borderRadius: "10px",
-                      background: "#fdf2f8",
-                      color: "#db2777",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexShrink: 0
-                    }}>
+                  <div className={styles.txInfoGroup}>
+                    <div className={styles.txIconBox}>
                       <ArrowDownLeft size={18} />
                     </div>
                     <div>
-                      <div style={{ fontWeight: "800", fontSize: "0.9rem", color: "#1e1322" }}>
+                      <div className={styles.txTitle}>
                         {tx.notes || "إضافة مصروف"}
-                        {tx.method && <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginRight: "6px", fontWeight: "600" }}>({tx.method})</span>}
+                        {tx.method && <span className={styles.txMethodTag}>({tx.method})</span>}
                       </div>
-                      <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "2px", fontWeight: "600" }}>
+                      <div className={styles.txDate}>
                         تاريخ الصرف: <span className="num-font" dir="ltr">{tx.date}</span>
                       </div>
                     </div>
                   </div>
 
-                  <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-                    <div style={{ fontWeight: "900", fontSize: "1.05rem", color: "#be185d" }}>
+                  <div className={styles.txRightSide}>
+                    <div className={styles.txAmount}>
                       <span className="num-font" dir="ltr">{formatNumber(tx.amount)}</span> ج.م
                     </div>
 
@@ -206,18 +135,7 @@ export default function ExpenseItemHistoryModal({
                       <button
                         onClick={() => setConfirmTx(tx)}
                         title="حذف هذه الدفعة"
-                        style={{
-                          background: "#fef2f2",
-                          border: "1px solid #fecaca",
-                          color: "#dc2626",
-                          width: "30px",
-                          height: "30px",
-                          borderRadius: "8px",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          cursor: "pointer"
-                        }}
+                        className={styles.deleteTxBtn}
                       >
                         <Trash2 size={14} />
                       </button>
@@ -230,11 +148,10 @@ export default function ExpenseItemHistoryModal({
         </div>
 
         {/* Footer */}
-        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "20px", paddingTop: "12px", borderTop: "1px solid #f0e1ec" }}>
+        <div className={styles.modalFooter}>
           <button 
             onClick={onClose}
-            className="btn-secondary"
-            style={{ padding: "8px 22px" }}
+            className={`btn-secondary ${styles.closeFooterBtn}`}
           >
             إغلاق
           </button>

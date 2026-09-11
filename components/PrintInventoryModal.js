@@ -2,19 +2,8 @@
 
 import React, { useState, useMemo } from "react";
 import { formatNumber, roundCurrency } from "@/lib/utils";
-import { 
-  X, 
-  Printer, 
-  FileText, 
-  CheckCircle2, 
-  Boxes, 
-  Layers, 
-  DollarSign, 
-  AlertTriangle,
-  SlidersHorizontal,
-  Check,
-  ShieldAlert
-} from "lucide-react";
+import { X, Printer, FileText } from "lucide-react";
+import styles from "./PrintInventoryModal.module.css";
 
 export default function PrintInventoryModal({ 
   isOpen, 
@@ -28,16 +17,16 @@ export default function PrintInventoryModal({
   const [filterCategory, setFilterCategory] = useState("all");
   const [sortBy, setSortBy] = useState("name_asc"); // "name_asc" | "qty_asc" | "qty_desc" | "category"
 
-  if (!isOpen) return null;
-
   // Categories list
   const categories = useMemo(() => {
+    if (!products || !Array.isArray(products)) return ["all"];
     const set = new Set(products.map(p => p.category).filter(Boolean));
     return ["all", ...Array.from(set)];
   }, [products]);
 
   // Filtered and sorted products
   const processedProducts = useMemo(() => {
+    if (!products || !Array.isArray(products)) return [];
     let list = products.filter(p => filterCategory === "all" || p.category === filterCategory);
 
     return list.sort((a, b) => {
@@ -48,6 +37,15 @@ export default function PrintInventoryModal({
       return 0;
     });
   }, [products, filterCategory, sortBy]);
+
+  // Report Serial Number (pure and stable)
+  const reportSerial = useMemo(() => {
+    const d = new Date();
+    const rand = Math.floor(1000 + Math.random() * 9000);
+    return `INV-${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}-${rand}`;
+  }, [isOpen]);
+
+  if (!isOpen) return null;
 
   // Calculations
   const totalItemsCount = processedProducts.length;
@@ -68,8 +66,6 @@ export default function PrintInventoryModal({
   hours = hours % 12 || 12;
   const formattedTime = `${hours}:${minutes} ${ampm}`;
 
-  const reportSerial = `INV-${currentDate.getFullYear()}${String(currentDate.getMonth() + 1).padStart(2, '0')}${String(currentDate.getDate()).padStart(2, '0')}-${Math.floor(1000 + Math.random() * 9000)}`;
-
   const handlePrint = () => {
     window.print();
   };
@@ -77,55 +73,29 @@ export default function PrintInventoryModal({
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div 
-        className="modal-content"
+        className={`modal-content ${styles.modalContainer}`}
         onClick={(e) => e.stopPropagation()}
-        style={{ 
-          maxWidth: "1050px", 
-          width: "96%",
-          padding: "24px", 
-          background: "#ffffff", 
-          maxHeight: "92vh",
-          overflowY: "auto",
-          borderRadius: "22px"
-        }}
       >
         {/* Top Control Bar (Hidden on Print) */}
-        <div className="no-print" style={{ 
-          display: "flex", 
-          alignItems: "center", 
-          justifyContent: "space-between", 
-          marginBottom: "18px",
-          borderBottom: "1.5px solid #fce7f3",
-          paddingBottom: "14px"
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div style={{
-              width: "40px",
-              height: "40px",
-              borderRadius: "12px",
-              background: "linear-gradient(135deg, #ec4899 0%, #db2777 100%)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#fff"
-            }}>
+        <div className={`no-print ${styles.topBar}`}>
+          <div className={styles.brandGroup}>
+            <div className={styles.iconBox}>
               <FileText size={22} />
             </div>
             <div>
-              <h3 style={{ fontSize: "1.25rem", color: "#1e1322", fontWeight: "900" }}>
+              <h3 className={styles.modalTitle}>
                 {title}
               </h3>
-              <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", fontWeight: "600" }}>
+              <p className={styles.modalSub}>
                 تقرير معتمد جاهز للطباعة المباشرة على ورق A4 أو الحفظ كملف PDF
               </p>
             </div>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <div className={styles.actionsGroup}>
             <button 
               onClick={handlePrint} 
-              className="btn-primary"
-              style={{ padding: "10px 24px", fontSize: "0.95rem" }}
+              className={`btn-primary ${styles.printBtn}`}
             >
               <Printer size={18} />
               طباعة الكشف الآن (A4)
@@ -141,48 +111,35 @@ export default function PrintInventoryModal({
         </div>
 
         {/* Print Options Toolbar (Hidden on Print) */}
-        <div className="no-print" style={{
-          background: "#fdf5f9",
-          border: "1px solid #fbcfe8",
-          borderRadius: "14px",
-          padding: "12px 18px",
-          marginBottom: "20px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          flexWrap: "wrap",
-          gap: "12px",
-          fontSize: "0.85rem"
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
-            <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", fontWeight: "700", color: "#374151" }}>
+        <div className={`no-print ${styles.optionsToolbar}`}>
+          <div className={styles.checkboxOptions}>
+            <label className={styles.checkLabel}>
               <input 
                 type="checkbox" 
                 checked={includeValuation} 
                 onChange={(e) => setIncludeValuation(e.target.checked)} 
-                style={{ accentColor: "#db2777" }}
+                className={styles.pinkCheckbox}
               />
               إظهار الأسعار والقيم المالية (للمسؤول والمحاسب)
             </label>
 
-            <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", fontWeight: "700", color: "#374151" }}>
+            <label className={styles.checkLabel}>
               <input 
                 type="checkbox" 
                 checked={includeAuditColumn} 
                 onChange={(e) => setIncludeAuditColumn(e.target.checked)} 
-                style={{ accentColor: "#db2777" }}
+                className={styles.pinkCheckbox}
               />
               إضافة خانة "الجرد الفعلي بالقلم ✍️"
             </label>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <div className={styles.selectsGroup}>
             {/* Category Filter */}
             <select
               value={filterCategory}
               onChange={(e) => setFilterCategory(e.target.value)}
-              className="form-input"
-              style={{ padding: "6px 12px", fontSize: "0.82rem", borderRadius: "8px", width: "auto" }}
+              className={`form-input ${styles.filterSelect}`}
             >
               <option value="all">جميع الأقسام ({products.length})</option>
               {categories.filter(c => c !== "all").map(c => (
@@ -194,8 +151,7 @@ export default function PrintInventoryModal({
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="form-input"
-              style={{ padding: "6px 12px", fontSize: "0.82rem", borderRadius: "8px", width: "auto" }}
+              className={`form-input ${styles.filterSelect}`}
             >
               <option value="name_asc">الترتيب: أبجدياً</option>
               <option value="qty_asc">الترتيب: النواقص أولاً</option>
@@ -208,122 +164,89 @@ export default function PrintInventoryModal({
         {/* ===================================================================
             PRINTABLE ENTERPRISE INVENTORY SHEET (Official A4 Format)
            =================================================================== */}
-        <div id="printable-inventory-document" style={{
-          background: "#ffffff",
-          color: "#000000",
-          padding: "20px 24px",
-          borderRadius: "12px",
-          border: "1.5px solid #d1d5db",
-          fontFamily: "var(--font-family), Arial, Tahoma, sans-serif"
-        }}>
+        <div id="printable-inventory-document" className={styles.printableDocument}>
           {/* Document Header */}
-          <div style={{
-            display: "flex",
-            alignItems: "flex-start",
-            justifyContent: "space-between",
-            borderBottom: "2.5px solid #111827",
-            paddingBottom: "14px",
-            marginBottom: "16px"
-          }}>
+          <div className={styles.docHeader}>
             <div>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <span style={{ fontSize: "1.4rem", fontWeight: "900", color: "#db2777", letterSpacing: "-0.5px" }}>
+              <div className={styles.brandNameHeader}>
+                <span className={styles.brandPink}>
                   NELLY COSMETICS
                 </span>
-                <span style={{ fontSize: "1.1rem", fontWeight: "800", color: "#111827" }}>
+                <span className={styles.locationTitle}>
                   | {locationName}
                 </span>
               </div>
-              <h1 style={{ fontSize: "1.2rem", fontWeight: "900", color: "#111827", marginTop: "4px" }}>
+              <h1 className={styles.docTitle}>
                 {title}
               </h1>
-              <div style={{ fontSize: "0.82rem", color: "#4b5563", marginTop: "4px", display: "flex", gap: "16px" }}>
+              <div className={styles.docDateRow}>
                 <span>تاريخ التقرير: <strong>{formattedDate}</strong></span>
                 <span>توقيت الطباعة: <strong className="num-font">{formattedTime}</strong></span>
               </div>
             </div>
 
             {/* Official Serial & Meta Box */}
-            <div style={{
-              background: "#f9fafb",
-              border: "1.5px solid #d1d5db",
-              borderRadius: "10px",
-              padding: "8px 14px",
-              textAlign: "right",
-              fontSize: "0.8rem",
-              minWidth: "190px"
-            }}>
-              <div>رقم التقرير: <strong className="num-font" dir="ltr" style={{ color: "#db2777" }}>{reportSerial}</strong></div>
-              <div style={{ marginTop: "2px" }}>نوع المستند: <strong>كشف جرد معتمد</strong></div>
-              <div style={{ marginTop: "2px" }}>حالة المخزون: <strong>مطابقة دورية</strong></div>
+            <div className={styles.metaBox}>
+              <div>رقم التقرير: <strong className={`num-font ${styles.serialPink}`} dir="ltr">{reportSerial}</strong></div>
+              <div className={styles.metaRow}>نوع المستند: <strong>كشف جرد معتمد</strong></div>
+              <div className={styles.metaRow}>حالة المخزون: <strong>مطابقة دورية</strong></div>
             </div>
           </div>
 
           {/* Executive KPI Statistics Grid */}
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: includeValuation ? "repeat(4, 1fr)" : "repeat(3, 1fr)",
-            gap: "10px",
-            marginBottom: "18px"
-          }}>
-            <div style={{ background: "#fdf2f8", border: "1px solid #fbcfe8", borderRadius: "8px", padding: "8px 12px" }}>
-              <div style={{ fontSize: "0.75rem", color: "#9d174d", fontWeight: "700" }}>إجمالي الأصناف</div>
-              <div className="num-font" dir="ltr" style={{ fontSize: "1.3rem", fontWeight: "900", color: "#831843" }}>
+          <div className={`${styles.kpiGrid} ${includeValuation ? styles.kpiGrid4 : styles.kpiGrid3}`}>
+            <div className={styles.kpiCardPink}>
+              <div className={styles.kpiLabelPink}>إجمالي الأصناف</div>
+              <div className={`num-font ${styles.kpiValPink}`} dir="ltr">
                 {formatNumber(totalItemsCount)}
               </div>
             </div>
 
-            <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "8px", padding: "8px 12px" }}>
-              <div style={{ fontSize: "0.75rem", color: "#15803d", fontWeight: "700" }}>إجمالي عدد القطع</div>
-              <div className="num-font" dir="ltr" style={{ fontSize: "1.3rem", fontWeight: "900", color: "#14532d" }}>
+            <div className={styles.kpiCardGreen}>
+              <div className={styles.kpiLabelGreen}>إجمالي عدد القطع</div>
+              <div className={`num-font ${styles.kpiValGreen}`} dir="ltr">
                 {formatNumber(totalQuantityCount)}
               </div>
             </div>
 
             {includeValuation && (
-              <div style={{ background: "#faf5ff", border: "1px solid #e9d5ff", borderRadius: "8px", padding: "8px 12px" }}>
-                <div style={{ fontSize: "0.75rem", color: "#7e22ce", fontWeight: "700" }}>قيمة رأس المال (جملة)</div>
-                <div style={{ fontSize: "1.3rem", fontWeight: "900", color: "#581c87" }}>
-                  <span className="num-font" dir="ltr">{formatNumber(totalWholesaleValue)}</span> <span style={{ fontSize: "0.75rem" }}>ج.م</span>
+              <div className={styles.kpiCardPurple}>
+                <div className={styles.kpiLabelPurple}>قيمة رأس المال (جملة)</div>
+                <div className={styles.kpiValPurple}>
+                  <span className="num-font" dir="ltr">{formatNumber(totalWholesaleValue)}</span> <span className={styles.currencyUnit}>ج.م</span>
                 </div>
               </div>
             )}
 
-            <div style={{ background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: "8px", padding: "8px 12px" }}>
-              <div style={{ fontSize: "0.75rem", color: "#c2410c", fontWeight: "700" }}>أصناف منخفضة / حرجة</div>
-              <div className="num-font" dir="ltr" style={{ fontSize: "1.3rem", fontWeight: "900", color: "#9a3412" }}>
+            <div className={styles.kpiCardOrange}>
+              <div className={styles.kpiLabelOrange}>أصناف منخفضة / حرجة</div>
+              <div className={`num-font ${styles.kpiValOrange}`} dir="ltr">
                 {formatNumber(lowStockCount)}
               </div>
             </div>
           </div>
 
           {/* Clean Enterprise Inventory Table */}
-          <table style={{
-            width: "100%",
-            borderCollapse: "collapse",
-            textAlign: "right",
-            fontSize: "0.85rem",
-            marginBottom: "20px"
-          }}>
+          <table className={styles.inventoryTable}>
             <thead>
-              <tr style={{ background: "#f3f4f6", borderTop: "2px solid #111827", borderBottom: "2px solid #111827" }}>
-                <th style={{ padding: "8px 10px", width: "35px", textAlign: "center", fontWeight: "900" }}>#</th>
-                <th style={{ padding: "8px 10px", width: "130px", fontWeight: "900" }}>الباركود</th>
-                <th style={{ padding: "8px 10px", fontWeight: "900" }}>اسم الصنف / الماركة</th>
-                <th style={{ padding: "8px 10px", width: "110px", fontWeight: "900" }}>القسم</th>
-                <th style={{ padding: "8px 10px", textAlign: "center", width: "95px", fontWeight: "900" }}>رصيد السيستم</th>
+              <tr className={styles.inventoryTheadRow}>
+                <th className={styles.thIndex}>#</th>
+                <th className={styles.thBarcode}>الباركود</th>
+                <th className={styles.thName}>اسم الصنف / الماركة</th>
+                <th className={styles.thCategory}>القسم</th>
+                <th className={styles.thQty}>رصيد السيستم</th>
                 {includeAuditColumn && (
-                  <th style={{ padding: "8px 10px", textAlign: "center", width: "100px", fontWeight: "900", background: "#fef3c7" }}>
+                  <th className={styles.thAudit}>
                     الجرد الفعلي ✍️
                   </th>
                 )}
                 {includeValuation && (
                   <>
-                    <th style={{ padding: "8px 10px", textAlign: "center", width: "95px", fontWeight: "900" }}>سعر الجملة</th>
-                    <th style={{ padding: "8px 10px", textAlign: "center", width: "110px", fontWeight: "900" }}>إجمالي القيمة</th>
+                    <th className={styles.thPrice}>سعر الجملة</th>
+                    <th className={styles.thTotalVal}>إجمالي القيمة</th>
                   </>
                 )}
-                <th style={{ padding: "8px 10px", textAlign: "center", width: "90px", fontWeight: "900" }}>الحالة</th>
+                <th className={styles.thStatus}>الحالة</th>
               </tr>
             </thead>
             <tbody>
@@ -338,58 +261,50 @@ export default function PrintInventoryModal({
                 return (
                   <tr 
                     key={item.id || index}
-                    style={{ 
-                      borderBottom: "1px solid #e5e7eb",
-                      background: index % 2 === 0 ? "#ffffff" : "#fdfafc"
-                    }}
+                    className={`${styles.tableRow} ${index % 2 === 0 ? styles.tableRowEven : styles.tableRowOdd}`}
                   >
-                    <td style={{ padding: "7px 8px", textAlign: "center", fontWeight: "700" }}>
+                    <td className={styles.tdIndex}>
                       <span className="num-font" dir="ltr">{index + 1}</span>
                     </td>
-                    <td style={{ padding: "7px 8px" }}>
-                      <span className="num-font" dir="ltr" style={{ 
-                        fontFamily: "monospace", 
-                        fontWeight: "900", 
-                        color: "#000000",
-                        letterSpacing: "0.5px"
-                      }}>
+                    <td className={styles.tdBarcode}>
+                      <span className={`num-font ${styles.barcodeCode}`} dir="ltr">
                         {item.barcode || item.code || "—"}
                       </span>
                     </td>
-                    <td style={{ padding: "7px 8px", fontWeight: "700", color: "#111827" }}>
+                    <td className={styles.tdName}>
                       {item.name}
-                      {item.brand && <span style={{ fontSize: "0.75rem", color: "#6b7280", marginRight: "4px" }}>({item.brand})</span>}
+                      {item.brand && <span className={styles.brandMuted}>({item.brand})</span>}
                     </td>
-                    <td style={{ padding: "7px 8px", fontSize: "0.8rem", color: "#4b5563" }}>
+                    <td className={styles.tdCategory}>
                       {item.category || "عام"}
                     </td>
-                    <td style={{ padding: "7px 8px", textAlign: "center" }}>
-                      <strong className="num-font" dir="ltr" style={{ fontSize: "0.95rem", color: isOut ? "#dc2626" : isLow ? "#c2410c" : "#111827" }}>
+                    <td className={styles.tdQty}>
+                      <strong className={`num-font ${styles.qtyValue} ${isOut ? styles.qtyOut : isLow ? styles.qtyLow : styles.qtyNormal}`} dir="ltr">
                         {formatNumber(qty)}
                       </strong>
                     </td>
                     {includeAuditColumn && (
-                      <td style={{ padding: "7px 8px", textAlign: "center", borderLeft: "1px dashed #d1d5db", borderRight: "1px dashed #d1d5db" }}>
-                        <span style={{ display: "inline-block", width: "45px", height: "18px", borderBottom: "1.5px solid #000000" }}></span>
+                      <td className={styles.tdAudit}>
+                        <span className={styles.auditLine}></span>
                       </td>
                     )}
                     {includeValuation && (
                       <>
-                        <td style={{ padding: "7px 8px", textAlign: "center" }}>
-                          <span className="num-font" dir="ltr" style={{ fontWeight: "700" }}>{formatNumber(cost)}</span>
+                        <td className={styles.tdPrice}>
+                          <span className={`num-font ${styles.priceWeight}`} dir="ltr">{formatNumber(cost)}</span>
                         </td>
-                        <td style={{ padding: "7px 8px", textAlign: "center" }}>
-                          <strong className="num-font" dir="ltr" style={{ fontWeight: "900" }}>{formatNumber(lineVal)}</strong>
+                        <td className={styles.tdPrice}>
+                          <strong className={`num-font ${styles.totalPriceWeight}`} dir="ltr">{formatNumber(lineVal)}</strong>
                         </td>
                       </>
                     )}
-                    <td style={{ padding: "7px 8px", textAlign: "center", fontSize: "0.75rem", fontWeight: "800" }}>
+                    <td className={styles.tdStatus}>
                       {isOut ? (
-                        <span style={{ color: "#dc2626" }}>نفد ❌</span>
+                        <span className={styles.statusOut}>نفد ❌</span>
                       ) : isLow ? (
-                        <span style={{ color: "#ea580c" }}>قليل ⚠️</span>
+                        <span className={styles.statusLow}>قليل ⚠️</span>
                       ) : (
-                        <span style={{ color: "#059669" }}>متوفر ✓</span>
+                        <span className={styles.statusNormal}>متوفر ✓</span>
                       )}
                     </td>
                   </tr>
@@ -399,30 +314,20 @@ export default function PrintInventoryModal({
           </table>
 
           {/* Official Signatures & Approval Footer */}
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
-            gap: "20px",
-            marginTop: "24px",
-            paddingTop: "14px",
-            borderTop: "2px solid #111827",
-            textAlign: "center",
-            fontSize: "0.82rem",
-            color: "#111827"
-          }}>
+          <div className={styles.signaturesFooter}>
             <div>
-              <div style={{ fontWeight: "800", marginBottom: "30px" }}>إعداد / مسؤول الجرد:</div>
-              <div style={{ borderTop: "1px dashed #6b7280", paddingTop: "4px", color: "#6b7280" }}>التوقيع والتاريخ</div>
+              <div className={styles.signatureRole}>إعداد / مسؤول الجرد:</div>
+              <div className={styles.signatureLine}>التوقيع والتاريخ</div>
             </div>
 
             <div>
-              <div style={{ fontWeight: "800", marginBottom: "30px" }}>مراجعة / مراقب المخزون:</div>
-              <div style={{ borderTop: "1px dashed #6b7280", paddingTop: "4px", color: "#6b7280" }}>التوقيع والتاريخ</div>
+              <div className={styles.signatureRole}>مراجعة / مراقب المخزون:</div>
+              <div className={styles.signatureLine}>التوقيع والتاريخ</div>
             </div>
 
             <div>
-              <div style={{ fontWeight: "800", marginBottom: "30px" }}>اعتماد / المدير العام:</div>
-              <div style={{ borderTop: "1px dashed #6b7280", paddingTop: "4px", color: "#6b7280" }}>الختم والتوقيع الرسمي</div>
+              <div className={styles.signatureRole}>اعتماد / المدير العام:</div>
+              <div className={styles.signatureLine}>الختم والتوقيع الرسمي</div>
             </div>
           </div>
         </div>

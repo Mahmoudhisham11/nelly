@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
-import { PlusCircle, MinusCircle, DollarSign, Award, X, AlertCircle } from "lucide-react";
+import { useState } from "react";
+import { PlusCircle, MinusCircle, DollarSign, Award, X } from "lucide-react";
 import { addEmployeeTransaction } from "@/lib/employeesService";
+import styles from "./EmployeeTransactionModal.module.css";
 
 export default function EmployeeTransactionModal({ isOpen, onClose, employee, onSaved }) {
   const [type, setType] = useState("bonus"); // bonus | penalty | advance | commission
@@ -46,117 +47,60 @@ export default function EmployeeTransactionModal({ isOpen, onClose, employee, on
   };
 
   const typesConfig = [
-    { id: "bonus", label: "علاوة / مكافأة (+)", icon: Award, bg: "#ecfdf5", border: "#a7f3d0", color: "#059669" },
-    { id: "penalty", label: "جزاء / خصم (-)", icon: MinusCircle, bg: "#fef2f2", border: "#fecaca", color: "#dc2626" },
-    { id: "advance", label: "سلفة / مسحوبات (-)", icon: DollarSign, bg: "#fffbeb", border: "#fde68a", color: "#d97706" },
-    { id: "commission", label: "عمولة إضافية (+)", icon: PlusCircle, bg: "#eff6ff", border: "#bfdbfe", color: "#2563eb" }
+    { id: "bonus", label: "علاوة / مكافأة (+)", icon: Award, activeClass: styles.typeBtnBonusActive },
+    { id: "penalty", label: "جزاء / خصم (-)", icon: MinusCircle, activeClass: styles.typeBtnPenaltyActive },
+    { id: "advance", label: "سلفة / مسحوبات (-)", icon: DollarSign, activeClass: styles.typeBtnAdvanceActive },
+    { id: "commission", label: "عمولة إضافية (+)", icon: PlusCircle, activeClass: styles.typeBtnCommissionActive }
   ];
 
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div 
-        className="modal-content"
+        className={`modal-content ${styles.modalContainer}`}
         onClick={(e) => e.stopPropagation()}
-        style={{ 
-          maxWidth: "520px", 
-          maxHeight: "min(92vh, 760px)", 
-          display: "flex", 
-          flexDirection: "column", 
-          overflow: "hidden",
-          padding: 0 
-        }}
       >
         {/* Header */}
-        <div style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "18px 24px",
-          borderBottom: "1px solid #f0e1ec",
-          background: "#ffffff",
-          flexShrink: 0
-        }}>
+        <div className={styles.modalHeader}>
           <div>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <h3 style={{ fontSize: "1.25rem", fontWeight: "900", color: "#1e1322", margin: 0 }}>
+            <div className={styles.headerTitleWrapper}>
+              <h3 className={styles.headerTitle}>
                 تسجيل حركة مالية
               </h3>
-              <span style={{
-                fontSize: "0.82rem",
-                fontWeight: "800",
-                background: "#fdf2f8",
-                color: "#db2777",
-                padding: "2px 10px",
-                borderRadius: "20px",
-                border: "1px solid #fbcfe8"
-              }}>
+              <span className={styles.employeeNameTag}>
                 {employee.name}
               </span>
             </div>
-            <p style={{ fontSize: "0.8rem", color: "#5a4663", margin: "3px 0 0 0", fontWeight: "600" }}>
-              كود الموظف: <span className="num-font" style={{ fontWeight: "800", color: "#1e1322" }}>{employee.code}</span>
+            <p className={styles.headerSubtitle}>
+              كود الموظف: <span className={`num-font ${styles.employeeCode}`}>{employee.code}</span>
             </p>
           </div>
 
           <button 
             type="button"
             onClick={onClose}
-            style={{
-              background: "#fdf2f8",
-              border: "none",
-              borderRadius: "10px",
-              padding: "8px",
-              cursor: "pointer",
-              color: "#db2777"
-            }}
+            className={styles.closeBtn}
           >
             <X size={18} />
           </button>
         </div>
 
         {/* Form Container */}
-        <form 
-          onSubmit={handleSubmit} 
-          style={{ 
-            display: "flex", 
-            flexDirection: "column", 
-            flex: "1 1 auto", 
-            minHeight: 0, 
-            overflow: "hidden" 
-          }}
-        >
+        <form onSubmit={handleSubmit} className={styles.form}>
           {/* Scrollable Body */}
-          <div 
-            style={{ 
-              padding: "20px 24px", 
-              overflowY: "auto", 
-              flex: "1 1 auto",
-              display: "flex",
-              flexDirection: "column",
-              gap: "14px"
-            }}
-          >
+          <div className={styles.modalBody}>
             {/* Error Alert */}
             {error && (
-              <div style={{
-                padding: "12px 16px",
-                background: "#fef2f2",
-                border: "1px solid #fecaca",
-                borderRadius: "12px",
-                color: "#dc2626",
-                fontSize: "0.88rem",
-                fontWeight: "700"
-              }}>
+              <div className={styles.errorAlert}>
                 {error}
               </div>
             )}
 
             {/* Type Selection */}
             <div>
-              <label style={{ display: "block", fontSize: "0.85rem", fontWeight: "800", color: "#1e1322", marginBottom: "8px" }}>
+              <label className={styles.fieldLabel}>
                 نوع الحركة المالية
               </label>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+              <div className={styles.typesGrid}>
                 {typesConfig.map((t) => {
                   const Icon = t.icon;
                   const isSelected = type === t.id;
@@ -165,20 +109,7 @@ export default function EmployeeTransactionModal({ isOpen, onClose, employee, on
                       key={t.id}
                       type="button"
                       onClick={() => setType(t.id)}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        padding: "10px 12px",
-                        borderRadius: "12px",
-                        border: isSelected ? `2px solid ${t.color}` : "1px solid #e5e7eb",
-                        background: isSelected ? t.bg : "#ffffff",
-                        color: isSelected ? t.color : "#4b5563",
-                        fontSize: "0.85rem",
-                        fontWeight: "800",
-                        cursor: "pointer",
-                        transition: "all 0.2s ease"
-                      }}
+                      className={`${styles.typeBtn} ${isSelected ? t.activeClass : ""}`}
                     >
                       <Icon size={16} />
                       <span>{t.label}</span>
@@ -190,7 +121,7 @@ export default function EmployeeTransactionModal({ isOpen, onClose, employee, on
 
             {/* Amount */}
             <div>
-              <label style={{ display: "block", fontSize: "0.85rem", fontWeight: "800", color: "#1e1322", marginBottom: "6px" }}>
+              <label className={styles.fieldLabel}>
                 المبلغ (ج.م) *
               </label>
               <input
@@ -201,14 +132,13 @@ export default function EmployeeTransactionModal({ isOpen, onClose, employee, on
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="0.00"
-                className="form-input num-font"
-                style={{ fontSize: "1.2rem", fontWeight: "900", color: "#1e1322" }}
+                className={`form-input num-font ${styles.amountInput}`}
               />
             </div>
 
             {/* Date */}
             <div>
-              <label style={{ display: "block", fontSize: "0.85rem", fontWeight: "800", color: "#1e1322", marginBottom: "6px" }}>
+              <label className={styles.fieldLabel}>
                 التاريخ
               </label>
               <input
@@ -221,7 +151,7 @@ export default function EmployeeTransactionModal({ isOpen, onClose, employee, on
 
             {/* Notes / Reason */}
             <div>
-              <label style={{ display: "block", fontSize: "0.85rem", fontWeight: "800", color: "#1e1322", marginBottom: "6px" }}>
+              <label className={styles.fieldLabel}>
                 بيان / سبب الحركة
               </label>
               <textarea
@@ -229,23 +159,13 @@ export default function EmployeeTransactionModal({ isOpen, onClose, employee, on
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="مثال: مكافأة مبيعات استثنائية، تأخير غير مبرر، سلفة راتب..."
-                className="form-input"
-                style={{ resize: "none" }}
+                className={`form-input ${styles.notesTextarea}`}
               />
             </div>
           </div>
 
           {/* Fixed Footer */}
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "flex-end",
-            gap: "10px",
-            padding: "16px 24px",
-            borderTop: "1px solid #f0e1ec",
-            background: "#ffffff",
-            flexShrink: 0
-          }}>
+          <div className={styles.modalFooter}>
             <button
               type="button"
               onClick={onClose}

@@ -11,7 +11,6 @@ import {
   Clock,
   DollarSign,
   Award,
-  MinusCircle,
   Calendar,
   Search,
   ArrowRightLeft,
@@ -20,9 +19,6 @@ import {
   FileText,
   Edit3,
   Trash2,
-  Sparkles,
-  Phone,
-  Briefcase,
   Barcode
 } from "lucide-react";
 import {
@@ -38,11 +34,12 @@ import EmployeeModal from "@/components/EmployeeModal";
 import EmployeeTransactionModal from "@/components/EmployeeTransactionModal";
 import EmployeePayslipModal from "@/components/EmployeePayslipModal";
 import EmployeeBarcodeModal from "@/components/EmployeeBarcodeModal";
-import { formatCurrency, formatDateTime, formatNumber, roundCurrency } from "@/lib/utils";
+import { formatCurrency, formatDateTime, formatNumber, roundCurrency, getLocalDateString, getLocalMonthString } from "@/lib/utils";
+import styles from "./employees.module.css";
 
 export default function EmployeesPage() {
   const router = useRouter();
-  const { user, isAdmin, loading: authLoading } = useAuth();
+  const { user, authLoading } = useAuth();
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // State
@@ -62,9 +59,7 @@ export default function EmployeesPage() {
 
   // Search & Filter
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedMonth, setSelectedMonth] = useState(
-    new Date().toISOString().slice(0, 7) // YYYY-MM
-  );
+  const [selectedMonth, setSelectedMonth] = useState(getLocalMonthString());
 
   // Modals state
   const [isEmployeeModalOpen, setIsEmployeeModalOpen] = useState(false);
@@ -190,8 +185,8 @@ export default function EmployeesPage() {
 
     const empTxs = transactions.filter((tx) => {
       if (tx.employeeId !== employeeId) return false;
-      const txMonth = (tx.date || "").slice(0, 7);
-      return txMonth === yyyyMm;
+      const txDateStr = tx.date || (tx.createdAt ? getLocalDateString(tx.createdAt) : "");
+      return txDateStr.startsWith(yyyyMm);
     });
 
     let totalBonus = 0;
@@ -209,8 +204,8 @@ export default function EmployeesPage() {
 
     const empAttendance = attendanceLogs.filter((att) => {
       if (att.employeeId !== employeeId) return false;
-      const attMonth = (att.date || "").slice(0, 7);
-      return attMonth === yyyyMm;
+      const attDateStr = att.date || (att.checkIn ? getLocalDateString(att.checkIn) : "");
+      return attDateStr.startsWith(yyyyMm);
     });
 
     const attendanceDays = new Set(empAttendance.map((a) => a.date)).size;
@@ -302,8 +297,8 @@ export default function EmployeesPage() {
 
   if (authLoading || (!user && loading)) {
     return (
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <p style={{ color: "var(--text-secondary)", fontWeight: "700" }}>جاري تحميل بيانات الموظفين...</p>
+      <div className={styles.loadingWrapper}>
+        <p className={styles.loadingText}>جاري تحميل بيانات الموظفين...</p>
       </div>
     );
   }
@@ -324,33 +319,17 @@ export default function EmployeesPage() {
 
         <main className="page-wrapper">
           {/* Page Header */}
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
-            gap: "16px",
-            marginBottom: "24px"
-          }}>
+          <div className={styles.headerRow}>
             <div>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <div style={{
-                  width: "40px",
-                  height: "40px",
-                  borderRadius: "12px",
-                  background: "linear-gradient(135deg, #ec4899 0%, #db2777 100%)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "#ffffff"
-                }}>
+              <div className={styles.headerTitleWrapper}>
+                <div className={styles.headerIconBox}>
                   <Users size={22} />
                 </div>
-                <h2 style={{ fontSize: "1.6rem", fontWeight: "900", color: "#1e1322", margin: 0 }}>
+                <h2 className={styles.headerTitle}>
                   إدارة الموظفين والرواتب
                 </h2>
               </div>
-              <p style={{ color: "#5a4663", fontSize: "0.88rem", marginTop: "4px", fontWeight: "600" }}>
+              <p className={styles.headerSubtitle}>
                 تسجيل الحضور السريع بالكود، الرواتب والعمولات، الجزاءات ومسير الرواتب الشهري
               </p>
             </div>
@@ -360,8 +339,7 @@ export default function EmployeesPage() {
                 setEditingEmployee(null);
                 setIsEmployeeModalOpen(true);
               }}
-              className="btn-primary"
-              style={{ padding: "10px 20px" }}
+              className={`btn-primary ${styles.addEmployeeBtn}`}
             >
               <UserPlus size={18} />
               إضافة موظف جديد
@@ -369,54 +347,34 @@ export default function EmployeesPage() {
           </div>
 
           {/* Quick Punch Bar & Working Live Staff */}
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-            gap: "18px",
-            marginBottom: "24px"
-          }}>
+          <div className={styles.topActionGrid}>
             {/* Punch In/Out Card */}
-            <div className="glass-card" style={{ padding: "22px", borderRight: "4px solid #db2777" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <div className={`glass-card ${styles.punchCard}`}>
+              <div className={styles.punchHeaderRow}>
+                <div className={styles.punchTitleGroup}>
                   <Clock size={20} color="#db2777" />
-                  <span style={{ fontSize: "1.05rem", fontWeight: "900", color: "#1e1322" }}>
+                  <span className={styles.punchCardTitle}>
                     تسجيل الحضور والانصراف السريع
                   </span>
                 </div>
-                <span style={{
-                  fontSize: "0.78rem",
-                  fontWeight: "800",
-                  background: "#ecfdf5",
-                  color: "#059669",
-                  padding: "3px 10px",
-                  borderRadius: "20px",
-                  border: "1px solid #a7f3d0"
-                }}>
+                <span className={styles.todayDateTag}>
                   اليوم: {new Date().toLocaleDateString("ar-EG")}
                 </span>
               </div>
 
-              <form onSubmit={handleQuickPunch} style={{ display: "flex", gap: "10px" }}>
+              <form onSubmit={handleQuickPunch} className={styles.punchForm}>
                 <input
                   type="text"
                   value={punchCode}
                   onChange={(e) => setPunchCode(e.target.value)}
                   placeholder="اكتب كود الموظف واضغط Enter..."
                   disabled={punching}
-                  className="form-input num-font"
-                  style={{
-                    fontWeight: "800",
-                    fontSize: "1rem",
-                    padding: "12px 14px",
-                    textTransform: "uppercase"
-                  }}
+                  className={`form-input num-font ${styles.punchInput}`}
                 />
                 <button
                   type="submit"
                   disabled={punching || !punchCode.trim()}
-                  className="btn-primary"
-                  style={{ whiteSpace: "nowrap", padding: "12px 18px", display: "flex", alignItems: "center", gap: "6px" }}
+                  className={`btn-primary ${styles.punchSubmitBtn}`}
                 >
                   <ArrowRightLeft size={16} />
                   <span>{punching ? "جاري..." : "تسجيل بصمة"}</span>
@@ -424,19 +382,7 @@ export default function EmployeesPage() {
               </form>
 
               {punchFeedback && (
-                <div style={{
-                  marginTop: "12px",
-                  padding: "10px 14px",
-                  borderRadius: "10px",
-                  fontSize: "0.85rem",
-                  fontWeight: "700",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  background: punchFeedback.type === "success" ? "#ecfdf5" : "#fef2f2",
-                  color: punchFeedback.type === "success" ? "#059669" : "#dc2626",
-                  border: punchFeedback.type === "success" ? "1px solid #a7f3d0" : "1px solid #fecaca"
-                }}>
+                <div className={punchFeedback.type === "success" ? styles.punchFeedbackSuccess : styles.punchFeedbackError}>
                   {punchFeedback.type === "success" ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
                   <span>{punchFeedback.message}</span>
                 </div>
@@ -444,51 +390,35 @@ export default function EmployeesPage() {
             </div>
 
             {/* Live Staff on Shift Card */}
-            <div className="glass-card" style={{ padding: "22px", borderRight: "4px solid #059669", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+            <div className={`glass-card ${styles.liveStaffCard}`}>
               <div>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <span style={{ width: "10px", height: "10px", borderRadius: "50%", background: "#10b981", display: "inline-block" }} />
-                    <span style={{ fontSize: "1.05rem", fontWeight: "900", color: "#1e1322" }}>
+                <div className={styles.liveHeaderRow}>
+                  <div className={styles.liveTitleGroup}>
+                    <span className={styles.liveDot} />
+                    <span className={styles.liveTitle}>
                       الموظفون على رأس العمل الآن
                     </span>
                   </div>
-                  <span style={{
-                    fontSize: "0.78rem",
-                    fontWeight: "900",
-                    background: "#ecfdf5",
-                    color: "#059669",
-                    padding: "2px 8px",
-                    borderRadius: "20px"
-                  }}>
+                  <span className={styles.liveBadge}>
                     {activeStaffIds.size} متواجد
                   </span>
                 </div>
 
                 {activeStaffIds.size === 0 ? (
-                  <p style={{ color: "#6b7280", fontSize: "0.85rem", margin: "14px 0", fontWeight: "600" }}>
+                  <p className={styles.noStaffText}>
                     لا يوجد موظفون مسجلين بالشيفت حالياً
                   </p>
                 ) : (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "6px", maxHeight: "120px", overflowY: "auto" }}>
+                  <div className={styles.staffList}>
                     {todayAttendance
                       .filter((a) => a.status === "in_progress")
                       .map((att) => (
                         <div
                           key={att.id}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            padding: "8px 12px",
-                            borderRadius: "10px",
-                            background: "#f9fafb",
-                            border: "1px solid #f3f4f6",
-                            fontSize: "0.82rem"
-                          }}
+                          className={styles.staffItemRow}
                         >
-                          <span style={{ fontWeight: "800", color: "#1e1322" }}>{att.employeeName}</span>
-                          <span className="num-font" style={{ color: "#059669", fontWeight: "700" }}>
+                          <span className={styles.staffNameText}>{att.employeeName}</span>
+                          <span className={`num-font ${styles.staffCheckInText}`}>
                             حضور: {formatDateTime(att.checkIn, true)}
                           </span>
                         </div>
@@ -497,11 +427,11 @@ export default function EmployeesPage() {
                 )}
               </div>
 
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.8rem", color: "#6b7280", marginTop: "10px" }}>
+              <div className={styles.liveFooterRow}>
                 <span>إجمالي فريق العمل: {employees.length}</span>
                 <span
                   onClick={() => setActiveTab("attendance")}
-                  style={{ color: "#db2777", fontWeight: "800", cursor: "pointer" }}
+                  className={styles.viewAttendanceLink}
                 >
                   عرض سجل الحضور &larr;
                 </span>
@@ -510,55 +440,50 @@ export default function EmployeesPage() {
           </div>
 
           {/* KPI Stats Cards */}
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-            gap: "16px",
-            marginBottom: "24px"
-          }}>
-            <div className="glass-card" style={{ padding: "20px", borderRight: "4px solid #db2777" }}>
-              <div style={{ fontSize: "0.82rem", color: "var(--text-muted)", fontWeight: "700" }}>عدد الموظفين</div>
-              <div className="num-font" style={{ fontSize: "1.8rem", fontWeight: "900", color: "#1e1322", marginTop: "4px" }}>
+          <div className={styles.kpiGrid}>
+            <div className={`glass-card ${styles.cardPink}`}>
+              <div className={styles.kpiLabel}>عدد الموظفين</div>
+              <div className={`num-font ${styles.kpiValMain}`}>
                 {formatNumber(stats.totalEmployeesCount)}
               </div>
             </div>
 
-            <div className="glass-card" style={{ padding: "20px", borderRight: "4px solid #059669" }}>
-              <div style={{ fontSize: "0.82rem", color: "var(--text-muted)", fontWeight: "700" }}>أجور الساعات المستحقة (الفعلي)</div>
-              <div style={{ display: "flex", alignItems: "baseline", gap: "4px", marginTop: "4px" }}>
-                <span className="num-font" style={{ fontSize: "1.8rem", fontWeight: "900", color: "#059669" }}>
+            <div className={`glass-card ${styles.cardGreen}`}>
+              <div className={styles.kpiLabel}>أجور الساعات المستحقة (الفعلي)</div>
+              <div className={styles.valWithUnitRow}>
+                <span className={`num-font ${styles.kpiValGreen}`}>
                   {formatNumber(stats.totalEarnedPayroll)}
                 </span>
-                <span style={{ fontSize: "0.85rem", color: "#059669", fontWeight: "800" }}>ج.م</span>
+                <span className={styles.kpiUnitGreen}>ج.م</span>
               </div>
             </div>
 
-            <div className="glass-card" style={{ padding: "20px", borderRight: "4px solid #2563eb" }}>
-              <div style={{ fontSize: "0.82rem", color: "var(--text-muted)", fontWeight: "700" }}>إضافات الشهر (علاوات وعمولات)</div>
-              <div style={{ display: "flex", alignItems: "baseline", gap: "4px", marginTop: "4px" }}>
-                <span className="num-font" style={{ fontSize: "1.8rem", fontWeight: "900", color: "#2563eb" }}>
+            <div className={`glass-card ${styles.cardBlue}`}>
+              <div className={styles.kpiLabel}>إضافات الشهر (علاوات وعمولات)</div>
+              <div className={styles.valWithUnitRow}>
+                <span className={`num-font ${styles.kpiValBlue}`}>
                   +{formatNumber(stats.totalMonthlyBonuses)}
                 </span>
-                <span style={{ fontSize: "0.85rem", color: "#2563eb", fontWeight: "800" }}>ج.م</span>
+                <span className={styles.kpiUnitBlue}>ج.م</span>
               </div>
             </div>
 
-            <div className="glass-card" style={{ padding: "20px", borderRight: "4px solid #dc2626" }}>
-              <div style={{ fontSize: "0.82rem", color: "var(--text-muted)", fontWeight: "700" }}>خصومات ومسحوبات الشهر</div>
-              <div style={{ display: "flex", alignItems: "baseline", gap: "4px", marginTop: "4px" }}>
-                <span className="num-font" style={{ fontSize: "1.8rem", fontWeight: "900", color: "#dc2626" }}>
+            <div className={`glass-card ${styles.cardRed}`}>
+              <div className={styles.kpiLabel}>خصومات ومسحوبات الشهر</div>
+              <div className={styles.valWithUnitRow}>
+                <span className={`num-font ${styles.kpiValRed}`}>
                   -{formatNumber(stats.totalMonthlyDeductions)}
                 </span>
-                <span style={{ fontSize: "0.85rem", color: "#dc2626", fontWeight: "800" }}>ج.م</span>
+                <span className={styles.kpiUnitRed}>ج.م</span>
               </div>
             </div>
           </div>
 
           {/* Navigation Tabs Bar */}
-          <div className="glass-panel" style={{ padding: "16px 20px", marginBottom: "20px" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px" }}>
+          <div className={`glass-panel ${styles.tabsPanel}`}>
+            <div className={styles.tabsContainer}>
               {/* Tabs */}
-              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+              <div className={styles.tabsGroup}>
                 {[
                   { id: "directory", label: `دليل الموظفين (${employees.length})`, icon: Users },
                   { id: "attendance", label: "سجل الحضور والانصراف", icon: Clock },
@@ -571,21 +496,7 @@ export default function EmployeesPage() {
                     <button
                       key={t.id}
                       onClick={() => setActiveTab(t.id)}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "6px",
-                        padding: "8px 16px",
-                        borderRadius: "12px",
-                        border: "none",
-                        cursor: "pointer",
-                        fontSize: "0.88rem",
-                        fontWeight: "800",
-                        transition: "all 0.2s ease",
-                        background: isActive ? "linear-gradient(135deg, #ec4899 0%, #db2777 100%)" : "#f3f4f6",
-                        color: isActive ? "#ffffff" : "#4b5563",
-                        boxShadow: isActive ? "0 4px 12px rgba(219, 39, 119, 0.25)" : "none"
-                      }}
+                      className={isActive ? styles.tabBtnActive : styles.tabBtnInactive}
                     >
                       <Icon size={16} />
                       <span>{t.label}</span>
@@ -595,31 +506,29 @@ export default function EmployeesPage() {
               </div>
 
               {/* Filters / Search */}
-              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <div className={styles.tabFiltersGroup}>
                 {(activeTab === "payroll" || activeTab === "transactions" || activeTab === "attendance") && (
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px", background: "#ffffff", padding: "6px 12px", borderRadius: "10px", border: "1px solid #e5e7eb" }}>
+                  <div className={styles.monthSelectWrap}>
                     <Calendar size={16} color="#db2777" />
                     <input
                       type="month"
                       value={selectedMonth}
                       onChange={(e) => setSelectedMonth(e.target.value)}
-                      className="num-font"
-                      style={{ border: "none", outline: "none", fontWeight: "700", fontSize: "0.85rem", color: "#1e1322" }}
+                      className={`num-font ${styles.monthInput}`}
                     />
                   </div>
                 )}
 
                 {activeTab === "directory" && (
-                  <div style={{ position: "relative", minWidth: "220px" }}>
+                  <div className={styles.searchDirectoryWrap}>
                     <input
                       type="text"
-                      className="form-input"
+                      className={`form-input ${styles.searchInput}`}
                       placeholder="بحث باسم أو كود الموظف..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      style={{ paddingRight: "34px", paddingLeft: "10px", height: "38px" }}
                     />
-                    <Search size={16} color="#db2777" style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)" }} />
+                    <Search size={16} color="#db2777" className={styles.searchIcon} />
                   </div>
                 )}
               </div>
@@ -630,84 +539,50 @@ export default function EmployeesPage() {
           {activeTab === "directory" && (
             <div>
               {filteredEmployees.length === 0 ? (
-                <div className="glass-card" style={{ padding: "40px", textAlign: "center" }}>
-                  <Users size={42} color="#9ca3af" style={{ margin: "0 auto 12px auto" }} />
-                  <h4 style={{ fontWeight: "800", color: "#4b5563", margin: "0 0 6px 0" }}>لا يوجد موظفون مسجلون</h4>
-                  <p style={{ fontSize: "0.85rem", color: "#9ca3af", margin: 0 }}>اضغط على زر "إضافة موظف جديد" للبدء</p>
+                <div className={`glass-card ${styles.emptyDirectoryCard}`}>
+                  <Users size={42} color="#9ca3af" className={styles.emptyDirectoryIcon} />
+                  <h4 className={styles.emptyDirectoryTitle}>لا يوجد موظفون مسجلون</h4>
+                  <p className={styles.emptyDirectorySub}>اضغط على زر "إضافة موظف جديد" للبدء</p>
                 </div>
               ) : (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "16px" }}>
+                <div className={styles.employeeGrid}>
                   {filteredEmployees.map((emp) => {
                     const isWorking = activeStaffIds.has(emp.id);
                     return (
                       <div
                         key={emp.id}
-                        className="glass-card"
-                        style={{
-                          padding: "20px",
-                          display: "flex",
-                          flexDirection: "column",
-                          justifyContent: "space-between",
-                          borderTop: isWorking ? "3px solid #10b981" : "1px solid rgba(255,255,255,0.7)"
-                        }}
+                        className={`glass-card ${isWorking ? styles.employeeCardWorking : styles.employeeCardIdle}`}
                       >
                         <div>
                           {/* Header */}
-                          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "12px" }}>
+                          <div className={styles.empCardHeader}>
                             <div>
-                              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                <h3 style={{ fontSize: "1.15rem", fontWeight: "900", color: "#1e1322", margin: 0 }}>
+                              <div className={styles.empNameGroup}>
+                                <h3 className={styles.empNameTitle}>
                                   {emp.name}
                                 </h3>
                                 {isWorking ? (
-                                  <span style={{
-                                    fontSize: "0.72rem",
-                                    fontWeight: "800",
-                                    background: "#ecfdf5",
-                                    color: "#059669",
-                                    padding: "2px 8px",
-                                    borderRadius: "12px",
-                                    border: "1px solid #a7f3d0"
-                                  }}>
+                                  <span className={styles.badgeOnShift}>
                                     ● في الشيفت
                                   </span>
                                 ) : (
-                                  <span style={{
-                                    fontSize: "0.72rem",
-                                    fontWeight: "700",
-                                    background: "#f3f4f6",
-                                    color: "#6b7280",
-                                    padding: "2px 8px",
-                                    borderRadius: "12px"
-                                  }}>
+                                  <span className={styles.badgeOffShift}>
                                     غير متواجد
                                   </span>
                                 )}
                               </div>
-                              <span className="num-font" style={{ fontSize: "0.82rem", color: "#db2777", fontWeight: "800", marginTop: "2px", display: "block" }}>
+                              <span className={`num-font ${styles.empCodeText}`}>
                                 كود: {emp.code}
                               </span>
                             </div>
 
-                            <div style={{ display: "flex", gap: "4px" }}>
+                            <div className={styles.empActionsGroup}>
                               <button
                                 onClick={() => {
                                   setBarcodeEmployee(emp);
                                   setIsBarcodeModalOpen(true);
                                 }}
-                                style={{ 
-                                  background: "#fdf2f8", 
-                                  border: "1px solid #fbcfe8", 
-                                  borderRadius: "8px", 
-                                  cursor: "pointer", 
-                                  color: "#db2777", 
-                                  padding: "5px 8px",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: "4px",
-                                  fontSize: "0.75rem",
-                                  fontWeight: "800"
-                                }}
+                                className={styles.barcodeSmallBtn}
                                 title="طباعة باركود وبطاقة الموظف"
                               >
                                 <Barcode size={15} />
@@ -718,14 +593,14 @@ export default function EmployeesPage() {
                                   setEditingEmployee(emp);
                                   setIsEmployeeModalOpen(true);
                                 }}
-                                style={{ background: "none", border: "none", cursor: "pointer", color: "#6b7280", padding: "4px" }}
+                                className={styles.iconBtnGray}
                                 title="تعديل"
                               >
                                 <Edit3 size={17} />
                               </button>
                               <button
                                 onClick={() => handleDeleteEmployee(emp)}
-                                style={{ background: "none", border: "none", cursor: "pointer", color: "#dc2626", padding: "4px" }}
+                                className={styles.iconBtnRed}
                                 title="حذف"
                               >
                                 <Trash2 size={17} />
@@ -734,31 +609,22 @@ export default function EmployeesPage() {
                           </div>
 
                           {/* Grid info */}
-                          <div style={{
-                            display: "grid",
-                            gridTemplateColumns: "1fr 1fr",
-                            gap: "8px",
-                            padding: "10px 12px",
-                            background: "#fdf2f8",
-                            borderRadius: "10px",
-                            fontSize: "0.82rem",
-                            marginBottom: "10px"
-                          }}>
+                          <div className={styles.empInfoGrid}>
                             <div>
-                              <span style={{ color: "#6b7280", display: "block", fontSize: "0.75rem" }}>الوظيفة</span>
-                              <strong style={{ color: "#1e1322" }}>{emp.role || "موظف مبيعات"}</strong>
+                              <span className={styles.empInfoLabel}>الوظيفة</span>
+                              <strong className={styles.empInfoValue}>{emp.role || "موظف مبيعات"}</strong>
                             </div>
                             <div>
-                              <span style={{ color: "#6b7280", display: "block", fontSize: "0.75rem" }}>الراتب الأساسي</span>
-                              <strong className="num-font" style={{ color: "#1e1322" }}>{formatCurrency(emp.baseSalary || emp.salary)}</strong>
+                              <span className={styles.empInfoLabel}>الراتب الأساسي</span>
+                              <strong className={`num-font ${styles.empInfoValue}`}>{formatCurrency(emp.baseSalary || emp.salary)}</strong>
                             </div>
                             <div>
-                              <span style={{ color: "#6b7280", display: "block", fontSize: "0.75rem" }}>نسبة العمولة</span>
-                              <strong className="num-font" style={{ color: "#2563eb" }}>{((emp.commissionRate || 0.01) * 100).toFixed(1)}%</strong>
+                              <span className={styles.empInfoLabel}>نسبة العمولة</span>
+                              <strong className={`num-font ${styles.commissionValue}`}>{((emp.commissionRate || 0.01) * 100).toFixed(1)}%</strong>
                             </div>
                             <div>
-                              <span style={{ color: "#6b7280", display: "block", fontSize: "0.75rem" }}>الهاتف</span>
-                              <strong className="num-font" style={{ color: "#1e1322" }}>{emp.phone || "---"}</strong>
+                              <span className={styles.empInfoLabel}>الهاتف</span>
+                              <strong className={`num-font ${styles.empInfoValue}`}>{emp.phone || "---"}</strong>
                             </div>
                           </div>
 
@@ -766,40 +632,24 @@ export default function EmployeesPage() {
                           {(() => {
                             const empSummary = getMonthlySummaryForEmployee(emp.id, selectedMonth);
                             return (
-                              <div style={{
-                                padding: "10px 12px",
-                                borderRadius: "10px",
-                                background: "#f8fafc",
-                                border: "1px solid #e2e8f0",
-                                display: "flex",
-                                flexDirection: "column",
-                                gap: "6px",
-                                marginBottom: "12px",
-                                fontSize: "0.82rem"
-                              }}>
-                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                                  <span style={{ color: "#6b7280", fontSize: "0.75rem" }}>ساعات العمل ({selectedMonth}):</span>
-                                  <strong className="num-font" style={{ color: "#0891b2" }}>
+                              <div className={styles.summaryBox}>
+                                <div className={styles.summaryRow}>
+                                  <span className={styles.summaryRowLabel}>ساعات العمل ({selectedMonth}):</span>
+                                  <strong className={`num-font ${styles.summaryValCyan}`}>
                                     {empSummary.hoursWorked}س و {empSummary.minutesWorked}د ({formatCurrency(empSummary.earnedSalary)})
                                   </strong>
                                 </div>
-                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                                  <span style={{ color: "#6b7280", fontSize: "0.75rem" }}>عمولات المبيعات:</span>
-                                  <strong className="num-font" style={{ color: "#2563eb" }}>
+                                <div className={styles.summaryRow}>
+                                  <span className={styles.summaryRowLabel}>عمولات المبيعات:</span>
+                                  <strong className={`num-font ${styles.summaryValBlue}`}>
                                     +{formatCurrency(empSummary.totalCommission)}
                                   </strong>
                                 </div>
-                                <div style={{
-                                  display: "flex", 
-                                  alignItems: "center", 
-                                  justifyContent: "space-between",
-                                  paddingTop: "6px",
-                                  borderTop: "1px dashed #cbd5e1"
-                                }}>
-                                  <span style={{ fontWeight: "900", color: "#1e1322" }}>
+                                <div className={styles.summaryNetRow}>
+                                  <span className={styles.summaryNetLabel}>
                                     الصافي المستحق:
                                   </span>
-                                  <span className="num-font" style={{ fontWeight: "900", fontSize: "1.1rem", color: "#db2777" }}>
+                                  <span className={`num-font ${styles.summaryNetVal}`}>
                                     {formatCurrency(empSummary.netSalary)}
                                   </span>
                                 </div>
@@ -809,14 +659,13 @@ export default function EmployeesPage() {
                         </div>
 
                         {/* Action buttons */}
-                        <div style={{ display: "flex", gap: "8px", paddingTop: "10px", borderTop: "1px solid #f3f4f6" }}>
+                        <div className={styles.empCardFooter}>
                           <button
                             onClick={() => {
                               setTransactionTargetEmployee(emp);
                               setIsTransactionModalOpen(true);
                             }}
-                            className="btn-secondary"
-                            style={{ flex: 1, padding: "8px", fontSize: "0.82rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px" }}
+                            className={`btn-secondary ${styles.cardFooterBtn}`}
                           >
                             <Award size={15} color="#d97706" />
                             <span>حركة مالية</span>
@@ -824,8 +673,7 @@ export default function EmployeesPage() {
 
                           <button
                             onClick={() => handleOpenPayslip(emp)}
-                            className="btn-secondary"
-                            style={{ flex: 1, padding: "8px", fontSize: "0.82rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", color: "#db2777" }}
+                            className={`btn-secondary ${styles.payslipBtn}`}
                           >
                             <FileText size={15} />
                             <span>كشف الحساب</span>
@@ -841,18 +689,18 @@ export default function EmployeesPage() {
 
           {/* TAB 2: ATTENDANCE LOGS */}
           {activeTab === "attendance" && (
-            <div className="glass-panel" style={{ padding: "20px" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
-                <h3 style={{ fontSize: "1.15rem", fontWeight: "900", color: "#1e1322", margin: 0 }}>
+            <div className={`glass-panel ${styles.tabSectionPanel}`}>
+              <div className={styles.sectionHeaderRow}>
+                <h3 className={styles.sectionTitle}>
                   سجل الحضور والانصراف لشهر {selectedMonth}
                 </h3>
-                <span className="num-font" style={{ fontSize: "0.85rem", color: "#6b7280", fontWeight: "700" }}>
+                <span className={`num-font ${styles.sectionSubCount}`}>
                   {attendanceLogs.filter((a) => (a.date || "").startsWith(selectedMonth)).length} حركة حضور
                 </span>
               </div>
 
-              <div style={{ overflowX: "auto" }}>
-                <table className="data-table" style={{ width: "100%", textAlign: "right" }}>
+              <div className={styles.tableScrollWrap}>
+                <table className={`data-table ${styles.fullDataTable}`}>
                   <thead>
                     <tr>
                       <th>التاريخ</th>
@@ -872,11 +720,11 @@ export default function EmployeesPage() {
                         const mins = (log.durationMinutes || 0) % 60;
                         return (
                           <tr key={log.id}>
-                            <td className="num-font" style={{ color: "#4b5563", fontWeight: "700" }}>{log.date}</td>
-                            <td style={{ fontWeight: "800", color: "#1e1322" }}>{log.employeeName}</td>
+                            <td className={`num-font ${styles.dateCol}`}>{log.date}</td>
+                            <td className={styles.empNameBold}>{log.employeeName}</td>
                             <td>
-                              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                                <span className="num-font" style={{ fontWeight: "900", color: "#db2777" }}>{log.employeeCode}</span>
+                              <div className={styles.codeCellGroup}>
+                                <span className={`num-font ${styles.empCodePink}`}>{log.employeeCode}</span>
                                 <button
                                   type="button"
                                   onClick={() => {
@@ -884,45 +732,29 @@ export default function EmployeesPage() {
                                     setBarcodeEmployee(matchingEmp || { name: log.employeeName, code: log.employeeCode });
                                     setIsBarcodeModalOpen(true);
                                   }}
-                                  style={{ background: "none", border: "none", cursor: "pointer", color: "#db2777", padding: "2px" }}
+                                  className={styles.barcodeIconBtn}
                                   title="طباعة باركود هذا الموظف"
                                 >
                                   <Barcode size={15} />
                                 </button>
                               </div>
                             </td>
-                            <td className="num-font" style={{ color: "#059669", fontWeight: "700" }}>
+                            <td className={`num-font ${styles.checkInTime}`}>
                               {formatDateTime(log.checkIn, true)}
                             </td>
-                            <td className="num-font" style={{ color: "#d97706", fontWeight: "700" }}>
+                            <td className={`num-font ${styles.checkOutTime}`}>
                               {log.checkOut ? formatDateTime(log.checkOut, true) : "---"}
                             </td>
-                            <td className="num-font" style={{ fontWeight: "800", color: "#1e1322" }}>
+                            <td className={`num-font ${styles.durationText}`}>
                               {log.status === "completed" ? `${hours} س و ${mins} د` : "جاري العمل..."}
                             </td>
                             <td>
                               {log.status === "completed" ? (
-                                <span style={{
-                                  fontSize: "0.75rem",
-                                  fontWeight: "800",
-                                  background: "#ecfdf5",
-                                  color: "#059669",
-                                  padding: "2px 8px",
-                                  borderRadius: "12px",
-                                  border: "1px solid #a7f3d0"
-                                }}>
+                                <span className={styles.badgeCompleted}>
                                   مكتمل
                                 </span>
                               ) : (
-                                <span style={{
-                                  fontSize: "0.75rem",
-                                  fontWeight: "800",
-                                  background: "#fffbeb",
-                                  color: "#d97706",
-                                  padding: "2px 8px",
-                                  borderRadius: "12px",
-                                  border: "1px solid #fde68a"
-                                }}>
+                                <span className={styles.badgeWorking}>
                                   على رأس العمل
                                 </span>
                               )}
@@ -932,7 +764,7 @@ export default function EmployeesPage() {
                       })}
                     {attendanceLogs.filter((a) => (a.date || "").startsWith(selectedMonth)).length === 0 && (
                       <tr>
-                        <td colSpan={7} style={{ textAlign: "center", padding: "30px", color: "#9ca3af" }}>
+                        <td colSpan={7} className={styles.emptyTableTd}>
                           لا توجد سجلات حضور مسجلة لهذا الشهر
                         </td>
                       </tr>
@@ -945,30 +777,30 @@ export default function EmployeesPage() {
 
           {/* TAB 3: MONTHLY PAYROLL LEDGER */}
           {activeTab === "payroll" && (
-            <div className="glass-panel" style={{ padding: "20px" }}>
-              <div style={{ marginBottom: "16px" }}>
-                <h3 style={{ fontSize: "1.15rem", fontWeight: "900", color: "#1e1322", margin: 0 }}>
+            <div className={`glass-panel ${styles.tabSectionPanel}`}>
+              <div className={styles.payrollHeaderWrap}>
+                <h3 className={styles.sectionTitle}>
                   مسير الرواتب والمستحقات لشهر {selectedMonth}
                 </h3>
-                <p style={{ fontSize: "0.82rem", color: "#6b7280", margin: "2px 0 0 0", fontWeight: "600" }}>
+                <p className={styles.payrollSubDesc}>
                   الصافي المستحق = أجر الساعات الفعلية (10س/يوم) + عمولات المبيعات + العلاوات - الجزاءات - المسحوبات
                 </p>
               </div>
 
-              <div style={{ overflowX: "auto" }}>
-                <table className="data-table" style={{ width: "100%", textAlign: "right" }}>
+              <div className={styles.tableScrollWrap}>
+                <table className={`data-table ${styles.fullDataTable}`}>
                   <thead>
                     <tr>
                       <th>الموظف</th>
-                      <th style={{ textAlign: "center" }}>ساعات العمل</th>
-                      <th style={{ textAlign: "left" }}>الأساسي التعاقدي</th>
-                      <th style={{ textAlign: "left", color: "#059669" }}>أجر الساعات (+)</th>
-                      <th style={{ textAlign: "left", color: "#2563eb" }}>العمولات (+)</th>
-                      <th style={{ textAlign: "left", color: "#10b981" }}>العلاوات (+)</th>
-                      <th style={{ textAlign: "left", color: "#dc2626" }}>الجزاءات (-)</th>
-                      <th style={{ textAlign: "left", color: "#d97706" }}>المسحوبات (-)</th>
-                      <th style={{ textAlign: "left", color: "#db2777" }}>الصافي المستحق</th>
-                      <th style={{ textAlign: "center" }}>كشف الحساب</th>
+                      <th className={styles.thCenter}>ساعات العمل</th>
+                      <th className={styles.thLeft}>الأساسي التعاقدي</th>
+                      <th className={styles.thEarnedHours}>أجر الساعات (+)</th>
+                      <th className={styles.thCommission}>العمولات (+)</th>
+                      <th className={styles.thBonus}>العلاوات (+)</th>
+                      <th className={styles.thPenalty}>الجزاءات (-)</th>
+                      <th className={styles.thAdvance}>المسحوبات (-)</th>
+                      <th className={styles.thNet}>الصافي المستحق</th>
+                      <th className={styles.thCenter}>كشف الحساب</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -977,38 +809,37 @@ export default function EmployeesPage() {
                       return (
                         <tr key={emp.id}>
                           <td>
-                            <strong style={{ color: "#1e1322", display: "block" }}>{emp.name}</strong>
-                            <span className="num-font" style={{ fontSize: "0.78rem", color: "#6b7280" }}>{emp.code}</span>
+                            <strong className={styles.empNameStrong}>{emp.name}</strong>
+                            <span className={`num-font ${styles.empCodeSub}`}>{emp.code}</span>
                           </td>
-                          <td className="num-font" style={{ textAlign: "center", fontWeight: "800" }}>
+                          <td className={`num-font ${styles.thCenterBold}`}>
                             {summary.hoursWorked}س و {summary.minutesWorked}د
                           </td>
-                          <td className="num-font" style={{ textAlign: "left", color: "#6b7280" }}>
+                          <td className={`num-font ${styles.thLeftMuted}`}>
                             {formatCurrency(summary.baseSalary)}
                           </td>
-                          <td className="num-font" style={{ textAlign: "left", fontWeight: "900", color: "#059669" }}>
+                          <td className={`num-font ${styles.earnedSalaryVal}`}>
                             +{formatCurrency(summary.earnedSalary)}
                           </td>
-                          <td className="num-font" style={{ textAlign: "left", fontWeight: "800", color: "#2563eb" }}>
+                          <td className={`num-font ${styles.commissionVal}`}>
                             +{formatCurrency(summary.totalCommission)}
                           </td>
-                          <td className="num-font" style={{ textAlign: "left", fontWeight: "800", color: "#10b981" }}>
+                          <td className={`num-font ${styles.bonusVal}`}>
                             +{formatCurrency(summary.totalBonus)}
                           </td>
-                          <td className="num-font" style={{ textAlign: "left", fontWeight: "800", color: "#dc2626" }}>
+                          <td className={`num-font ${styles.penaltyVal}`}>
                             -{formatCurrency(summary.totalPenalty)}
                           </td>
-                          <td className="num-font" style={{ textAlign: "left", fontWeight: "800", color: "#d97706" }}>
+                          <td className={`num-font ${styles.advanceVal}`}>
                             -{formatCurrency(summary.totalAdvance)}
                           </td>
-                          <td className="num-font" style={{ textAlign: "left", fontWeight: "900", color: "#db2777", fontSize: "1.08rem" }}>
+                          <td className={`num-font ${styles.netSalaryVal}`}>
                             {formatCurrency(summary.netSalary)}
                           </td>
-                          <td style={{ textAlign: "center" }}>
+                          <td className={styles.thCenter}>
                             <button
                               onClick={() => handleOpenPayslip(emp)}
-                              className="btn-secondary"
-                              style={{ padding: "6px 10px", color: "#db2777" }}
+                              className={`btn-secondary ${styles.payslipIconBtn}`}
                               title="عرض كشف الحساب"
                             >
                               <FileText size={16} />
@@ -1025,65 +856,85 @@ export default function EmployeesPage() {
 
           {/* TAB 4: TRANSACTIONS AUDIT */}
           {activeTab === "transactions" && (
-            <div className="glass-panel" style={{ padding: "20px" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
-                <h3 style={{ fontSize: "1.15rem", fontWeight: "900", color: "#1e1322", margin: 0 }}>
+            <div className={`glass-panel ${styles.tabSectionPanel}`}>
+              <div className={styles.sectionHeaderRow}>
+                <h3 className={styles.sectionTitle}>
                   سجل الحركات المالية (العلاوات، الجزاءات، المسحوبات والعمولات)
                 </h3>
-                <span className="num-font" style={{ fontSize: "0.85rem", color: "#6b7280", fontWeight: "700" }}>
+                <span className={`num-font ${styles.sectionSubCount}`}>
                   {transactions.filter((t) => (t.date || "").startsWith(selectedMonth)).length} حركة
                 </span>
               </div>
 
-              <div style={{ overflowX: "auto" }}>
-                <table className="data-table" style={{ width: "100%", textAlign: "right" }}>
+              <div className={styles.tableScrollWrap}>
+                <table className={`data-table ${styles.fullDataTable}`}>
                   <thead>
                     <tr>
                       <th>التاريخ</th>
                       <th>الموظف</th>
                       <th>نوع الحركة</th>
                       <th>البيان / الملاحظات</th>
-                      <th style={{ textAlign: "left" }}>المبلغ</th>
-                      <th style={{ textAlign: "center" }}>إجراء</th>
+                      <th className={styles.thLeft}>المبلغ</th>
+                      <th className={styles.thCenter}>إجراء</th>
                     </tr>
                   </thead>
                   <tbody>
                     {transactions
                       .filter((t) => (t.date || "").startsWith(selectedMonth))
                       .map((tx) => {
-                        const typeConfig = {
-                          bonus: { label: "علاوة / مكافأة", color: "#059669", bg: "#ecfdf5" },
-                          commission: { label: "عمولة مبيعات", color: "#2563eb", bg: "#eff6ff" },
-                          penalty: { label: "جزاء / خصم", color: "#dc2626", bg: "#fef2f2" },
-                          advance: { label: "سلفة / مسحوبات", color: "#d97706", bg: "#fffbeb" }
-                        };
-                        const meta = typeConfig[tx.type] || { label: tx.type, color: "#4b5563", bg: "#f3f4f6" };
+                        const isBonus = tx.type === "bonus";
+                        const isCommission = tx.type === "commission";
+                        const isPenalty = tx.type === "penalty";
+                        const isAdvance = tx.type === "advance";
+
+                        const badgeClass = isBonus 
+                          ? styles.txBadgeBonus 
+                          : isCommission 
+                          ? styles.txBadgeCommission 
+                          : isPenalty 
+                          ? styles.txBadgePenalty 
+                          : isAdvance 
+                          ? styles.txBadgeAdvance 
+                          : styles.txBadgeGeneric;
+
+                        const label = isBonus 
+                          ? "علاوة / مكافأة" 
+                          : isCommission 
+                          ? "عمولة مبيعات" 
+                          : isPenalty 
+                          ? "جزاء / خصم" 
+                          : isAdvance 
+                          ? "سلفة / مسحوبات" 
+                          : tx.type;
+
+                        const amountClass = isBonus 
+                          ? styles.txAmountGreen 
+                          : isCommission 
+                          ? styles.txAmountBlue 
+                          : isPenalty 
+                          ? styles.txAmountRed 
+                          : isAdvance 
+                          ? styles.txAmountAmber 
+                          : styles.txAmountGeneric;
 
                         return (
                           <tr key={tx.id}>
-                            <td className="num-font" style={{ color: "#4b5563", fontWeight: "700" }}>{tx.date}</td>
-                            <td style={{ fontWeight: "800", color: "#1e1322" }}>{tx.employeeName}</td>
+                            <td className={`num-font ${styles.dateCol}`}>{tx.date}</td>
+                            <td className={styles.empNameBold}>{tx.employeeName}</td>
                             <td>
-                              <span style={{
-                                fontSize: "0.78rem",
-                                fontWeight: "800",
-                                background: meta.bg,
-                                color: meta.color,
-                                padding: "3px 10px",
-                                borderRadius: "12px"
-                              }}>
-                                {meta.label}
+                              <span className={badgeClass}>
+                                {label}
                               </span>
                             </td>
-                            <td style={{ color: "#374151", fontWeight: "600" }}>{tx.notes || "---"}</td>
-                            <td className="num-font" style={{ textAlign: "left", fontWeight: "900", color: meta.color, fontSize: "1rem" }}>
-                              {tx.type === "bonus" || tx.type === "commission" ? "+" : "-"}
+                            <td className={styles.txNotes}>{tx.notes || "---"}</td>
+                            <td className={`num-font ${amountClass}`}>
+                              {isBonus || isCommission ? "+" : "-"}
                               {formatCurrency(tx.amount)}
                             </td>
-                            <td style={{ textAlign: "center" }}>
+                            <td className={styles.thCenter}>
                               <button
                                 onClick={() => handleDeleteTransaction(tx.id)}
-                                style={{ background: "none", border: "none", cursor: "pointer", color: "#dc2626", padding: "4px" }}
+                                className={styles.iconBtnRed}
                                 title="حذف الحركة"
                               >
                                 <Trash2 size={16} />
@@ -1094,7 +945,7 @@ export default function EmployeesPage() {
                       })}
                     {transactions.filter((t) => (t.date || "").startsWith(selectedMonth)).length === 0 && (
                       <tr>
-                        <td colSpan={6} style={{ textAlign: "center", padding: "30px", color: "#9ca3af" }}>
+                        <td colSpan={6} className={styles.emptyTableTd}>
                           لا توجد حركات مالية مسجلة لهذا الشهر
                         </td>
                       </tr>

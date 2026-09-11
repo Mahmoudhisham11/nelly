@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { X, UserPlus, User, Hash, DollarSign, Percent, Phone, Briefcase, FileText } from "lucide-react";
+import { useState, useEffect } from "react";
+import { X, UserPlus } from "lucide-react";
 import { addEmployee, updateEmployee } from "@/lib/employeesService";
+import styles from "./EmployeeModal.module.css";
 
 export default function EmployeeModal({ isOpen, onClose, employee, onSaved }) {
   const [name, setName] = useState("");
@@ -82,46 +83,20 @@ export default function EmployeeModal({ isOpen, onClose, employee, onSaved }) {
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div 
-        className="modal-content"
+        className={`modal-content ${styles.modalContainer}`}
         onClick={(e) => e.stopPropagation()}
-        style={{ 
-          maxWidth: "560px", 
-          maxHeight: "min(92vh, 760px)", 
-          display: "flex", 
-          flexDirection: "column", 
-          overflow: "hidden",
-          padding: 0
-        }}
       >
         {/* Header */}
-        <div style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "18px 24px",
-          borderBottom: "1px solid #f0e1ec",
-          background: "#ffffff",
-          flexShrink: 0
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div style={{
-              width: "40px",
-              height: "40px",
-              borderRadius: "12px",
-              background: "linear-gradient(135deg, #ec4899 0%, #db2777 100%)",
-              color: "#ffffff",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "0 4px 14px rgba(219, 39, 119, 0.25)"
-            }}>
+        <div className={styles.modalHeader}>
+          <div className={styles.headerBrand}>
+            <div className={styles.headerIcon}>
               <UserPlus size={22} />
             </div>
             <div>
-              <h3 style={{ fontSize: "1.25rem", fontWeight: "900", color: "#1e1322", margin: 0 }}>
+              <h3 className={styles.headerTitle}>
                 {employee ? "تعديل بيانات الموظف" : "تسجيل موظف جديد"}
               </h3>
-              <p style={{ fontSize: "0.82rem", color: "#5a4663", margin: "2px 0 0 0", fontWeight: "600" }}>
+              <p className={styles.headerSubtitle}>
                 البيانات الأساسية وكود البصمة والراتب والعمولة
               </p>
             </div>
@@ -129,60 +104,27 @@ export default function EmployeeModal({ isOpen, onClose, employee, onSaved }) {
           <button 
             type="button"
             onClick={onClose}
-            style={{
-              background: "#fdf2f8",
-              border: "none",
-              borderRadius: "10px",
-              padding: "8px",
-              cursor: "pointer",
-              color: "#db2777"
-            }}
+            className={styles.closeBtn}
           >
             <X size={18} />
           </button>
         </div>
 
         {/* Form Container */}
-        <form 
-          onSubmit={handleSubmit} 
-          style={{ 
-            display: "flex", 
-            flexDirection: "column", 
-            flex: "1 1 auto", 
-            minHeight: 0, 
-            overflow: "hidden" 
-          }}
-        >
+        <form onSubmit={handleSubmit} className={styles.form}>
           {/* Scrollable Body */}
-          <div 
-            style={{ 
-              padding: "20px 24px", 
-              overflowY: "auto", 
-              flex: "1 1 auto",
-              display: "flex",
-              flexDirection: "column",
-              gap: "14px"
-            }}
-          >
+          <div className={styles.modalBody}>
             {/* Error Alert */}
             {error && (
-              <div style={{
-                padding: "12px 16px",
-                background: "#fef2f2",
-                border: "1px solid #fecaca",
-                borderRadius: "12px",
-                color: "#dc2626",
-                fontSize: "0.88rem",
-                fontWeight: "700"
-              }}>
+              <div className={styles.errorAlert}>
                 {error}
               </div>
             )}
 
             {/* Name & Code */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+            <div className={styles.gridRow}>
               <div>
-                <label style={{ display: "block", fontSize: "0.85rem", fontWeight: "800", color: "#1e1322", marginBottom: "6px" }}>
+                <label className={styles.fieldLabel}>
                   اسم الموظف *
                 </label>
                 <input
@@ -196,7 +138,7 @@ export default function EmployeeModal({ isOpen, onClose, employee, onSaved }) {
               </div>
 
               <div>
-                <label style={{ display: "block", fontSize: "0.85rem", fontWeight: "800", color: "#1e1322", marginBottom: "6px" }}>
+                <label className={styles.fieldLabel}>
                   كود الموظف (للبصمة) *
                 </label>
                 <input
@@ -205,16 +147,15 @@ export default function EmployeeModal({ isOpen, onClose, employee, onSaved }) {
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
                   placeholder="مثال: 101 أو EMP-01"
-                  className="form-input num-font"
-                  style={{ textTransform: "uppercase", fontWeight: "800", color: "#db2777" }}
+                  className={`form-input num-font ${styles.codeInput}`}
                 />
               </div>
             </div>
 
             {/* Role & Phone */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+            <div className={styles.gridRow}>
               <div>
-                <label style={{ display: "block", fontSize: "0.85rem", fontWeight: "800", color: "#1e1322", marginBottom: "6px" }}>
+                <label className={styles.fieldLabel}>
                   المسمى الوظيفي
                 </label>
                 <input
@@ -227,7 +168,7 @@ export default function EmployeeModal({ isOpen, onClose, employee, onSaved }) {
               </div>
 
               <div>
-                <label style={{ display: "block", fontSize: "0.85rem", fontWeight: "800", color: "#1e1322", marginBottom: "6px" }}>
+                <label className={styles.fieldLabel}>
                   رقم الهاتف
                 </label>
                 <input
@@ -241,9 +182,9 @@ export default function EmployeeModal({ isOpen, onClose, employee, onSaved }) {
             </div>
 
             {/* Salary & Commission */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+            <div className={styles.gridRow}>
               <div>
-                <label style={{ display: "block", fontSize: "0.85rem", fontWeight: "800", color: "#1e1322", marginBottom: "6px" }}>
+                <label className={styles.fieldLabel}>
                   الراتب الأساسي الشهري (ج.م) *
                 </label>
                 <input
@@ -253,13 +194,12 @@ export default function EmployeeModal({ isOpen, onClose, employee, onSaved }) {
                   value={baseSalary}
                   onChange={(e) => setBaseSalary(e.target.value)}
                   placeholder="0.00"
-                  className="form-input num-font"
-                  style={{ fontWeight: "800" }}
+                  className={`form-input num-font ${styles.salaryInput}`}
                 />
               </div>
 
               <div>
-                <label style={{ display: "block", fontSize: "0.85rem", fontWeight: "800", color: "#1e1322", marginBottom: "6px" }}>
+                <label className={styles.fieldLabel}>
                   نسبة العمولة على المبيعات (%)
                 </label>
                 <input
@@ -270,15 +210,14 @@ export default function EmployeeModal({ isOpen, onClose, employee, onSaved }) {
                   value={commissionRate}
                   onChange={(e) => setCommissionRate(e.target.value)}
                   placeholder="1"
-                  className="form-input num-font"
-                  style={{ fontWeight: "800", color: "#2563eb" }}
+                  className={`form-input num-font ${styles.commissionInput}`}
                 />
               </div>
             </div>
 
             {/* Notes */}
             <div>
-              <label style={{ display: "block", fontSize: "0.85rem", fontWeight: "800", color: "#1e1322", marginBottom: "6px" }}>
+              <label className={styles.fieldLabel}>
                 ملاحظات إضافية
               </label>
               <textarea
@@ -286,23 +225,13 @@ export default function EmployeeModal({ isOpen, onClose, employee, onSaved }) {
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="أي ملاحظات تخص شروط العمل أو مواعيد الشيفت..."
-                className="form-input"
-                style={{ resize: "none" }}
+                className={`form-input ${styles.notesTextarea}`}
               />
             </div>
           </div>
 
           {/* Fixed Footer */}
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "flex-end",
-            gap: "10px",
-            padding: "16px 24px",
-            borderTop: "1px solid #f0e1ec",
-            background: "#ffffff",
-            flexShrink: 0
-          }}>
+          <div className={styles.modalFooter}>
             <button
               type="button"
               onClick={onClose}

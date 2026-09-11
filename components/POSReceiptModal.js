@@ -9,6 +9,7 @@ import {
   MessageCircle,
   ShoppingBag
 } from "lucide-react";
+import styles from "./POSReceiptModal.module.css";
 
 export default function POSReceiptModal({ isOpen, onClose, invoice, onNewSale }) {
   const receiptRef = useRef(null);
@@ -62,7 +63,7 @@ export default function POSReceiptModal({ isOpen, onClose, invoice, onNewSale })
         }
         #printable-receipt table.receipt-grid-table,
         .thermal-receipt table.receipt-grid-table {
-          border: 1.5px solid #000000 !important;
+          border: 1px solid #000000 !important;
           border-collapse: collapse !important;
         }
         #printable-receipt table.receipt-grid-table th,
@@ -73,28 +74,32 @@ export default function POSReceiptModal({ isOpen, onClose, invoice, onNewSale })
           print-color-adjust: exact !important;
           color: #000000 !important;
           vertical-align: middle !important;
-          padding: 4px 2px !important;
+          padding: 2px 2px !important;
+          font-size: 9.5px !important;
+          line-height: 1.15 !important;
         }
         #printable-receipt table.receipt-grid-table td,
         .thermal-receipt table.receipt-grid-table td {
           border: 1px solid #000000 !important;
           color: #000000 !important;
           vertical-align: middle !important;
-          padding: 4px 2px !important;
+          padding: 2px 2px !important;
+          font-size: 9.5px !important;
+          line-height: 1.15 !important;
         }
         #printable-receipt table.receipt-grid-table th:nth-child(1),
         #printable-receipt table.receipt-grid-table td:nth-child(1),
         .thermal-receipt table.receipt-grid-table th:nth-child(1),
         .thermal-receipt table.receipt-grid-table td:nth-child(1) {
-          width: 42% !important;
+          width: 44% !important;
           text-align: right !important;
-          padding-right: 4px !important;
+          padding-right: 3px !important;
         }
         #printable-receipt table.receipt-grid-table th:nth-child(2),
         #printable-receipt table.receipt-grid-table td:nth-child(2),
         .thermal-receipt table.receipt-grid-table th:nth-child(2),
         .thermal-receipt table.receipt-grid-table td:nth-child(2) {
-          width: 16% !important;
+          width: 15% !important;
           text-align: center !important;
         }
         #printable-receipt table.receipt-grid-table th:nth-child(3),
@@ -108,7 +113,7 @@ export default function POSReceiptModal({ isOpen, onClose, invoice, onNewSale })
         #printable-receipt table.receipt-grid-table td:nth-child(4),
         .thermal-receipt table.receipt-grid-table th:nth-child(4),
         .thermal-receipt table.receipt-grid-table td:nth-child(4) {
-          width: 22% !important;
+          width: 21% !important;
           text-align: center !important;
         }
       }
@@ -162,38 +167,20 @@ export default function POSReceiptModal({ isOpen, onClose, invoice, onNewSale })
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div 
-        className="modal-content"
+        className={`modal-content ${styles.modalContainer}`}
         onClick={(e) => e.stopPropagation()}
-        style={{ 
-          maxWidth: "420px", 
-          maxHeight: "min(92vh, 800px)",
-          display: "flex",
-          flexDirection: "column",
-          padding: 0,
-          overflow: "hidden"
-        }}
       >
         {/* Modal Header */}
         <div className="modal-header no-print">
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div style={{
-              width: "34px",
-              height: "34px",
-              borderRadius: "10px",
-              background: "#ecfdf5",
-              color: "#059669",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0
-            }}>
+          <div className={styles.modalHeaderRow}>
+            <div className={styles.iconSuccess}>
               <CheckCircle2 size={20} />
             </div>
             <div>
-              <h3 className="modal-title" style={{ fontSize: "1.05rem", fontWeight: "800", color: "#111827", margin: 0 }}>
+              <h3 className={`modal-title ${styles.headerTitle}`}>
                 تمت عملية البيع بنجاح
               </h3>
-              <span style={{ fontSize: "0.78rem", color: "var(--text-muted)", fontWeight: "700" }}>
+              <span className={styles.headerSubtitle}>
                 فاتورة #{invoice.invoiceNumber}
               </span>
             </div>
@@ -210,136 +197,57 @@ export default function POSReceiptModal({ isOpen, onClose, invoice, onNewSale })
         </div>
 
         {/* Modal Body with Printable Thermal Receipt */}
-        <div className="modal-body custom-scrollbar" style={{ padding: "1rem", overflowY: "auto", flex: 1 }}>
+        <div className={`modal-body custom-scrollbar ${styles.modalBodyContent}`}>
           <div 
             ref={receiptRef}
             id="printable-receipt"
-            className="thermal-receipt"
-            style={{
-              background: "#ffffff",
-              border: "1.5px solid #000000",
-              borderRadius: "10px",
-              padding: "14px 14px",
-              fontFamily: "var(--font-cairo), 'Segoe UI', Tahoma, sans-serif",
-              color: "#000000",
-              boxShadow: "0 2px 10px rgba(0,0,0,0.04)",
-              fontSize: "0.8rem",
-              lineHeight: 1.4
-            }}
+            className={`thermal-receipt ${styles.receiptContainer}`}
           >
             {/* 1. Header: Nelly Title & Invoice Number */}
-            <div style={{ textAlign: "center", marginBottom: "10px", borderBottom: "1.5px solid #000000", paddingBottom: "8px" }}>
-              <h1 style={{ 
-                fontSize: "1.6rem", 
-                fontWeight: "900", 
-                color: "#000000", 
-                margin: 0,
-                letterSpacing: "1px",
-                lineHeight: 1.1
-              }}>
+            <div className={styles.receiptHeader}>
+              <h1 className={styles.brandTitle}>
                 Nelly
               </h1>
-              <div style={{ 
-                fontSize: "0.76rem", 
-                fontWeight: "800", 
-                color: "#111827",
-                marginTop: "4px"
-              }}>
-                رقم الفاتورة: <span className="num-font" dir="ltr" style={{ fontWeight: "900" }}>#{invoice.invoiceNumber}</span>
+              <div className={styles.invoiceNumRow}>
+                رقم الفاتورة: <span className={`num-font ${styles.boldInvoiceNum}`} dir="ltr">#{invoice.invoiceNumber}</span>
               </div>
             </div>
 
             {/* 2. Sequential Invoice Meta */}
-            <div style={{ 
-              fontSize: "0.78rem", 
-              color: "#000000", 
-              fontWeight: "800",
-              marginBottom: "10px",
-              lineHeight: 1.5,
-              borderBottom: "1px dashed #000000",
-              paddingBottom: "8px"
-            }}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "2px" }}>
+            <div className={styles.metaSection}>
+              <div className={styles.metaRow}>
                 <span>التاريخ:</span>
                 <span>{dateStr}</span>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "2px" }}>
+              <div className={styles.metaRow}>
                 <span>العميل:</span>
                 <span>{invoice.customer?.name || "عميل نقدي"}</span>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "2px" }}>
+              <div className={styles.metaRow}>
                 <span>الكاشير:</span>
                 <span>{invoice.cashier?.name || "كاشير المحل"}</span>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <div className={styles.metaRow}>
                 <span>طريقة الدفع:</span>
                 <span>{invoice.paymentMethod || "نقدي"}</span>
               </div>
             </div>
 
             {/* 3. Items Table - Structured Bordered Grid Table */}
-            <div style={{ marginBottom: "10px" }}>
-              <table 
-                className="receipt-grid-table"
-                style={{ 
-                  width: "100%", 
-                  tableLayout: "fixed",
-                  fontSize: "0.78rem", 
-                  borderCollapse: "collapse", 
-                  border: "1.5px solid #000000",
-                  color: "#000000",
-                  direction: "rtl",
-                  margin: "6px 0"
-                }}
-              >
+            <div className={styles.tableSection}>
+              <table className={`receipt-grid-table ${styles.receiptTable}`}>
                 <thead>
-                  <tr style={{ background: "#f0f0f0" }}>
-                    <th style={{ 
-                      width: "42%",
-                      textAlign: "right", 
-                      padding: "5px 4px", 
-                      fontWeight: "900", 
-                      color: "#000000", 
-                      border: "1px solid #000000",
-                      verticalAlign: "middle",
-                      boxSizing: "border-box"
-                    }}>
+                  <tr className={styles.receiptTableHeadRow}>
+                    <th className={styles.thItemName}>
                       اسم الصنف
                     </th>
-                    <th style={{ 
-                      width: "16%",
-                      textAlign: "center", 
-                      padding: "5px 2px", 
-                      fontWeight: "900", 
-                      color: "#000000", 
-                      border: "1px solid #000000",
-                      verticalAlign: "middle",
-                      boxSizing: "border-box"
-                    }}>
+                    <th className={styles.thQty}>
                       الكمية
                     </th>
-                    <th style={{ 
-                      width: "20%",
-                      textAlign: "center", 
-                      padding: "5px 2px", 
-                      fontWeight: "900", 
-                      color: "#000000", 
-                      border: "1px solid #000000",
-                      verticalAlign: "middle",
-                      boxSizing: "border-box"
-                    }}>
+                    <th className={styles.thPrice}>
                       السعر
                     </th>
-                    <th style={{ 
-                      width: "22%",
-                      textAlign: "center", 
-                      padding: "5px 2px", 
-                      fontWeight: "900", 
-                      color: "#000000", 
-                      border: "1px solid #000000",
-                      verticalAlign: "middle",
-                      boxSizing: "border-box"
-                    }}>
+                    <th className={styles.thTotal}>
                       الإجمالي
                     </th>
                   </tr>
@@ -347,54 +255,16 @@ export default function POSReceiptModal({ isOpen, onClose, invoice, onNewSale })
                 <tbody>
                   {items.map((it, idx) => (
                     <tr key={idx}>
-                      <td style={{ 
-                        width: "42%",
-                        textAlign: "right", 
-                        padding: "5px 4px", 
-                        fontWeight: "800", 
-                        color: "#000000", 
-                        border: "1px solid #000000",
-                        verticalAlign: "middle",
-                        lineHeight: "1.3",
-                        wordBreak: "break-word",
-                        boxSizing: "border-box"
-                      }}>
+                      <td className={styles.tdItemName}>
                         {it.name}
                       </td>
-                      <td style={{ 
-                        width: "16%",
-                        textAlign: "center", 
-                        padding: "5px 2px", 
-                        fontWeight: "900", 
-                        color: "#000000", 
-                        border: "1px solid #000000",
-                        verticalAlign: "middle",
-                        boxSizing: "border-box"
-                      }}>
+                      <td className={styles.tdQty}>
                         {it.quantity}
                       </td>
-                      <td style={{ 
-                        width: "20%",
-                        textAlign: "center", 
-                        padding: "5px 2px", 
-                        fontWeight: "800", 
-                        color: "#000000", 
-                        border: "1px solid #000000",
-                        verticalAlign: "middle",
-                        boxSizing: "border-box"
-                      }}>
+                      <td className={styles.tdPrice}>
                         {formatNumber(it.sellingPrice)}
                       </td>
-                      <td style={{ 
-                        width: "22%",
-                        textAlign: "center", 
-                        padding: "5px 2px", 
-                        fontWeight: "900", 
-                        color: "#000000", 
-                        border: "1px solid #000000",
-                        verticalAlign: "middle",
-                        boxSizing: "border-box"
-                      }}>
+                      <td className={styles.tdTotal}>
                         {formatNumber(it.subtotal || it.quantity * it.sellingPrice)}
                       </td>
                     </tr>
@@ -404,61 +274,37 @@ export default function POSReceiptModal({ isOpen, onClose, invoice, onNewSale })
             </div>
 
             {/* 4. Total Card (كارت الإجمالي) */}
-            <div style={{ 
-              border: "1.5px solid #000000", 
-              borderRadius: "8px", 
-              padding: "8px 10px", 
-              marginBottom: "10px",
-              background: "#fafafa",
-              fontSize: "0.82rem",
-              lineHeight: 1.5
-            }}>
-              <div style={{ 
-                display: "flex", 
-                justifyContent: "space-between", 
-                alignItems: "center",
-                fontWeight: "900",
-                fontSize: "0.95rem",
-                color: "#000000"
-              }}>
+            <div className={styles.totalCard}>
+              <div className={styles.totalCardMain}>
                 <span>الإجمالي:</span>
-                <span className="num-font" style={{ fontSize: "1.05rem" }}>
+                <span className={`num-font ${styles.totalCardValue}`}>
                   {formatNumber(invoice.total)} ج.م
                 </span>
               </div>
 
               {invoice.discount > 0 && (
-                <div style={{ 
-                  display: "flex", 
-                  justifyContent: "space-between", 
-                  color: "#000000", 
-                  fontWeight: "800",
-                  fontSize: "0.78rem",
-                  borderTop: "1px dashed #000000",
-                  paddingTop: "4px",
-                  marginTop: "4px"
-                }}>
+                <div className={styles.discountRow}>
                   <span>الخصم المطبق:</span>
                   <span className="num-font">-{formatNumber(invoice.discount)} ج.م</span>
                 </div>
               )}
 
               {invoice.receivedCash > 0 && (
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.78rem", fontWeight: "800", color: "#000000", marginTop: "3px" }}>
+                <div className={styles.subMetaRow}>
                   <span>المبلغ المدفوع:</span>
                   <span className="num-font">{formatNumber(invoice.receivedCash)} ج.م</span>
                 </div>
               )}
 
               {invoice.changeAmount > 0 && (
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.78rem", color: "#000000", fontWeight: "800", marginTop: "3px" }}>
+                <div className={styles.subMetaRow}>
                   <span>الباقي للعميل:</span>
                   <span className="num-font">{formatNumber(invoice.changeAmount)} ج.م</span>
                 </div>
               )}
 
               {invoice.remainingDue > 0 && (
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.78rem", color: "#000000", fontWeight: "900", marginTop: "3px" }}>
+                <div className={styles.subMetaRowBold}>
                   <span>المتبقي آجل:</span>
                   <span className="num-font">{formatNumber(invoice.remainingDue)} ج.م</span>
                 </div>
@@ -466,22 +312,10 @@ export default function POSReceiptModal({ isOpen, onClose, invoice, onNewSale })
             </div>
 
             {/* 5. Footer: Thank You Message & Optional Exchange Policy */}
-            <div style={{ 
-              textAlign: "center", 
-              borderTop: "1.5px solid #000000", 
-              paddingTop: "8px", 
-              fontSize: "0.78rem", 
-              fontWeight: "900",
-              color: "#000000" 
-            }}>
+            <div className={styles.receiptFooter}>
               <div>شكراً لتعاملكم معنا ونسعد بزيارتكم</div>
               {includePolicy && (
-                <div style={{ 
-                  marginTop: "4px", 
-                  fontSize: "0.73rem", 
-                  fontWeight: "800", 
-                  color: "#1f2937" 
-                }}>
+                <div className={styles.policyNotice}>
                   البضاعة المباعة لا ترد ولكن تستبدل خلال 14 يوماً مع وجود الفاتورة
                 </div>
               )}
@@ -490,45 +324,25 @@ export default function POSReceiptModal({ isOpen, onClose, invoice, onNewSale })
         </div>
 
         {/* Pinned Action Buttons Footer in Modal (Print, WhatsApp, Policy Toggle, New Sale) */}
-        <div className="modal-footer no-print" style={{ flexDirection: "column", gap: "8px", flexShrink: 0, padding: "12px 16px" }}>
+        <div className={`modal-footer no-print ${styles.pinnedFooter}`}>
           {/* Policy Toggle Option */}
-          <label style={{ 
-            display: "flex", 
-            alignItems: "center", 
-            justifyContent: "space-between", 
-            width: "100%",
-            padding: "6px 12px", 
-            background: "#f8fafc", 
-            border: "1px solid #e2e8f0", 
-            borderRadius: "8px", 
-            cursor: "pointer", 
-            userSelect: "none" 
-          }}>
-            <span style={{ fontSize: "0.8rem", fontWeight: "700", color: "#334155" }}>
+          <label className={styles.policyToggleLabel}>
+            <span className={styles.policyToggleText}>
               طباعة سياسة الاستبدال (14 يوم) بالفاتورة
             </span>
             <input 
               type="checkbox" 
               checked={includePolicy} 
               onChange={(e) => setIncludePolicy(e.target.checked)}
-              style={{ width: "17px", height: "17px", accentColor: "#db2777", cursor: "pointer" }}
+              className={styles.policyCheckbox}
             />
           </label>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", width: "100%" }}>
+          <div className={styles.actionButtonsGrid}>
             <button
               type="button"
               onClick={handlePrint}
-              className="btn-primary"
-              style={{ 
-                padding: "10px", 
-                display: "flex", 
-                alignItems: "center", 
-                justifyContent: "center", 
-                gap: "6px",
-                fontSize: "0.9rem",
-                fontWeight: "800"
-              }}
+              className={`btn-primary ${styles.printActionBtn}`}
             >
               <Printer size={16} />
               طباعة الفاتورة (Print)
@@ -537,20 +351,7 @@ export default function POSReceiptModal({ isOpen, onClose, invoice, onNewSale })
             <button
               type="button"
               onClick={handleShareWhatsApp}
-              style={{
-                padding: "10px",
-                borderRadius: "12px",
-                background: "#25D366",
-                color: "#ffffff",
-                border: "none",
-                fontWeight: "800",
-                fontSize: "0.9rem",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "6px"
-              }}
+              className={styles.whatsappBtn}
             >
               <MessageCircle size={16} />
               مشاركة WhatsApp
@@ -561,17 +362,7 @@ export default function POSReceiptModal({ isOpen, onClose, invoice, onNewSale })
             <button
               type="button"
               onClick={() => { onClose(); onNewSale(); }}
-              className="btn-secondary"
-              style={{ 
-                width: "100%", 
-                padding: "9px", 
-                display: "flex", 
-                alignItems: "center", 
-                justifyContent: "center", 
-                gap: "6px",
-                fontWeight: "800",
-                fontSize: "0.85rem"
-              }}
+              className={`btn-secondary ${styles.newSaleBtn}`}
             >
               <ShoppingBag size={15} />
               بدء فاتورة بيع جديدة

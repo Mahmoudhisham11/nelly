@@ -11,6 +11,8 @@ import PrintInventoryModal from "@/components/PrintInventoryModal";
 import TransferModal from "@/components/TransferModal";
 import PermissionDeniedModal from "@/components/PermissionDeniedModal";
 import CustomSelect from "@/components/CustomSelect";
+import ShopPurchaseInvoiceModal from "@/components/ShopPurchaseInvoiceModal";
+import ShopInvoicesHistoryModal from "@/components/ShopInvoicesHistoryModal";
 import { 
   subscribeToShopProducts, 
   addShopProduct, 
@@ -18,39 +20,47 @@ import {
   deleteShopProduct,
   transferFromShopToWarehouse
 } from "@/lib/shopService";
+import { subscribeToSuppliers } from "@/lib/suppliersService";
+import { 
+  subscribeToShopPurchases, 
+  createShopPurchaseInvoice, 
+  returnShopPurchaseItems 
+} from "@/lib/shopPurchasesService";
 import { formatNumber, roundCurrency } from "@/lib/utils";
 import { 
   Store, 
   Plus, 
   Search, 
   Download, 
-  Printer,
+  Printer, 
   Trash2, 
   Edit3, 
   Barcode, 
   Boxes, 
   Layers, 
   DollarSign, 
-  RotateCcw, 
-  Lock, 
-  ArrowLeftRight, 
+  RotateCcw,
   ShoppingBag,
-  Sparkles,
-  TrendingUp,
-  PackageCheck
+  Receipt
 } from "lucide-react";
+import styles from "./shop.module.css";
 
 export default function ShopPage() {
   const router = useRouter();
   const { user, isAdmin, loading: authLoading } = useAuth();
 
   const [products, setProducts] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
+  const [shopPurchases, setShopPurchases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
 
+  // Modals state
+  const [isPurchaseInvoiceModalOpen, setIsPurchaseInvoiceModalOpen] = useState(false);
+  const [isInvoicesHistoryModalOpen, setIsInvoicesHistoryModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [barcodeProduct, setBarcodeProduct] = useState(null);
@@ -74,11 +84,24 @@ export default function ShopPage() {
 
   useEffect(() => {
     if (!user) return;
-    const unsubscribe = subscribeToShopProducts((data) => {
+    const unsubProducts = subscribeToShopProducts((data) => {
       setProducts(data);
       setLoading(false);
     });
-    return () => unsubscribe();
+
+    const unsubSuppliers = subscribeToSuppliers((data) => {
+      setSuppliers(data);
+    });
+
+    const unsubPurchases = subscribeToShopPurchases((data) => {
+      setShopPurchases(data);
+    });
+
+    return () => {
+      unsubProducts();
+      unsubSuppliers();
+      unsubPurchases();
+    };
   }, [user]);
 
   // Categories list for select
@@ -173,6 +196,7 @@ export default function ShopPage() {
     setIsAddModalOpen(true);
   };
 
+  // Save Product (Single Item)
   const handleSaveProduct = async (productData, id) => {
     if (id) {
       await updateShopProduct(id, productData);
@@ -181,6 +205,33 @@ export default function ShopPage() {
       await addShopProduct(productData);
       showToast("تمت إضافة الصنف إلى بضاعة المحل بنجاح.");
     }
+  };
+
+  // Save Shop Purchase Invoice (Multi-Item + Supplier)
+  const handleSavePurchaseInvoice = async (invoicePayload) => {
+    const res = await createShopPurchaseInvoice({
+      ...invoicePayload,
+      user
+    });
+    showToast(`تم حفظ فاتورة الواردات #${res.invoiceNumber} وإضافة البضاعة للمحل بنجاح.`);
+  };
+
+  // Return items from Shop Purchase Invoice to Supplier
+  const handleReturnPurchaseItem = async (returnPayload) => {
+    const res = await returnShopPurchaseItems({
+      ...returnPayload,
+      user
+    });
+    showToast(`تم إرجاع البضاعة للمورد بنجاح (إشعار #${res.returnNumber}) وخصم ${formatNumber(res.refundedCost)} ج.م من حسابه.`);
+  };
+
+  // Return full Shop Purchase Invoice to Supplier
+  const handleReturnFullPurchaseInvoice = async (returnPayload) => {
+    const res = await returnShopPurchaseItems({
+      ...returnPayload,
+      user
+    });
+    showToast(`تم إرجاع الفاتورة بالكامل للمورد بنجاح (إشعار #${res.returnNumber}) وخصم ${formatNumber(res.refundedCost)} ج.م من حسابه.`);
   };
 
   const handleConfirmReturnToWarehouse = async (product, quantity) => {
@@ -243,104 +294,91 @@ export default function ShopPage() {
         <main className="page-wrapper">
           {/* Toast Notification */}
           {toastMessage && (
-            <div style={{
-              position: "fixed",
-              bottom: "24px",
-              left: "24px",
-              background: "#111827",
-              color: "#ffffff",
-              padding: "12px 20px",
-              borderRadius: "14px",
-              boxShadow: "0 10px 30px rgba(0,0,0,0.25)",
-              zIndex: 1000,
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              fontSize: "0.92rem",
-              fontWeight: "700"
-            }}>
+            <div className={styles.toastWrapper}>
               <Store size={18} color="#f472b6" />
               <span>{toastMessage}</span>
             </div>
           )}
 
           {/* Page Header */}
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
-            gap: "16px",
-            marginBottom: "24px"
-          }}>
+          <div className={styles.pageHeader}>
             <div>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <div style={{
-                  width: "40px",
-                  height: "40px",
-                  borderRadius: "12px",
-                  background: "linear-gradient(135deg, #ec4899 0%, #db2777 100%)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "#ffffff"
-                }}>
+              <div className={styles.headerTitleGroup}>
+                <div className={styles.headerIconBox}>
                   <Store size={22} />
                 </div>
-                <h2 style={{ fontSize: "1.6rem", fontWeight: "900", color: "#1e1322" }}>المحل</h2>
-                <span className="badge badge-code" style={{ fontSize: "0.85rem" }}>
+                <h2 className={styles.headerMainTitle}>المحل</h2>
+                <span className={`badge badge-code ${styles.productCountBadge}`}>
                   <span className="num-font" dir="ltr">{formatNumber(products.length)}</span> صنف معروض
                 </span>
               </div>
-              <p style={{ color: "#5a4663", fontSize: "0.88rem", marginTop: "4px", fontWeight: "600" }}>
+              <p className={styles.headerSubtitle}>
                 جرد ومتابعة بضاعة المعرض والمحل التجاري، واستقبال البضاعة المحولة من المخزن
               </p>
             </div>
 
             {/* Action buttons */}
-            <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+            <div className={styles.headerActions}>
+              <button 
+                onClick={() => setIsInvoicesHistoryModalOpen(true)}
+                className={`btn-secondary ${styles.whiteBtn}`}
+                title="سجل فواتير الواردات وشحنات الموردين والمرتجعات"
+              >
+                <Receipt size={16} color="#7c3aed" />
+                سجل الواردات والمرتجعات
+                {shopPurchases.length > 0 && (
+                  <span className="badge badge-info" style={{ marginRight: "4px", fontSize: "0.75rem", padding: "0.15rem 0.45rem" }}>
+                    {shopPurchases.length}
+                  </span>
+                )}
+              </button>
+
               <button 
                 onClick={() => setIsPrintModalOpen(true)} 
-                className="btn-secondary" 
+                className={`btn-secondary ${styles.whiteBtn}`} 
                 title="معاينة وطباعة كشف جرد بضاعة المحل" 
-                style={{ background: "#ffffff" }}
               >
                 <Printer size={16} color="#db2777" />
-                طباعة كشف المحل
+                طباعة الكشف
               </button>
-              <button onClick={exportToCSV} className="btn-secondary" title="تصدير إلى ملف إكسل CSV" style={{ background: "#ffffff" }}>
+
+              <button onClick={exportToCSV} className={`btn-secondary ${styles.whiteBtn}`} title="تصدير إلى ملف إكسل CSV">
                 <Download size={16} color="#059669" />
                 تصدير CSV
               </button>
-              <button onClick={handleOpenAddModal} className="btn-primary">
-                <Plus size={18} />
-                إضافة صنف للمحل
+
+              <button 
+                onClick={() => {
+                  if (!isAdmin) {
+                    setPermissionDeniedAction("إصدار فاتورة واردات للمحل");
+                    return;
+                  }
+                  setIsPurchaseInvoiceModalOpen(true);
+                }} 
+                className="btn-primary"
+              >
+                <ShoppingBag size={18} />
+                فاتورة واردات جديدة
               </button>
             </div>
           </div>
 
           {/* Filter & Search Toolbar */}
-          <div className="glass-panel" style={{ padding: "18px 20px", marginBottom: "24px", background: "#ffffff", border: "1.5px solid #ebdbe6" }}>
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-              gap: "12px",
-              alignItems: "center"
-            }}>
+          <div className={`glass-panel ${styles.filterPanel}`}>
+            <div className={styles.filterGrid}>
               {/* Search Input for Barcode or Name */}
-              <div style={{ position: "relative" }}>
+              <div className={styles.searchWrap}>
                 <input 
                   type="text"
-                  className="form-input"
+                  className={`form-input ${styles.searchInput}`}
                   placeholder="ابحث بالباركود، اسم الصنف، أو الماركة بالمحل..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  style={{ paddingRight: "40px", fontWeight: "600" }}
                 />
                 <Search 
                   size={18} 
                   color="#db2777" 
-                  style={{ position: "absolute", right: "14px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} 
+                  className={styles.searchIcon}
                 />
               </div>
 
@@ -375,9 +413,8 @@ export default function ShopPage() {
               {(searchQuery || selectedCategory !== "all" || selectedStatus !== "all" || sortBy !== "newest") && (
                 <button 
                   onClick={resetFilters} 
-                  className="btn-secondary"
+                  className={`btn-secondary ${styles.resetBtn}`}
                   title="إعادة ضبط الفلاتر"
-                  style={{ padding: "11px" }}
                 >
                   <RotateCcw size={16} />
                 </button>
@@ -385,82 +422,51 @@ export default function ShopPage() {
             </div>
 
             {/* 3 Rich Stat Cards for Shop Summary Data */}
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-              gap: "14px",
-              marginTop: "18px",
-              paddingTop: "16px",
-              borderTop: "1px solid #fce7f3"
-            }}>
+            <div className={styles.statCardsGrid}>
               {/* Card 1: معروض */}
-              <div style={{
-                background: "linear-gradient(135deg, #ffffff 0%, #fdf2f8 100%)",
-                border: "1.5px solid #fbcfe8",
-                borderRadius: "14px",
-                padding: "14px 18px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between"
-              }}>
+              <div className={styles.statCardRose}>
                 <div>
-                  <span style={{ fontSize: "0.82rem", color: "var(--text-muted)", fontWeight: "700" }}>أصناف المحل المعروضة</span>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: "4px", marginTop: "2px" }}>
-                    <span className="num-font" dir="ltr" style={{ fontSize: "1.5rem", fontWeight: "900", color: "#1e1322" }}>
+                  <span className={styles.statLabel}>أصناف المحل المعروضة</span>
+                  <div className={styles.statValueGroup}>
+                    <span className={`num-font ${styles.statNumberDark}`} dir="ltr">
                       {formatNumber(totalFilteredCount)}
                     </span>
-                    <span style={{ fontSize: "0.8rem", color: "#5a4663", fontWeight: "700" }}>صنف</span>
+                    <span className={styles.statUnitDark}>صنف</span>
                   </div>
                 </div>
-                <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: "#fce7f3", color: "#db2777", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <div className={styles.statIconBoxRose}>
                   <Store size={20} />
                 </div>
               </div>
 
               {/* Card 2: إجمالي القطع */}
-              <div style={{
-                background: "linear-gradient(135deg, #ffffff 0%, #fff7ed 100%)",
-                border: "1.5px solid #fed7aa",
-                borderRadius: "14px",
-                padding: "14px 18px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between"
-              }}>
+              <div className={styles.statCardOrange}>
                 <div>
-                  <span style={{ fontSize: "0.82rem", color: "var(--text-muted)", fontWeight: "700" }}>إجمالي قطع المحل</span>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: "4px", marginTop: "2px" }}>
-                    <span className="num-font" dir="ltr" style={{ fontSize: "1.5rem", fontWeight: "900", color: "#c2410c" }}>
+                  <span className={styles.statLabel}>إجمالي قطع المحل</span>
+                  <div className={styles.statValueGroup}>
+                    <span className={`num-font ${styles.statNumberOrange}`} dir="ltr">
                       {formatNumber(totalFilteredQty)}
                     </span>
-                    <span style={{ fontSize: "0.8rem", color: "#c2410c", fontWeight: "700" }}>قطعة</span>
+                    <span className={styles.statUnitOrange}>قطعة</span>
                   </div>
                 </div>
-                <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: "#ffedd5", color: "#ea580c", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <div className={styles.statIconBoxOrange}>
                   <Layers size={20} />
                 </div>
               </div>
 
               {/* Card 3: إجمالي القيمة بسعر البيع (قطاعي) */}
-              <div style={{
-                background: "linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%)",
-                border: "1.5px solid #bbf7d0",
-                borderRadius: "14px",
-                padding: "14px 18px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between"
-              }}>
+              <div className={styles.statCardGreen}>
                 <div>
-                  <span style={{ fontSize: "0.82rem", color: "var(--text-muted)", fontWeight: "700" }}>إجمالي القيمة (سعر البيع)</span>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: "4px", marginTop: "2px" }}>
-                    <span className="num-font" dir="ltr" style={{ fontSize: "1.5rem", fontWeight: "900", color: "#15803d" }}>
+                  <span className={styles.statLabel}>إجمالي القيمة (سعر البيع)</span>
+                  <div className={styles.statValueGroup}>
+                    <span className={`num-font ${styles.statNumberGreen}`} dir="ltr">
                       {formatNumber(totalRetailVal)}
                     </span>
-                    <span style={{ fontSize: "0.8rem", color: "#15803d", fontWeight: "700" }}>ج.م</span>
+                    <span className={styles.statUnitGreen}>ج.م</span>
                   </div>
                 </div>
-                <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: "#dcfce7", color: "#16a34a", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <div className={styles.statIconBoxGreen}>
                   <DollarSign size={20} />
                 </div>
               </div>
@@ -470,10 +476,10 @@ export default function ShopPage() {
           {/* Shop Products Table */}
           <div className="table-container">
             {filteredProducts.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "60px 20px" }}>
-                <Store size={48} color="#db2777" style={{ margin: "0 auto 12px", opacity: 0.8 }} />
-                <h3 style={{ fontSize: "1.2rem", marginBottom: "6px", color: "#1e1322", fontWeight: "800" }}>لا توجد بضاعة مسجلة بالمحل حالياً</h3>
-                <p style={{ color: "var(--text-muted)", fontSize: "0.88rem", marginBottom: "18px", fontWeight: "600" }}>
+              <div className={styles.emptyPlaceholder}>
+                <Store size={48} color="#db2777" className={styles.emptyIcon} />
+                <h3 className={styles.emptyTitle}>لا توجد بضاعة مسجلة بالمحل حالياً</h3>
+                <p className={styles.emptySubtitle}>
                   يمكنك تحويل بضاعة من المخزن إلى المحل أو إضافة صنف جديد هنا مباشرة
                 </p>
                 <button onClick={handleOpenAddModal} className="btn-primary">
@@ -485,14 +491,14 @@ export default function ShopPage() {
               <table className="custom-table">
                 <thead>
                   <tr>
-                    <th style={{ width: "160px", whiteSpace: "nowrap" }}>الباركود</th>
-                    <th style={{ whiteSpace: "nowrap" }}>اسم الصنف والماركة</th>
-                    <th style={{ whiteSpace: "nowrap" }}>القسم</th>
-                    <th style={{ textAlign: "center", whiteSpace: "nowrap" }}>الكمية بالمحل</th>
-                    <th style={{ whiteSpace: "nowrap" }}>سعر البيع (قطاعي)</th>
-                    <th style={{ whiteSpace: "nowrap" }}>سعر التكلفة</th>
-                    <th style={{ whiteSpace: "nowrap" }}>حالة التوفر</th>
-                    <th style={{ textAlign: "center", whiteSpace: "nowrap" }}>الإجراءات</th>
+                    <th className={styles.thBarcode}>الباركود</th>
+                    <th className={styles.thNowrap}>اسم الصنف والماركة</th>
+                    <th className={styles.thNowrap}>القسم</th>
+                    <th className={styles.thCenter}>الكمية بالمحل</th>
+                    <th className={styles.thNowrap}>سعر البيع (قطاعي)</th>
+                    <th className={styles.thNowrap}>سعر التكلفة</th>
+                    <th className={styles.thNowrap}>حالة التوفر</th>
+                    <th className={styles.thCenter}>الإجراءات</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -509,19 +515,8 @@ export default function ShopPage() {
                         {/* Barcode */}
                         <td>
                           <span 
-                            className="num-font" 
+                            className={`num-font ${styles.barcodeTag}`} 
                             dir="ltr"
-                            style={{
-                              fontFamily: "monospace",
-                              fontSize: "0.95rem",
-                              fontWeight: "900",
-                              color: "#831843",
-                              background: "#fce7f3",
-                              padding: "5px 12px",
-                              borderRadius: "8px",
-                              border: "1.5px solid #f472b6",
-                              display: "inline-block"
-                            }}
                           >
                             {p.barcode || "—"}
                           </span>
@@ -529,11 +524,11 @@ export default function ShopPage() {
 
                         {/* Name & Brand */}
                         <td>
-                          <div style={{ fontWeight: "800", color: "#1e1322", whiteSpace: "nowrap" }}>
+                          <div className={styles.productNameText}>
                             {p.name}
                           </div>
                           {p.brand && (
-                            <div style={{ fontSize: "0.75rem", color: "#db2777", fontWeight: "700", marginTop: "2px" }}>
+                            <div className={styles.brandText}>
                               {p.brand}
                             </div>
                           )}
@@ -541,25 +536,21 @@ export default function ShopPage() {
 
                         {/* Category */}
                         <td>
-                          <span className="badge" style={{ background: "#fdf2f8", color: "#be185d", border: "1px solid #fbcfe8" }}>
+                          <span className={`badge ${styles.categoryBadge}`}>
                             {p.category || "أخرى"}
                           </span>
                         </td>
 
                         {/* Quantity in Shop */}
-                        <td style={{ textAlign: "center" }}>
-                          <span className="num-font" dir="ltr" style={{
-                            fontSize: "1.15rem",
-                            fontWeight: "900",
-                            color: isOut ? "#dc2626" : isLow ? "#ea580c" : "#047857"
-                          }}>
+                        <td className={styles.thCenter}>
+                          <span className={`num-font ${styles.qtyValue} ${isOut ? styles.qtyOut : isLow ? styles.qtyLow : styles.qtyNormal}`} dir="ltr">
                             {formatNumber(qty)}
                           </span>
                         </td>
 
                         {/* Selling Price */}
                         <td>
-                          <strong style={{ color: "#15803d", fontSize: "1.02rem" }}>
+                          <strong className={styles.sellingPriceVal}>
                             <span className="num-font" dir="ltr">{formatNumber(retailPrice)}</span> ج.م
                           </strong>
                         </td>
@@ -567,11 +558,11 @@ export default function ShopPage() {
                         {/* Wholesale Price */}
                         <td>
                           {isAdmin ? (
-                            <span style={{ color: "#4b5563", fontWeight: "700" }}>
+                            <span className={styles.wholesalePriceVal}>
                               <span className="num-font" dir="ltr">{formatNumber(wholesale)}</span> ج.م
                             </span>
                           ) : (
-                            <span style={{ color: "#9ca3af", fontSize: "0.78rem" }}>🔒 خاص بالمسؤول</span>
+                            <span className={styles.lockPriceTag}>🔒 خاص بالمسؤول</span>
                           )}
                         </td>
 
@@ -587,13 +578,12 @@ export default function ShopPage() {
                         </td>
 
                         {/* Actions */}
-                        <td style={{ textAlign: "center" }}>
-                          <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", flexWrap: "nowrap" }}>
+                        <td className={styles.thCenter}>
+                          <div className={styles.actionsGroup}>
                             {/* Return to Warehouse button */}
                             <button 
                               onClick={() => setProductToReturn(p)}
-                              className="btn-secondary"
-                              style={{ padding: "6px 10px", fontSize: "0.8rem", color: "#7e22ce", borderColor: "#d8b4fe", background: "#faf5ff" }}
+                              className={`btn-secondary ${styles.returnWarehouseBtn}`}
                               title="إرجاع كمية من الصنف إلى المخزن"
                             >
                               <Boxes size={14} color="#9333ea" />
@@ -603,8 +593,7 @@ export default function ShopPage() {
                             {/* Barcode Print */}
                             <button 
                               onClick={() => setBarcodeProduct(p)}
-                              className="btn-secondary"
-                              style={{ padding: "6px 10px", fontSize: "0.8rem" }}
+                              className={`btn-secondary ${styles.barcodeBtn}`}
                               title="طباعة باركود"
                             >
                               <Barcode size={15} color="#db2777" />
@@ -613,8 +602,7 @@ export default function ShopPage() {
                             {/* Edit */}
                             <button 
                               onClick={() => handleOpenEditModal(p)}
-                              className="btn-primary"
-                              style={{ padding: "6px 10px", fontSize: "0.82rem" }}
+                              className={`btn-primary ${styles.editBtn}`}
                               title="تعديل بيانات الصنف بالمحل"
                             >
                               <Edit3 size={15} />
@@ -623,8 +611,7 @@ export default function ShopPage() {
                             {/* Delete */}
                             <button 
                               onClick={() => setProductToDelete(p)}
-                              className="btn-danger"
-                              style={{ padding: "6px 8px" }}
+                              className={`btn-danger ${styles.deleteBtn}`}
                               title="حذف الصنف من المحل"
                             >
                               <Trash2 size={15} />
@@ -641,6 +628,25 @@ export default function ShopPage() {
         </main>
       </div>
 
+      {/* Shop Purchase Invoice Modal */}
+      <ShopPurchaseInvoiceModal 
+        isOpen={isPurchaseInvoiceModalOpen}
+        onClose={() => setIsPurchaseInvoiceModalOpen(false)}
+        suppliers={suppliers}
+        shopProducts={products}
+        onSave={handleSavePurchaseInvoice}
+      />
+
+      {/* Shop Invoices History & Returns Modal */}
+      <ShopInvoicesHistoryModal 
+        isOpen={isInvoicesHistoryModalOpen}
+        onClose={() => setIsInvoicesHistoryModalOpen(false)}
+        invoices={shopPurchases}
+        suppliers={suppliers}
+        onReturnItem={handleReturnPurchaseItem}
+        onReturnFullInvoice={handleReturnFullPurchaseInvoice}
+      />
+
       {/* Return to Warehouse Transfer Modal */}
       <TransferModal 
         isOpen={!!productToReturn}
@@ -650,7 +656,7 @@ export default function ShopPage() {
         direction="shop_to_warehouse"
       />
 
-      {/* Product Modal for Shop */}
+      {/* Product Modal for Shop (Single Item) */}
       <ProductModal 
         isOpen={isAddModalOpen}
         onClose={() => { setIsAddModalOpen(false); setEditingProduct(null); }}
@@ -686,32 +692,21 @@ export default function ShopPage() {
       {productToDelete && (
         <div className="modal-overlay" onClick={() => setProductToDelete(null)}>
           <div 
-            className="modal-content"
+            className={`modal-content ${styles.deleteModalContainer}`}
             onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: "440px", padding: "26px", textAlign: "center", background: "#ffffff" }}
           >
-            <div style={{
-              width: "50px",
-              height: "50px",
-              borderRadius: "50%",
-              background: "#fee2e2",
-              color: "#dc2626",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              marginBottom: "16px"
-            }}>
+            <div className={styles.deleteIconBox}>
               <Trash2 size={26} />
             </div>
 
-            <h3 style={{ fontSize: "1.2rem", marginBottom: "8px", color: "#1e1322", fontWeight: "800" }}>تأكيد حذف الصنف من المحل</h3>
-            <p style={{ fontSize: "0.9rem", color: "var(--text-secondary)", marginBottom: "20px", fontWeight: "600" }}>
-              هل أنت متأكد من حذف الصنف <strong style={{ color: "#1e1322" }}>"{productToDelete.name}"</strong> من سجل بضاعة المحل؟
+            <h3 className={styles.deleteModalTitle}>تأكيد حذف الصنف من المحل</h3>
+            <p className={styles.deleteModalText}>
+              هل أنت متأكد من حذف الصنف <strong className={styles.deleteTargetName}>"{productToDelete.name}"</strong> من سجل بضاعة المحل؟
             </p>
 
-            <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
-              <button onClick={() => setProductToDelete(null)} className="btn-secondary" style={{ padding: "10px 20px" }}>إلغاء</button>
-              <button onClick={handleConfirmDelete} className="btn-danger" style={{ padding: "10px 20px", background: "#dc2626", color: "#fff", border: "none" }}>نعم، احذف الصنف</button>
+            <div className={styles.deleteActionsRow}>
+              <button onClick={() => setProductToDelete(null)} className={`btn-secondary ${styles.cancelModalBtn}`}>إلغاء</button>
+              <button onClick={handleConfirmDelete} className={`btn-danger ${styles.confirmDeleteBtn}`}>نعم، احذف الصنف</button>
             </div>
           </div>
         </div>
